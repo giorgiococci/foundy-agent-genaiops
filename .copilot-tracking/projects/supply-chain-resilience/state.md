@@ -1,17 +1,280 @@
 ---
 title: "State of supply-chain-resilience"
-description: "Accepted Foundry managed prompt-agent path with Python driver; documentary planning proposed."
-ms.date: "2026-11-02"
+description: "S-022 completed: real human-approved reservation, persistent result and local execution trace verified."
+ms.date: "2026-11-03"
 project_id: "supply-chain-resilience"
 kind: "foundry-solution"
-phase: "design"
-step_id: "S-010"
+phase: "implementation"
+step_id: "S-022"
 step_revision: 1
 step_status: "completed"
 autonomy: "single-step"
 ---
 
 ## Objective and Resume Point
+
+Effective completed outcome on 2026-11-03: S-022 revision 1 passed the real
+end-to-end synthetic walkthrough on `supply-chain-resilience-advisor` v2.
+The user's one-case EXPRESS selection (Q-021) produced the exact proposal;
+their separate approval (Q-022) was recorded outside the model. The agent
+then requested execution and read back its durable outcome.
+One proposal/request persists, source on-hand/reserved/available is 80/70/10,
+destination remains 20; nothing shipped or arrived.
+Cumulative live usage: 9 model requests, 6 function calls, 13,738 tokens;
+conservative estimated model cost EUR 0.27476, not invoiced cost.
+Verified 36 local correlated metadata events with human approval before
+execution and no prompt/argument/result text. This is local application
+tracing, not Azure Monitor/OpenTelemetry export.
+All 70 offline tests, 10 documentary/link checks and dependency consistency
+checks passed. Session/store/trace are retained in ignored
+`artifacts/local/supply-chain-s022`; no further live sessions were started.
+See [A-014 evidence](implementation/log.md#a-014---s-022-revision-1-complete-human-gated-walkthrough).
+S-022 and this exact business approval are consumed; no subsequent cloud
+activity is authorized. The three-milestone implementation is complete for
+the agreed synthetic demo with local tracing, not production readiness.
+One proposed next activity is user-led demonstration/review of this flow;
+the Copilot harness remains a separate later study topic.
+The earlier partial/pending entries below are historical.
+
+Live proposal checkpoint: EXPRESS proposal
+`4113e1b5-55a0-4137-b1e3-4d5481adcf3b` created by the model tool and verified
+against its exact final answer. Quantity 40, cost 95, W-B to W-A,
+arrival day 1/completion day 2; snapshot v1/policy P-1:1.
+Session stage is `awaiting_approval`; no reservation occurred.
+Q-022 requests exact-proposal human approval or rejection. Cumulative usage:
+6 model requests, 4 tool calls, 6,865 tokens; no unreconciled usage.
+
+Q-021 now answered: the user explicitly selected EXPRESS for this single
+walkthrough at 15:29 on 2026-11-03. Continue only to proposal creation in the
+existing session; no business approval or reservation is inferred.
+
+Q-021 clarification pause: the user asked whether the requested selection is
+for this example only. Confirm that it is role-playing the planner for one
+synthetic live case, not a permanent decision rule. No selection, proposal or
+approval has occurred; the live session remains at `awaiting_selection`.
+
+S-022 checkpoint: workflow agent version `2` was created and verified in the
+same identity, with v1 retained. Conversation
+`conv_0492c8bfd1d8311400NkVZtm61THqvWjwXjqoRmDf8V11OUHvm`
+completed comparison: 4 requests, 3 tool calls, 3,658 tokens; exact options,
+no stock mutation. Durable session and metadata-only local events are under
+ignored `artifacts/local/supply-chain-s022`. Q-021 now requests planner choice;
+no proposal or business approval is inferred. All 67 offline tests pass.
+
+Effective update: Q-020 explicitly approves S-022 revision 1 with local
+execution traces. Implementation is in progress within the existing project,
+agent identity and deployment. One new version and one end-to-end live case
+are authorized. Planner selection and exact-proposal human approval remain
+separate inputs, not inferred from implementation consent. Earlier S-020
+completion records are historical and remain valid.
+
+Current outcome on 2026-11-03: S-020 revision 2 completed successfully.
+The existing semantic agent/version made all three required read-tool calls
+and returned the exact 90/95 transfer options, margins and a correct trade-off
+explanation without choosing or mutating stock. Four model requests, three
+tool calls, 2,997 tokens; conservative model-cost estimate EUR 0.05994,
+not actual billing. The single-run authorization is consumed.
+See [live evidence](implementation/log.md#a-013---s-020-revision-2-successful-live-read-only-case).
+The prior HTTP 405 prerequisite no longer blocks this path. Earlier blocked
+records below are historical. The project is not complete: human approval,
+action and full trace visibility remain future work.
+One proposed next activity is the complete interactive approval/action
+walkthrough with traces under a separate bounded contract; not started.
+
+Q-019 explicitly approved S-020 revision 2's single live read-only case on
+2026-11-03. Execution is in progress using the existing semantic agent v1
+and deployment, one new conversation and post-response budget monitoring.
+No new agent/version, deletion, write tool or IAM change is authorized.
+
+Latest update on 2026-11-03 at 15:09: the user explicitly authorized relaxing
+the mandatory token pre-count, stating sufficient demo budget. Applied this
+local change without a new approval round. The driver no longer calls the
+unsupported counting endpoint. It retains ten-request/twenty-tool-call bounds,
+requested output-token limits and explicit errors. Aggregate 100,000-token
+and estimated EUR 10 thresholds now monitor actual returned usage after each
+response and stop further work; they are not hard pre-request ceilings.
+Uncertain requests are flagged as unreconciled rather than assigned a
+fabricated token reservation. All 56 Python tests pass after the change.
+No new live inference or cloud operation occurred. The mandatory-pre-count
+blocker is removed locally; live function calling remains unverified.
+Earlier blocked/pre-count requirements below are historical and superseded
+only as described here.
+
+Investigation result on 2026-11-03 at the user's 15:01 request: installed SDK
+source confirms a generic OpenAI input-token-count POST on the agent-scoped
+route; no supported exact pre-count path was verified. A dated Microsoft Q&A
+answer supports the lack of a standalone Azure estimation endpoint, with its
+limitations explicitly recorded in
+[research evidence](research/evidence.md#token-count-investigation-on-2026-11-03).
+No new cloud call, inference or application edit was performed.
+S-020 remains blocked by the application's mandatory pre-count. A different,
+explicitly estimate-based budget strategy is proposed only; user agreement
+is needed before changing enforcement or resuming inference.
+
+User priority confirmed on 2026-11-03 at 14:55 +01:00: complete the current
+managed prompt agent with the existing Python function-calling architecture
+first; study the Copilot harness afterwards. The harness question was a
+clarification only, not a requested architecture change. No harness migration,
+new agent or additional cloud operation is authorized by this clarification.
+The next unresolved task remains S-020's token-count compatibility blocker.
+
+S-021 revision 2 completed on 2026-11-03: created
+`supply-chain-resilience-advisor` version `1`, verified its definition equals
+the previous agent's version `1`, then deleted only
+`supply-chain-readonly-847751e8dee6` as explicitly requested. Deletion returned
+`deleted: true` and a subsequent get returned not-found. The old conversation
+was retained. No inference ran.
+The CLI now reuses the named version and fails on a mismatched definition,
+instead of creating random identities. Focused validation is recorded in A-011.
+S-021 authorization is consumed; S-020's token-count blocker remains open.
+Earlier retained-old-agent wording is historical and superseded by this result.
+
+On 2026-11-03 the user requested a more meaningful agent name and an explanation
+of how the resource was created. Proposed name: `supply-chain-resilience-advisor`,
+not yet accepted or applied. This is a naming/explanation discussion only;
+no cloud operation, new agent, deletion, inference or S-020 retry is authorized.
+The existing HTTP 405 blocker and retained resource references remain unchanged.
+
+The user subsequently explicitly requested the naming change. Local inspection
+of Projects 2.10.0 exposes `get`, `get_version` and `create_version`, but no
+`update` or `update_version`; an in-place rename has not been established.
+Q-018 proposes creating the same definition under the accepted semantic name,
+retaining the old resource and performing no inference or deletion. Await
+explicit consent to replacement creation, which is not an in-place rename.
+The user also asked about portal execution: current client-executed functions
+require the Python driver; registration does not upload their implementations.
+
+Effective Q-018 answer: S-021 revision 2 is approved and in progress. The user
+explicitly requests deletion of the old named agent, superseding retention
+for this resource only. Create and verify the equivalent semantic identity
+first; delete only `supply-chain-readonly-847751e8dee6` without force. Preserve
+the old conversation. No inference or other cloud changes are included.
+
+Current outcome: the corrected CLI user/directory check and exact deployment
+lookup succeeded. The SDK adapter is implemented and all 55 combined offline
+tests pass; dependency consistency also passes.
+All 10 final repository documentary/link checks pass.
+One real agent, `supply-chain-readonly-847751e8dee6` version `1`, and one
+conversation were created under the approved scope. They are retained, not
+deleted. The service returned HTTP 405 for pre-inference token counting,
+so no generation requests or function dispatches occurred.
+S-020 revision 1 is blocked, not completed; further live attempts are suspended.
+See [A-010 evidence and retained references](implementation/log.md#a-010-live-attempt-and-token-count-blocker).
+Next proposed activity: resolve the token-count compatibility issue and
+resume the existing resources under an explicit corrected contract.
+Do not automatically bypass counting, create duplicates or delete resources.
+Earlier blockers and continuation statements below are historical.
+
+Effective continuation: the user confirmed completing the corrected CLI login
+and explicitly authorized resuming S-020 revision 1 with unchanged targets and
+limits. Verify the corrected context before metadata access. Earlier paused
+entries remain historical, not the current authorization state.
+
+Q-017 clarification: the user confirmed the same directory value and supplied
+the intended account. A local cached CLI context check shows neither the
+active user nor the default tenant matches. No identity data is retained here.
+The blocker is now the CLI account context, not a newly supplied tenant ID.
+Await user-performed login correction and explicit S-020 continuation; do not
+change the shared CLI login or issue another Foundry request automatically.
+
+Latest update at 17:39 +01:00 on 2026-11-02: the user challenged the tenant
+selection. Stop cloud attempts; S-020 revision 1 is blocked pending
+[Q-017](questions.md#q-017---tenant-selection-correction).
+The explicitly selected directory from Q-016 is not established as correct
+for this project and must not be retried on the basis of the earlier answer.
+No active PowerShell sessions remained when checked after the interruption.
+No agent/version or conversation creation and no model inference were started.
+
+Q-016 follow-up: the user supplied the correct directory tenant identifier
+and explicitly authorized the same-project read-only retry. S-020 revision 1
+resumes only within Q-015's unchanged scope and limits, using explicit
+`AzureCliCredential(tenant_id=...)`, not a global login/account switch.
+The prior failure remains recorded below as history.
+
+Latest outcome: S-020 revision 1 is blocked. The approved read-only project
+deployment lookup failed because the Azure CLI token tenant does not match
+the target resource tenant. No model deployment was verified, no agent/version
+or conversation was created, and no inference occurred. Do not retry with
+another identity or enumerate tenants/subscriptions without user direction.
+[Q-016](questions.md#q-016---correct-the-existing-project-authentication-context)
+asks for a corrected existing authentication context and scoped retry.
+The installed project-local SDK packages are recorded in
+[A-010](implementation/log.md#a-010---s-020-revision-1-preflight-blocker).
+No application adapter code has been added; the original local business tools
+are unchanged. Earlier in-progress language below records the prior state.
+
+Effective update after Q-015 on 2026-11-02: S-020 revision 1 is explicitly
+approved and now in progress. Actual limits are ten model requests, twenty
+function calls, 100,000 aggregate input/output tokens and 10 EUR.
+Only the existing project/deployment named in the contract is targeted.
+The earlier proposed/unapproved language below is historical; this update,
+the contract and Q-015 are the current authority.
+
+Current resume point on 2026-11-02: S-019 revision 2 has implemented the
+reusable local business tools, organized into domain, SQLite store and
+tool-dispatch modules with a thin CLI. All 34 Python tests pass, including
+an independent-process approval/reservation walkthrough. All 10 repository
+documentary/link checks also pass. This increment is completed and its
+authorization consumed. See the current
+[implementation evidence](implementation/log.md).
+The earlier discovery/planning statements below are historical records;
+this paragraph, the current contract and A-009 describe the effective state.
+The one proposed next activity is S-020 revision 1: the real managed Foundry
+agent/tool loop, after target, model, permissions and call budget are explicitly
+agreed and its operational contract approved. It is not started.
+No cloud milestone is authorized and the whole project is not completed.
+
+At 17:22 +01:00 the user requested continuation. Preparation resumes with
+[Q-014](questions.md#q-014---target-and-bounds-for-the-first-real-foundry-agent),
+now answered, to identify an existing project/deployed model and proposed
+run bounds before presenting S-020's operational contract. The generic
+continuation is not cloud approval. No authenticated access, SDK installation,
+application edits, agent creation or model calls have started.
+
+## S-020 Revision 1 Proposed Operational Contract
+
+* Status: approved through Q-015, reconfirmed after corrected login in Q-017;
+  now blocked before inference by token-count HTTP 405. No automatic retry.
+  Original proposal and actual answers retained in
+  [Q-015](questions.md#q-015---s-020-revision-1-operational-contract-and-remaining-limits).
+* Objective: one real named/versioned Foundry prompt agent that compares the
+  existing synthetic transfer options through a bounded Python function loop.
+* Target: existing project endpoint
+  `https://ai-aif-demo-01.services.ai.azure.com/api/projects/ai-aif-demo-prg-01`;
+  user-supplied deployment `gpt-6.1-sol`, not yet verified.
+* Files/actions: add a thin SDK adapter/CLI, dependency manifest and offline
+  adapter tests under `src/supply-chain-resilience`; update README and related
+  tracking. Install declared dependencies only in a project-local virtual
+  environment. Inspect existing authentication/tool availability without
+  recording secrets; use existing credentials, never request tokens in chat.
+* Azure actions: read-only connectivity/deployment metadata checks within the
+  named project, followed by creation of one uniquely named demo prompt-agent
+  version and one conversation. Invoke only this agent/deployment for the
+  single synthetic comparison. Record safe resource references and leave
+  resources intact; deletion is not authorized.
+* Tools exposed: snapshot, policy and comparison only. No proposal creation,
+  human approval, transfer execution or stock mutation in the live test.
+* Accepted run limits: at most ten model requests and twenty tool calls,
+  100,000 aggregate input/output tokens and 10 EUR.
+  No automatic retry that bypasses these limits.
+* Checks/acceptance: existing 34 Python tests remain green; new offline SDK
+  adapter tests cover call IDs/continuation, explicit failures, tool allowlist
+  and bounds. The single live run must use real function calls, return both
+  90/95 options with correct margins, and leave the baseline database unchanged.
+  Run repository documentary/link checks. Distinguish offline and live evidence.
+* Cost/risk: existing model usage is billable; no price or quota is assumed.
+  Verify applicable SDK/API and available deployment/pricing evidence first.
+  If authentication, access, compatibility or safe spend enforcement cannot
+  be established, stop before inference and report the blocker. Application
+  counters are not a guaranteed instantaneous Azure billing cutoff.
+* Exclusions: new Azure project/model deployments or compute/storage resources,
+  provisioning, IAM/role changes, APIM, hosted agents, HTTP/MCP services,
+  telemetry export, paid evaluation, global package installs, delegation,
+  resource deletion, Git commits or pushes.
+* Recovery: stop on unexpected access/SDK/tool/model errors or exhausted bounds;
+  preserve explicit errors and safe references. No automatic cleanup or
+  expansion into another subscription/project/model. Local tests use isolated
+  temporary stores; no existing demonstration database is reset.
 
 The user selected the supply-chain theme for a mixed audience, but questioned
 the realism of the initial event and suggested an agentic system integrated
@@ -90,6 +353,12 @@ S-010 revision 1, completed: recorded the explicit free-form acceptance
 of a named/versioned Foundry managed prompt agent with a thin Python driver.
 This is the chosen first-increment technical direction, not implementation
 authority. Model, region, exact package versions, storage and entry point remain open.
+
+S-011 revision 1, completed: drafted [plan version 1](plan/plan.md), with
+learning objectives, real dependencies, bounded step contracts, explicit
+local/cloud gates and observable acceptance cases.
+All 10 repository documentary/link tests passed. The plan is still proposed:
+no implementation or operational step has been approved or started.
 
 ## Approval
 
@@ -246,9 +515,91 @@ S-010 revision 1 is completed by the user's 16:36 +01:00 free-form confirmation
 of D-012. Only that documentary choice and its tracking are recorded.
 No plan, spike, installation, implementation or cloud activity has started.
 
-Current next point: S-011 revision 1, proposed and not started.
-Prepare a short versioned learning-first implementation plan as a document,
-not an authorization to implement it.
+S-011 revision 1, completed.
+The user's 16:40 +01:00 "perfetto procediamo" confirms only the single
+planning contract presented in the preceding response and recorded below.
+Prepare the versioned learning-first plan as a document, not an authorization
+to implement it.
+
+Current next point: S-012 revision 1, proposed and not started.
+Review plan version 1 and record acceptance, revision or deferral through the
+bounded documentary contract in the plan. Approval concerns the document only.
+Only after that decision should a separately scoped first activity be proposed.
+No automatic continuation, installation, implementation or cloud approval follows.
+
+### Workflow Pause on 2026-11-02
+
+At 16:51 +01:00, the user challenged the workflow length and asked how many
+S-IDs remain. No new activity is authorized. The current proposed plan contains
+seven remaining steps, S-012...S-018: one plan decision and six future activities.
+Answer that count directly and acknowledge excessive conversational granularity.
+Any suggestion to present the work as three learning milestones is only a
+proposal, not a plan revision or permission to combine cloud authorizations.
+S-012 remains proposed and unstarted; the workflow is paused for user direction.
+
+### Local Milestone Requested
+
+At 16:54 +01:00, the user explicitly requested the local demo.
+The revised single increment is S-019 revision 1, proposed under
+[Q-013](questions.md#q-013---implement-the-local-demo-milestone).
+It consolidates local work into a standard-library Python/SQLite terminal demo,
+with code, tests, documentation and plan realignment included in one contract.
+Existing local Python/SQLite availability was verified read-only.
+Implementation has not started; await this bounded implementation confirmation.
+No cloud, SDK installation, external reasoning agent or later milestone is authorized.
+
+Q-013 returned "wait" and questions about local-only execution, Python's
+standard library and the fictional STANDARD/EXPRESS transfer choices.
+The user has not approved S-019. It is blocked and unstarted.
+No application code, dependency, database or plan revision was created.
+Only read-only environment inspection and necessary tracking were performed.
+Explain that a separate offline simulator is optional preparation, not a
+Foundry requirement, and does not demonstrate a real agent. The accepted
+target remains an agent in Foundry with Python tools and synthetic data.
+Do not continue implementation, tests, cloud operations or plan rewriting;
+await the user's direction after the clarification.
+
+### Current S-019 Revision 2 Contract and Consent
+
+The user's 16:59 +01:00 request explicitly authorizes implementation of the
+clarified functions. This is fresh consent after the pause, not reuse of an
+old approval. S-019 revision 2 is now completed and this consent is consumed.
+
+* Objective: reusable synthetic planning/transfer functions and a bounded
+  function-tool dispatcher, ready for later integration with the managed agent.
+* Scope: Python code, SQLite state, tool descriptions/argument contracts,
+  isolated tests, a thin manual CLI walkthrough and README under
+  `src/supply-chain-resilience`; update related tracking and realign the plan.
+* Tool exposure: function calling as in D-012/E-08; no API or MCP server.
+  The caller supplies demo actor context; the model cannot approve its own action.
+* Checks: exact scenario arithmetic, infeasible/no-impact cases, explicit
+  errors, approval/stock/version checks, atomic reservation and duplicate
+  prevention, CLI walkthrough, Python syntax/unit tests and documentary tests.
+* Exclusions: SDK/package installation, network/model calls, Foundry resources,
+  authenticated access, spending, environment changes, delegation and Git mutations.
+* Cost/risk/recovery: no Azure cost; initialization refuses existing databases.
+  Tests use their own temporary stores and remove only those stores.
+  Local role fixtures are explicitly not authentication or IAM evidence.
+
+## A-009 - S-019 Revision 2 Reusable Tool Implementation
+
+* Date: 2026-11-02
+* Status: completed
+* Consent: user's 16:59 +01:00 explicit implementation request after clarification
+* Scope check: narrowed reusable-tool implementation only; no cloud scope added
+* Runtime facts: terminal Python 3.12.10, SQLite 3.49.1 verified read-only;
+  no claim about editor interpreter configuration
+* Organization: user's 17:06 request applied within the existing local scope:
+  three cohesive modules, a thin CLI and separate tests; no additional framework
+* Outputs: [application README](../../../src/supply-chain-resilience/README.md),
+  reusable package, CLI, tests, local SQLite ignore rules and
+  [canonical implementation log](implementation/log.md)
+* Checks: 34 Python tests passed, including separate CLI processes, exact
+  stock/cost outcomes, atomic rollback and concurrent/idempotent requests
+* Documentary checks: all 10 repository tests passed, including metadata,
+  local links and anchors
+* Limitations: no SDK/cloud validation, model inference, real IAM or tracing
+* Authorization consumed: yes; S-020 revision 1 is proposed only and not started
 
 ### Proposed S-011 Revision 1 Contract
 
@@ -275,6 +626,32 @@ not an authorization to implement it.
   if it grows beyond the thin-flow scope.
 * Prerequisite and approval: explicit consent to this planning activity.
   Plan approval and each future implementation/cloud activity remain separate.
+
+## A-008 - S-011 Revision 1 Documentary Planning
+
+* Date: 2026-11-02
+* Status: completed
+* Consent: user's 16:40 +01:00 "perfetto procediamo", directly following the
+  S-011 proposal and link to its complete unchanged bounded contract
+* Authorization check: scope and revision unchanged; documentary planning only,
+  no automatic implementation, installation, tenant access or cloud operation
+* Inputs: accepted D-008...D-012, scenario, research limitations and plan template
+* Workspace observation: the existing `src/supply-chain-resilience` directory
+  has no visible entries; no `pyproject.toml` was found. No application baseline
+  or selected package/runtime is assumed.
+* Output: [plan version 1](plan/plan.md), status proposed, with S-012
+  document review and S-013...S-018 future increments. All are unapproved.
+  Exact local choices and all operational/cloud targets remain gated.
+* Acceptance review: the plan retains the accepted two-option numbers and
+  Foundry-managed learning goal, distinguishes offline from live evidence,
+  records actual branch dependencies and separates preflight, live inference,
+  local action/instrumentation and final validation permissions.
+* Checks: `node --test scripts/test-copilot-customizations.mjs`, all 10
+  documentary/link tests passed, 0 failed
+* Limitations: no Python code, schema, fixture, package, environment, authenticated
+  query, resource, deployment, paid evaluation, delegation, commit or push changed
+* Closure: S-011 planning consent consumed; plan approval and every execution
+  contract remain separate. Only S-012 is proposed as the next activity.
 
 ## A-007 - S-010 Revision 1 Technical Direction Acceptance
 

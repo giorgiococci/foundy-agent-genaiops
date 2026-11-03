@@ -523,3 +523,32 @@ story and simple business rules are unchanged. Cloud evaluation support for
 agent targets does not prove execution of our application-side function loop;
 that and full trace/approval behavior need later authorized validation.
 No implementation, installation, tenant query, resource or paid evaluation ran.
+
+## S-011 Planning Output
+
+The [version 1 implementation plan](../plan/plan.md) translates the accepted
+learning-first design and managed prompt-agent/Python direction into bounded
+future steps. It is proposed and does not authorize implementation.
+Cloud prerequisites, exact package compatibility, simple store/actor choices,
+budgets and trace/evaluation gaps remain explicit gates rather than assumed
+configuration. S-012 is the next proposed documentary plan review.
+
+## S-019 Revision 2 Local Tool Outcome
+
+After clarification of the local preparation versus real Foundry agent,
+the user explicitly authorized reusable Python business functions at
+16:59 +01:00 on 2026-11-02 and requested simple, organized code at 17:06.
+This superseded the paused S-019 revision 1 form without erasing its history.
+Plan version 2 consolidates the work into three milestones; only the first
+local increment is authorized.
+
+The [implementation log](../implementation/log.md) records the package's
+domain, SQLite and dispatcher boundaries, thin CLI, actual files and tests.
+All 34 runtime tests passed. The six future function-calling tools reuse
+the same calculations and durable action functions; human approval remains
+outside model-invocable tools. No HTTP API or MCP service was added.
+The original learning-first scope and accepted synthetic numbers remain intact.
+This is not runtime evidence for a Foundry agent, SDK, identity or tracing.
+All 10 documentary/link checks also passed. S-019 revision 2 is completed;
+its authorization is consumed. The next real-agent milestone is proposed
+only, with no cloud target, model, permissions or call budget silently chosen.

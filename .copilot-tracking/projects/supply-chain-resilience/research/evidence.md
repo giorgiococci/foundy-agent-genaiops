@@ -4,6 +4,120 @@ description: "S-004 comparison, freshly verified official evidence, proposed bou
 ms.date: "2026-11-02"
 ---
 
+## S-020 Fresh Source Check and Preflight Boundary
+
+### Token-Count Investigation on 2026-11-03
+
+The user explicitly requested verifying whether the blocking pre-count can
+work, accepting that it might not be possible. This investigation used public
+sources and installed SDK source only; no authenticated project access,
+inference, resource mutation or application-code changes occurred.
+
+Observed installed code:
+
+* Projects 2.10.0 `_resolve_openai_base_url` selects
+  `{project_endpoint}/agents/{agent_name}/endpoint/protocols/openai` when an
+  agent name is supplied.
+* OpenAI 3.38.0 `responses.input_tokens.count` unconditionally issues POST
+  `/responses/input_tokens` on that base URL. Its presence in the generic
+  OpenAI client is not an Azure service-support guarantee.
+* The earlier real attempt returned 405 before generation on that route.
+  No new network probe or attempt on another route was made.
+
+Public supporting evidence:
+
+* [Microsoft Q&A answer dated 2026-03-01](https://learn.microsoft.com/en-us/answers/questions/5791830/azure-openai-response-api-input-token-counting-wit)
+  states that Azure OpenAI did not provide a standalone input-token estimation
+  endpoint and reports usage after generation instead. Retrieved 2026-11-03.
+  This is dated support guidance, not a normative current API contract or
+  proof for every Foundry agent route. Its unrelated compaction claims are
+  not adopted.
+* The [Responses API guide](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/responses)
+  is the linked product reference. No verified current support for the
+  agent-scoped pre-count route was established by this investigation.
+
+Conclusion: the current requirement for a successful server-side pre-count
+is an application-introduced blocker, not evidence that the agent's generation
+or function-calling APIs fail. No supported correction to obtain an exact
+pre-count for this managed conversation was verified. Do not retry guesses
+of API versions/routes or silently substitute an exact-looking token estimate.
+
+Proposed direction, not implemented or authorized for inference: explicitly
+replace the exact-pre-count requirement with bounded requests/tool calls and
+per-response output limits, local input/history estimates clearly labeled as
+estimates, and reconciliation against actual returned usage. Such estimates
+cannot guarantee a hard aggregate input-token or EUR cutoff before a request.
+The enforcement change requires user agreement before modifying the guard or
+resuming paid calls. The existing 100,000-token/EUR 10 limits are not silently
+relaxed.
+
+Checked on 2026-11-02 for S-020 revision 1:
+
+Latest verification after the user corrected login and explicitly reconfirmed
+continuation: the cached CLI user/directory matches the requested context.
+The exact approved deployment lookup succeeded and returned model
+`gpt-6.1-sol`, version `2026-09-29`, publisher OpenAI, SKU `GlobalStandard`,
+capacity 100. This is not a successful Responses/function-calling test.
+
+Subsequent live evidence: managed prompt-agent version and conversation
+creation succeeded, but `responses.input_tokens.count` returned HTTP 405.
+The installed method's existence is not proof of service-route support.
+The fail-closed guard prevented `responses.create`: zero generation requests
+and zero tool dispatches. No automatic fallback or duplicate creation ran.
+Safe references and acceptance gaps are in the
+[live attempt record](../implementation/log.md#a-010-live-attempt-and-token-count-blocker).
+
+The earlier pricing-placeholder limitation below was subsequently resolved
+by reading the first-party pricing HTML's `data-amount` attributes, rather
+than relying on search snippets or rendered placeholders:
+
+| Published Global tier, USD per million | Input | Cached input | Cache writes | Output |
+| ------------------------------------- | ----- | ------------ | ------------ | ------ |
+| GPT-6.1 Sol short context | 2 | 0.10 | 2.50 | 10 |
+| GPT-6.1 Sol long context | 4 | 0.20 | 5 | 15 |
+
+Source: [Azure OpenAI pricing](https://azure.microsoft.com/en-us/pricing/details/azure-openai/),
+retrieved directly on 2026-11-02. Each inspected Global row returned the same
+values across its listed regions. Do not infer the context-tier threshold:
+the conservative estimate covers both tiers instead.
+
+[ECB reference rates](https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml)
+for 2026-11-02 report USD 1.1216 per EUR. The highest listed input/cache-write
+rate is therefore approximately EUR 4.46 per million and output EUR 13.38
+per million at that reference rate. Configure deliberately higher application
+estimate rates of EUR 5 input and EUR 20 output per million. Charging every
+token at the higher rate bounds 100,000 tokens at an estimated EUR 2,
+below the accepted EUR 10 ceiling. These are conservative estimate inputs,
+not actual contracted EUR tariff values or a guaranteed billing cutoff;
+taxes, billing conversion and account terms can differ.
+
+[Agent Service pricing](https://azure.microsoft.com/en-us/pricing/details/foundry-agent-service/)
+states no additional charge for creation/running of native prompt/workflow
+agents, while models, paid tools and hosted compute are separate.
+This slice uses native prompt agents with local read-only functions only,
+no paid built-in tools, hosted compute or telemetry export.
+
+* [Function calling](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/function-calling):
+  Python prompt-agent sample uses `FunctionTool`, `PromptAgentDefinition`,
+  `agents.create_version`, `get_openai_client`, a conversation and
+  `function_call_output` preserving each call ID. The sample's cleanup
+  operations are excluded from this project's approved contract.
+  The page distinguishes ephemeral Agent Framework execution from server-side
+  prompt agents and notes a separate harness-specific strict-schema limitation.
+* [SDK quickstart](https://learn.microsoft.com/en-us/azure/foundry/quickstarts/get-started-code):
+  the inspected Python setup specifies Projects >=2.3.0 and existing CLI
+  authentication. Installed local versions are recorded in A-010, not assumed
+  compatible merely because installation succeeds.
+* [Azure OpenAI pricing](https://azure.microsoft.com/en-us/pricing/details/azure-openai/):
+  deployment types and model/context tiers affect prices. The direct page
+  retrieval returned numeric price placeholders, so no EUR rate or cost
+  estimate is inferred. Search snippets do not establish this project's rate.
+* User-supplied deployment `gpt-6.1-sol` is configuration, not verified model
+  identity or availability. The approved project lookup returned a
+  tenant-mismatch error before metadata could be obtained. No inference ran.
+
+See the [preflight record](../implementation/log.md#a-010---s-020-revision-1-preflight-blocker).
+
 ## Research Question and Authority
 
 S-004 revision 1 asks which logical architecture best supports the confirmed
