@@ -1,8 +1,86 @@
 ---
 title: "Decisions for supply-chain-resilience"
 description: "Confirmed business scope and boundaries of the supply-chain demo."
-ms.date: "2026-11-02"
+ms.date: "2026-11-03"
 ---
+
+## D-013 - Agent-Led Conversation and Prompt-as-Code
+
+* Status: accepted for the local unpublished S-024 revision 1 candidate
+* Date and evidence: 2026-11-03,
+  [S-023 review](research/evidence.md#s-023---agent-led-design-and-prompt-lifecycle-review)
+* Requirements: RQ-011...RQ-014, user's explicit learning/organization concern
+* Recommendation: one managed Foundry agent conducts the case, with a generic
+  Python function loop and trusted external approval; separate definition,
+  text instructions, runtime, tool contracts, business rules and scenario data.
+* Alternatives: keep the current fixed-flow driver; refactor to this bounded
+  agent-led path; adopt a hosted/harness runtime. Recommend the middle option,
+  with no extra framework or runtime migration.
+* Prompt lifecycle: Git-tracked stable instruction file, explicit configuration,
+  hashes and release provenance; versioned synthetic evaluation cases; later
+  authorized publication creates/verifies the matching Foundry definition.
+  No mandatory Prompty/Prompt flow or automatic optimizer.
+* Behavior: agent may explain or conditionally recommend a trade-off, but
+  cannot replace planner selection or exact human approval with its own text.
+* Consequences if accepted: revise D-008's fixed sequencing, not D-009's
+  learning priority or D-012's managed-agent choice. Preserve old positive
+  evidence and run state; candidate remains unpublished until authorized.
+* Consent: the analysis request did not authorize implementation. The user's
+  subsequent 2026-11-03 16:22 +01:00 "procedi" explicitly confirms the single
+  proposed S-024 local increment. No new cloud execution is authorized.
+* Outcome: local candidate implemented and offline-verified in
+  [A-015](implementation/log.md#a-015---s-024-revision-1-agent-led-local-candidate);
+  S-024 consent consumed. Managed cloud v2 is unchanged.
+
+## D-014 - Per-Agent Packages with Shared Solution Capabilities
+
+* Status: accepted for local S-025 revision 1 with Q-023 ownership clarification
+* Date: 2026-11-03, user's 16:34 +01:00 clarification
+* User intent, faithful English summary: organize the repository to accommodate
+  several agents in a multi-agent solution, although only one is implemented now.
+* Recommendation: group the advisor's definition, instructions and specialized
+  conversation controls under `supply_chain/agents/resilience_advisor`.
+  Keep advisor-specific tool schemas/dispatch in that package. Retain the
+  common runtime, reusable store/domain operations and solution data outside
+  agent packages; group evaluation cases by agent. Do not create a shared-tool
+  package without an actual shared capability.
+* Boundary: this prepares source ownership, not a working multi-agent runtime,
+  isolated identities, delegation or new deployed agents. Keep the existing
+  application session advisor-specific rather than inventing a generic registry.
+* Alternatives: flat single-agent files; per-agent packages with shared
+  capabilities (recommended); a plugin/registry/orchestrator framework (defer).
+* Consequences: move code/assets, repair imports/links, include nested source
+  files in provenance, preserve exact published instruction content and behavior.
+* Implementation authority: Q-023 explicitly confirms S-025's local structural
+  increment with the above tool-ownership clarification. No cloud publication,
+  new runtime agents or additional scope is authorized.
+* Outcome: implemented and locally verified in
+  [A-016](implementation/log.md#a-016---s-025-revision-1-multi-agent-ready-source-layout).
+  Local S-025 consent consumed; only one advisor and no new orchestrator.
+
+## D-015 - Current Versus Historical Evidence and One Active Driver
+
+* Status: accepted and locally implemented in S-027 revision 2
+* Date and authority: 2026-11-03, Q-028 and the user's explicit cleanup request
+* Problem: genuine pre-write tool results in S-026's final answer were rejected
+  after cache invalidation, even though the current post-write result was present.
+* Decision: the application separates exact known historical tool objects
+  from exact current objects; the current result and a post-write lookup
+  remain mandatory. Historical evidence is not current stock or execution proof.
+* Alternative: omit historical objects entirely. The user selected keeping
+  separately labeled history for before/after explanations.
+* Boundary: keep the model's existing two-key response contract and unchanged
+  published prompt/schema/definition. Python adds `historical_evidence` to
+  the delivered answer; it does not prescribe the agent's reasoning order.
+* Source cleanup: retire unused read-only/staged execution paths and factories,
+  move useful safety regression coverage onto the current runtime/advisor,
+  and preserve manual business tools, prompt assets and actual run evidence.
+* Consequences: one managed-agent CLI; no legacy-driver compatibility facade.
+  Old runs remain stopped/read-only; source drift is not silently rebound.
+* Validation and limitations: see
+  [A-018](implementation/log.md#a-018---s-027-revision-2-evidence-separation-and-legacy-retirement).
+  Local regression success does not supersede S-026's failed live acceptance
+  or authorize another cloud case.
 
 ## Scope and Evidence
 

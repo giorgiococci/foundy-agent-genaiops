@@ -7,7 +7,8 @@ status: research-baseline
 
 ## Reading rules
 
-All entries have the consultation date **2026-11-02**. `updated_at`
+Baseline entries have the consultation date **2026-11-02**.
+Follow-up entries specify their own consultation dates. `updated_at`
 indicates the page's editorial date, not the feature release.
 "Not established" means that no GA/preview status is assigned without
 specific evidence. Learn sources are product documentation; S09 is
@@ -274,6 +275,88 @@ an application-pattern blog. The limitations of this research are in the
 * Metadata: `ms.date` 2026-10-26; `updated_at` 2026-10-28
 * Use: definition in external code without a persisted agent resource
 * Limitation: ephemeral pattern without Copilot harness selection or prompt-agent optimizer
+
+## Prompt-agent definition follow-up
+
+* Source: [Prompt agents in Foundry Agent Service](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/prompt-agents)
+* Consulted: 2026-11-03
+* Evidence: saved definition contains model, instructions and tools; saving
+  changes creates a new version; default runtime versus optional harness
+* Use: separate the managed agent definition from client-side function execution
+* Limitation: generic managed-tool orchestration does not imply execution of
+  local Python functions; no harness migration or version-pinned route was tested
+
+## Prompt lifecycle training follow-up
+
+* Sources: [Manage prompts with GitHub](https://learn.microsoft.com/en-us/training/modules/prompt-versioning-genaiops/),
+  [agent and prompt versioning](https://learn.microsoft.com/en-us/training/modules/prompt-versioning-genaiops/3-foundry-agents-prompt-versioning),
+  [repository structure](https://learn.microsoft.com/en-us/training/modules/prompt-versioning-genaiops/4-github-repository-structure),
+  [safe deployment workflow](https://learn.microsoft.com/en-us/training/modules/prompt-versioning-genaiops/5-prompt-workflow-development)
+* Consulted: 2026-11-03
+* Type: Microsoft Learn training, not the current SDK API contract
+* Evidence: prompts as versioned assets; separate text/Markdown files;
+  configuration metadata; development, validation, review and release stages
+* Use: lightweight prompt-as-code practice and baseline/candidate comparison
+* Limitation: the versioning unit contains `from_connection_string` and
+  `create_agent` examples, not the current Projects 2.x `create_version` path.
+  Adopt the lifecycle guidance, not those API snippets. File formats and
+  numbered-file layouts are examples, not platform requirements.
+
+## Evaluation targets follow-up
+
+* Source: [Evaluate models and agents with the Foundry SDK](https://learn.microsoft.com/en-us/azure/foundry/observability/how-to/cloud-evaluation-targets)
+* Consulted: 2026-11-03, alongside fresh checks of S02, S23 and S32
+* Evidence: model/agent targets and runtime generation for evaluation
+* Use: distinguish generated-response evaluation from deterministic tests
+* Limitation: an agent-target evaluation does not prove execution of the
+  application's local function dispatcher. S32 explicitly says prompt-agent
+  function tools execute client-side and tool-description optimization cannot
+  evaluate tool execution. No evaluation or optimizer job was launched.
+
+## AG-UI integration follow-up
+
+* Consulted: 2026-11-03
+* Sources:
+  [AG-UI integration with Agent Framework](https://learn.microsoft.com/en-us/agent-framework/integrations/by-component/ui/ag-ui/),
+  [getting started](https://learn.microsoft.com/en-us/agent-framework/integrations/by-component/ui/ag-ui/getting-started),
+  [backend tool rendering](https://learn.microsoft.com/en-us/agent-framework/integrations/by-component/ui/ag-ui/backend-tool-rendering),
+  [human-in-the-loop](https://learn.microsoft.com/en-us/agent-framework/integrations/by-component/ui/ag-ui/human-in-the-loop),
+  [security considerations](https://learn.microsoft.com/en-us/agent-framework/integrations/by-component/ui/ag-ui/security-considerations)
+* Evidence: Microsoft describes AG-UI as a standardized UI protocol using
+  HTTP/SSE for streaming, tool events, state and human interaction. The
+  overview explicitly compares direct agent use with AG-UI and says to
+  consider AG-UI for relevant UI requirements, not for every application.
+  CopilotKit is linked as an ecosystem UI component option, not a Microsoft
+  product or a Foundry runtime.
+* Python integration: the documented `agent-framework-ag-ui` package brings
+  Agent Framework and its AG-UI integration. The examples create framework
+  agents; they do not prove drop-in compatibility with a custom Projects
+  Responses loop bound to an existing named/versioned Foundry prompt agent.
+* Safety: generic approval transport does not replace business authorization.
+  Microsoft recommends a trusted frontend server mediating untrusted browser
+  input, server-owned instructions/tools and validation of client data.
+* Limitations: no package compatibility, custom adapter, hosting, live
+  integration or universal GA status was established. Language-specific
+  support varies; .NET prerelease instructions must not be generalized to
+  the Python package. No framework migration or implementation is approved.
+
+## Agent Framework managed Foundry integration follow-up
+
+* Consulted: 2026-11-03
+* Source: [Microsoft Foundry Agent Service integration](https://learn.microsoft.com/en-us/agent-framework/integrations/by-component/agent-services/foundry)
+* Evidence: Python `FoundryAgent` connects to an existing Prompt Agent using
+  project endpoint, agent name and version; stored instructions/configuration
+  remain authoritative. Matching local function implementations can be
+  supplied through `tools=` when their definitions already exist on the
+  managed agent. Standard framework run, streaming and session APIs apply.
+* Distinction: this is not the direct-model `FoundryChatClient` pattern where
+  application code owns an ephemeral agent definition, and does not require
+  switching to a hosted agent.
+* Limitations: caller-provided model/instructions and some tool options are
+  filtered or ignored for service-managed agents. The documentation does not
+  prove compatibility with this repository's pinned SDKs, exact safety/budget
+  behavior or AG-UI integration end to end. These need a bounded assessment.
+  No packages were installed and no existing agent/session was invoked.
 
 ## Demo discovery supporting sources
 

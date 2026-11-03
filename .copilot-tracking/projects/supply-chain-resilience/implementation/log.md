@@ -6,6 +6,342 @@ ms.date: "2026-11-03"
 
 ## Activity Log
 
+## A-018 - S-027 Revision 2 Evidence Separation and Legacy Retirement
+
+* Date: 2026-11-03
+* Authority: user's 17:02 +01:00 local correction request and Q-028's explicit
+  historical/current choice plus obsolete-code deletion request
+* Status: local implementation verified; no further live validation claimed
+* Scope: advisor evidence/persistence, retired local drivers, tests and docs
+
+### Evidence Correction
+
+The observed failure is reproduced by an offline test: read snapshot,
+policy and comparison before execution, execute the exact human-approved
+proposal, read its durable result, then include those unchanged earlier
+facts alongside the current result. Before the fix it raises the same
+`ungrounded_answer`; after the fix it completes with separate collections.
+
+The [advisor](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor/conversation.py)
+archives successful tool results when superseded or invalidated. Historical
+facts persist with human decisions, using an empty default for older records;
+this is not a source-hash migration or a means of reconstructing missing facts.
+Python classifies the model's exact returned objects into `answer.evidence`
+(current) and `answer.historical_evidence` (historical), leaving the message
+unchanged. The model still returns exactly `message` and `evidence`.
+
+Only actual locally recorded tool results can match either collection.
+Changed or invented objects fail. A historical result cannot satisfy a
+required current operation result or replace the mandatory post-write lookup.
+Execution invalidates earlier comparison/read obligations as well as facts,
+avoiding a stale comparison requirement after that comparison has been
+removed from the current cache. This does not prescribe a reasoning workflow.
+
+Regression checks cover authentic history with current read-back, modified
+history, omission of the current result, refreshed snapshots, durable history
+restoration and older records without invented history. Existing forged
+approval, wrong ID, rejection, stale facts, duplicate execution and interrupted
+write checks remain. Free-text correctness is not semantically certified.
+
+### Retired Executable Paths
+
+After confirming no active advisor/session import depends on them, removed:
+
+* Historical read-only adapter `supply_chain/foundry.py` and `foundry_demo.py`
+* Historical staged adapter `supply_chain/walkthrough.py` and `walkthrough_demo.py`
+* Their retired-path suites `tests/foundry_adapter_tests.py` and
+  `tests/walkthrough_tests.py`
+* Legacy definition factories/profile generation and the unused shared-runtime
+  result hook/called-tool accumulator
+
+Useful SDK response fixtures and transport/usage/batch/call-ID/error checks
+now live in [runtime tests](../../../../src/supply-chain-resilience/tests/runtime_tests.py)
+against the current advisor. Cloud binding/version reuse guards are covered
+in [advisor tests](../../../../src/supply-chain-resilience/tests/advisor_tests.py),
+with mocked clients only. This avoids preserving a dead implementation just
+to test shared safeguards. The SDK-free manual tool adapter, business
+capabilities, explicit historical prompt assets and actual run evidence remain.
+Historical links below now identify retired source paths instead of linking
+to nonexistent files; their original outcomes and decisions remain unchanged.
+
+Validation:
+
+* The failing reproduction passed after the correction
+* All 95 combined tests passed in 4.095 seconds; the lower total reflects
+  retirement of obsolete driver-specific tests, not removal of active guards
+* Pylance reports all eight current definition-factory call sites compatible;
+  advisor diagnostics contain no items
+* All 34 SDK-free tests passed independently in 2.313 seconds
+* All ten documentary/link checks passed; retired implementation references
+  no longer create broken links
+* Changed application Python files have no syntax errors; no remaining
+  Python references to the retired adapters/factories/hooks were found
+* Current and historical prompt/schema/definition hashes still pass their
+  existing regression assertions; no new publication is needed solely for
+  this local adapter change
+
+S-026 remains a failed historical live acceptance with one completed synthetic
+reservation. Its session, stop flag, counters, source hash, database, events
+and cloud version were not rewritten or retried. A new live case using the
+unchanged v3 definition requires separate operational authorization.
+Read-only inspection confirmed original 14/11/48,338 counters, source binding,
+one request and 80/70/10 stock; session, SQLite and trace bytes were unchanged
+by that inspection. The published definition fingerprint remains
+`46e916cf4ce54c524d41472d24e506d83d26eea91c9b1d001623502fed254da2`.
+No authenticated Azure access, inference, installation, commit or push occurred.
+
+## A-017 - S-026 Live Agent-Led Validation
+
+* Date: 2026-11-03
+* Status: blocked at final-answer acceptance; live attempt ended and
+  operational authority consumed. No automatic retry or rollback.
+* Authority: Q-024 publication and bounded live case; Q-025 STANDARD choice;
+  Q-026 revision 2 allowance/local correction; independent Q-027 exact approval
+* Target: existing project/deployment, same agent version 3 and conversation
+* No new provisioning, IAM, prompt change, telemetry export, commit or push
+
+Version 3 was published and its complete definition read back before inference.
+The first natural-language turn used snapshot/policy/comparison, then asked
+for a preference: four requests, three tools, 6,104 tokens, no effects.
+After Q-025's trusted STANDARD selection, a second conversational message
+caused a fresh read of those three tools, proposal creation and a stop for
+approval. No fixed propose-stage model command was used.
+
+The exact proposal is `bf144275-ec8f-4ad3-bdd2-b63b9ff4616f`: STANDARD,
+40 BOARD-1 W-B to W-A, cost 90, arrival 2/completion 3, snapshot 1/P-1:1.
+At the pause, 9 requests/7 tools/22,345 tokens had been consumed,
+conservative estimate EUR 0.4469. Independent local inspection confirmed
+fully reconciled usage, `running=false`, no request, unapproved proposal
+and stock 80/30/50 at W-B, 20 at W-A.
+
+Q-026 explicitly extended the same run to 20 cumulative requests, not twenty
+additional requests. Historical `RunLimits` still defaults/caps at ten;
+the advisor subclass permits twenty while its session defaults to ten.
+The allowance is persisted and restored. Initial CLI setup accepts explicit
+10/20; it never changes an existing session's allowance automatically.
+All 101 tests passed in 3.849 seconds, including actual twenty-versus-
+twenty-first simulated request enforcement, legacy cap rejection and
+restoration retaining nine requests and seen call IDs.
+
+The authorized local-source transition changes only this clean session's
+source fingerprint and allowance, with all bindings, usage, decisions and
+seen call IDs retained. It is not an automatic migration or a means of
+clearing uncertain operations. All other drift checks remain in force:
+
+* Old source: `d87f70f707ec149ea0909ce73c18874c9e2dc14d35af6c2e2e60d23809667e9b`
+* New source: `ff5fc9ca7047961e84904b7355cc8166fe50ec9a9389522396bd3ee78ab26f14`
+* Instructions/schema/full cloud definition remain unchanged
+
+Q-027 independently approves the exact proposal, not a future proposal,
+shipment or receipt. Human-path approval and agent-requested execution/
+read-back were the next authorized actions at that checkpoint.
+
+### Actual Action and Final-Answer Failure
+
+The human-only CLI recorded approval before model continuation; trace event
+34 is `human.approved`, preceding execution at event 45. The agent chose
+snapshot, policy, execution, then durable-result read-back, without a fixed
+application execution-stage command. Exactly one proposal and one request
+exist. The request is `682a1ce9-1600-4e75-bae9-c0338df29f82`, bound to the
+exact approved STANDARD proposal. Snapshot advanced to version 2:
+W-B on-hand/reserved/available 80/70/10; W-A remains 20.
+No shipping, receipt, purchasing or factory scheduling occurred.
+
+The final model response was rejected with `ungrounded_answer`; CLI exit 1.
+Read-only retrieval of the existing response
+`resp_09d5d47071f1bef3006aea038f03f48190b00355a300d6214c` and bounded
+conversation-item inspection required no additional model inference.
+All three evidence objects match actual earlier function outputs exactly:
+pre-write snapshot 1, policy, and the correct post-write durable result.
+The prose describes the reservation and before/after values accurately.
+The failure is therefore a temporal evidence-contract mismatch, not observed
+fabricated tool data or failed execution: the application invalidates cached
+read results after a write, while the model also copied those historical
+facts into its final evidence. This does not justify accepting stale facts
+as current state or disabling the guard.
+
+Separate-process reconciliation verified:
+
+* One proposal/request, correct IDs, source 80/70/10, destination 20
+* Human approval precedes the single execution; subsequent result read-back
+* All eleven tool starts/completions have matched unique call IDs
+* All 53 local events share run/conversation correlation and contain no raw
+  prompts, arguments, model text or tool-result payloads
+* Fourteen model requests, eleven tools; 45,189 input + 3,149 output =
+  48,338 tokens, estimate EUR 0.96676, not invoice
+* Usage reconciled; `running=true` retained as the failed-turn stop flag,
+  not evidence of an active process. No flags cleared or write retried.
+
+The 101 offline tests passed; all ten documentary/link checks and changed
+application Python syntax checks passed before closure. These checks do
+not turn the failed live final-answer contract into a successful test.
+No new version, prompt change or recovery operation was performed to mask it.
+The next proposed local increment is to correct the historical/current
+evidence handoff with regression coverage; any publication and further live
+case require a separate operational contract.
+
+## A-016 - S-025 Revision 1 Multi-Agent-Ready Source Layout
+
+* Date: 2026-11-03
+* Authority: Q-023 explicitly approved the local reorganization, with the
+  clarification that tools can be agent-specific or shared.
+* Status: completed; local approval consumed
+* Scope: source ownership/imports/assets/provenance/tests/documentation only
+
+The [resilience advisor package](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor)
+now owns its definition, conversational controls, prompts and six tool
+contracts/dispatcher. Its
+[evaluation cases](../../../../src/supply-chain-resilience/evals/resilience_advisor/cases.json)
+are grouped by agent. Package initializers do not eagerly load the SDK.
+The [root package](../../../../src/supply-chain-resilience/supply_chain/__init__.py)
+retains SDK-free tool convenience exports for existing callers.
+
+The [shared runtime](../../../../src/supply-chain-resilience/supply_chain/runtime.py)
+depends only on a small structural `FunctionDispatcher` protocol, not the
+advisor or a concrete business tool session. Agent-specific approval handlers
+and historical baseline adapters explicitly retain their business store/actor.
+Domain rules, store transactions and solution data are reused without copying.
+No shared-tool directory is invented before actual reuse; a later agent can
+own different schemas/permissions or reuse an extracted common capability.
+The application session/CLI still explicitly binds the single advisor.
+
+All imports, asset paths, applicable historical links and README were updated.
+Source hashing now includes nested agent Python modules, rather than only
+root-level package files. Existing candidate source hashes are not rewritten
+or silently migrated; drift still blocks continuation while local inspection
+remains available. No persisted run artifacts were changed.
+
+Validation:
+
+* All 99 combined tests passed in 3.946 seconds: the previous 96 and three
+  additional source-layout/decoupling regression tests
+* All 34 SDK-free tests passed independently
+* All 10 repository documentary/link checks passed
+* Captured pre-move candidate instruction, tool-schema and full-definition
+  hashes match after relocation; exact historical v1/v2 instruction hashes
+  also still match
+* A simulated nested tool-source change changes source provenance and
+  triggers `candidate_drift`; no actual source modification is used by the test
+* A dispatcher without advisor/store members works with the shared runtime
+* Pylance conversation diagnostics returned no items; runtime diagnostics
+  contain only unused-parameter hints in its pre-existing extension hooks
+
+This is multi-agent-ready organization, not multi-agent orchestration,
+delegation or identity isolation. Only the original advisor exists.
+No prompt behavior, schema, dependency, cloud definition, tenant context,
+inference, telemetry export, commit or push changed.
+The next proposed activity remains separately authorized candidate publication
+and bounded live conversational validation; it was not started.
+
+## A-015 - S-024 Revision 1 Agent-Led Local Candidate
+
+* Date: 2026-11-03
+* Authority: user's 16:22 +01:00 "procedi" confirms the single local
+  increment presented after S-023. This is free-form consent, not an
+  invented native-form answer or new cloud approval.
+* Status: local implementation verified; no publication or inference
+* Accepted direction: D-013, RQ-011...RQ-014, existing Python/managed-agent
+  choice and unchanged synthetic stock/approval invariants
+
+### Implemented Boundaries
+
+* [Agent definitions](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor/definition.py)
+  load explicit text instructions and bind tools/model. No deployment logic.
+* [Advisor instructions](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor/prompts/advisor.txt)
+  cover investigation, uncertainty, planner preference, external approval,
+  failure/reconciliation, language and exact-evidence output.
+* [Generic runtime](../../../../src/supply-chain-resilience/supply_chain/runtime.py)
+  owns Responses continuation, call IDs, usage/limits and metadata events.
+  Supply-chain instructions and required read-tool sequences are absent.
+* [Conversation](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor/conversation.py)
+  accepts arbitrary planner messages; guards capabilities using trusted human
+  decisions, not comparison/proposal/execution reasoning phases.
+* [Candidate session](../../../../src/supply-chain-resilience/supply_chain/session.py)
+  persists decisions, synthetic evidence, seen call IDs, usage and asset
+  references. Exclusive locking and checkpoint-before-request semantics
+  block blind retries after interrupted/failed turns.
+* [Candidate CLI](../../../../src/supply-chain-resilience/advisor_demo.py)
+  provides local definition/init/inspect/select/approve/reject commands and
+  a future guarded chat path. It contains no agent publication command.
+  Chat verifies the full latest definition/version before opening the
+  Responses client; historical cloud v2 is not a matching candidate.
+* [Scenario](../../../../src/supply-chain-resilience/data/scenario.json)
+  and [loader](../../../../src/supply-chain-resilience/supply_chain/data.py)
+  separate versioned initial snapshot facts from code. The small fixed
+  product/order/cost model remains explicit in the existing domain module;
+  no ERP abstraction, alternate data service or ORM was introduced.
+* [Evaluation asset](../../../../src/supply-chain-resilience/evals/resilience_advisor/cases.json)
+  defines ten synthetic scenarios/rubrics, not measured model outcomes.
+* [README](../../../../src/supply-chain-resilience/README.md)
+  distinguishes the unpublished candidate from real historical baseline
+  evidence and explains local preparation versus future authorized chat.
+
+The existing tool schemas, business arithmetic, SQLite transactions and
+human-only approval store were reused. The historical fixed-flow drivers
+remain available and their sessions are not migrated.
+The read-only and walkthrough instruction assets exactly preserve committed
+v1/v2 content: regression SHA-256 values were independently derived from
+the committed source and match the extracted files.
+No `.replace` construction of workflow instructions remains.
+
+### GenAIOps and Provenance
+
+The stable candidate instruction path is tracked as source, without copied
+numbered candidate files or a templating dependency. Candidate state records
+instruction/schema/definition hashes, source-content hash, exact SDK versions,
+scenario/evaluation hashes and actual remote bindings only when verified.
+These content references are not a clean-commit claim, signed release or
+fabricated Foundry version. Model deployment is configuration; resolved
+model version and publication evidence await an authorized cloud step.
+
+Any detected code/prompt/schema/scenario/evaluation/SDK drift blocks
+resumption rather than silently changing the running candidate. Prompt
+changes in the portal do not synchronize into Git. The existing latest-version
+guard remains; no historical-version routing or automatic rollback is claimed.
+
+### Validation and Limits
+
+The combined suite passed 96 tests, including 26 new offline candidate tests
+and all 70 historical tests. The 34 SDK-free business tests independently
+passed with terminal Python. `pip check` found no broken requirements.
+All 10 documentary/link checks passed.
+
+Candidate cases use real SDK Response objects and real local SQLite effects
+with a simulated model. They verify:
+
+* Multiple read-tool orders, partial investigation and tool-free clarification
+* Explicit human selection, exact proposal/approval and rejection without writes
+* Forbidden self-approval, wrong IDs/options and stale facts
+* Exact evidence preservation, mandatory read-back after execution, and a
+  pre-execution result read not satisfying post-execution confirmation
+* One effect for duplicate execution and persistent reconciliation after
+  a lost response, without another model request
+* Shared budgets, restored call IDs, metadata-only trace correlation, command
+  locking, version-format rejection, prompt/schema/SDK drift and no overwrite
+* No Azure authentication from local commands and no Responses client opened
+  when the existing cloud definition does not match the candidate
+
+Pylance syntax checks passed for conversation, session and CLI. Initial syntax
+tool calls required an explicit workspace root; after supplying it, all three
+checks passed. Editor diagnostics reported `reportMissingImports` for Azure
+Projects imports in agent/CLI while execution/imports succeeded in the pinned
+application-local environment. No editor-interpreter setting was changed and
+no fully clean strict workspace type-check is claimed.
+
+Free-text message correctness is not certified by JSON/evidence validation.
+No live candidate conversation, model-quality score, optimizer, cloud
+evaluation, new agent version/conversation or telemetry export was run.
+Trusted local files/demo roles are not a production authorization boundary.
+One proposal is allowed per candidate session; rejection does not silently
+create a replacement proposal. The existing completed S-022 artifacts were
+not reset, migrated or removed.
+No dependencies, environment configuration, cloud resources, IAM, APIs/MCP,
+harness/hosted runtime, Git commits or pushes changed.
+
+The next proposed activity is bounded candidate publication and live
+conversational validation; operational targets/limits and business approval
+must be confirmed separately. Local S-024 implementation consent is consumed.
+
 ## A-014 - S-022 Revision 1 Complete Human-Gated Walkthrough
 
 * Date: 2026-11-03
@@ -23,23 +359,28 @@ ms.date: "2026-11-03"
 
 ### Implemented Surfaces
 
-* [Shared loop](../../../../src/supply-chain-resilience/supply_chain/foundry.py):
+The paths below describe the S-022 implementation at that time. The old
+drivers were retired in S-027; shared safeguards now live in the
+[current runtime](../../../../src/supply-chain-resilience/supply_chain/runtime.py)
+and current advisor tests.
+
+* Shared loop (`supply_chain/foundry.py`, retired):
   reuse of request accounting, call-ID continuation, batch validation and
   explicit-error behavior; optional metadata-only event callback
-* [Workflow stages](../../../../src/supply-chain-resilience/supply_chain/walkthrough.py):
+* Workflow stages (`supply_chain/walkthrough.py`, retired):
   human-selected option and exact approved proposal checks independent of
   model instructions; no model approval tool
-* [Staged CLI](../../../../src/supply-chain-resilience/walkthrough_demo.py):
+* Staged CLI (`walkthrough_demo.py`, retired):
   durable session and SQLite state, atomic session-file replacement,
   exclusive command lock, persistent shared usage and uncertainty flags
-* [Workflow tests](../../../../src/supply-chain-resilience/tests/walkthrough_tests.py):
+* Workflow tests (`tests/walkthrough_tests.py`, retired):
   success, rejection without reservation, early execution/self-approval
   rejection, wrong IDs/options, duplicate proposal prevention, shared budgets,
   state/trace restoration and confirmation/uncertainty guards
-* [Baseline CLI](../../../../src/supply-chain-resilience/foundry_demo.py):
+* Baseline CLI (`foundry_demo.py`, retired):
   explicitly rejects a different latest named-endpoint version rather than
   silently invoking the new workflow definition as read-only v1
-* [Adapter regression tests](../../../../src/supply-chain-resilience/tests/foundry_adapter_tests.py)
+* Adapter regression tests (`tests/foundry_adapter_tests.py`, retired)
   and [README](../../../../src/supply-chain-resilience/README.md) updated
 
 No new dependency, framework, MCP/API server, workflow engine, cloud
@@ -295,9 +636,9 @@ passed, and the exact deployment lookup succeeded: `gpt-6.1-sol`,
 version `2026-09-29`, publisher OpenAI, SKU `GlobalStandard`, capacity 100.
 No global login state was changed by the assistant.
 
-Added [SDK adapter](../../../../src/supply-chain-resilience/supply_chain/foundry.py),
-[live CLI](../../../../src/supply-chain-resilience/foundry_demo.py) and
-[offline SDK tests](../../../../src/supply-chain-resilience/tests/foundry_adapter_tests.py).
+Added SDK adapter `supply_chain/foundry.py`, live CLI `foundry_demo.py` and
+offline SDK tests `tests/foundry_adapter_tests.py` (these historical paths
+were subsequently retired in S-027; current runtime checks were retained).
 Pinned direct dependencies to installed Projects 2.10.0, Identity 1.27.0 and
 OpenAI 3.38.0. SDK imports remain outside the business package's normal imports.
 
@@ -394,7 +735,7 @@ not implemented. Package responsibilities are:
 | ---- | -------------------------- |
 | [domain.py](../../../../src/supply-chain-resilience/supply_chain/domain.py) | Synthetic snapshot, local actor fixtures, shared feasibility/cost/margin rules |
 | [store.py](../../../../src/supply-chain-resilience/supply_chain/store.py) | SQLite schema, transactions, exact-proposal approval, durable request and reservation |
-| [tools.py](../../../../src/supply-chain-resilience/supply_chain/tools.py) | Six strict JSON function specifications and explicit-error dispatcher |
+| [tools.py](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor/tools.py) | Six strict JSON function specifications and explicit-error dispatcher |
 | [package exports](../../../../src/supply-chain-resilience/supply_chain/__init__.py) | Stable entry points shared by callers |
 | [demo.py](../../../../src/supply-chain-resilience/demo.py) | Thin manual CLI; demo role selection is not authentication |
 | [domain tests](../../../../src/supply-chain-resilience/tests/test_domain.py) | Pure scenario arithmetic and fixture validation |

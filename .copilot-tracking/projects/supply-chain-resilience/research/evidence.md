@@ -1,8 +1,212 @@
 ---
 title: "Logical Architecture Research for supply-chain-resilience"
 description: "S-004 comparison, freshly verified official evidence, proposed boundaries, and unresolved design choices."
-ms.date: "2026-11-02"
+ms.date: "2026-11-03"
 ---
+
+## S-029 - Why the Current Runtime Does Not Use Agent Framework
+
+* Date and authority: 2026-11-03, user's 17:19 +01:00 clarification request
+* Status: completed historical/public-source analysis, not migration approval
+
+D-012 chose a named/versioned managed prompt agent over a code-defined hosted
+agent for the initial increment. It did not establish that Agent Framework
+is incompatible with managed agents or record a user rejection of the
+framework. The direct Projects/Responses driver was the implementation's
+initial minimal-dependency approach, not a Foundry constraint.
+
+Fresh [official integration documentation](../../../../docs/research/sources.md#agent-framework-managed-foundry-integration-follow-up)
+explicitly supports Python `FoundryAgent` connecting to an existing Prompt
+Agent by project/name/version, with matching local callable implementations
+for functions already declared on that agent. This can preserve the managed
+agent principle while using framework run/streaming/session abstractions.
+It is distinct from a sample that creates an application-owned agent from
+a direct model client.
+
+With the user's current UI and future multi-agent learning goals, assess
+this first-party integration before choosing a custom AG-UI bridge or adding
+more handwritten generic runtime plumbing. The previous S-028 compatibility
+caution still applies, but must not imply that a custom adapter is preferred
+or that framework adoption requires abandoning the existing managed agent.
+
+The framework would not eliminate business rules, SQLite transactions,
+exact-proposal approval, current/historical evidence checks or explicit
+budget/uncertainty policy. A bounded compatibility assessment must verify
+SDK dependencies, callable/schema matching, explicit tenant/agent targeting,
+tool-permission guards, persistence, retry/usage accounting and UI integration.
+No automatic one-to-one replacement or successful migration is claimed.
+
+No source/dependency change, authenticated tenant access, inference, published
+definition change or run-data operation occurred. The user asked why; no
+framework/UI implementation or cloud execution is authorized by that question.
+Recommended next activity is a bounded Agent Framework integration assessment
+that preserves the managed agent and application safeguards.
+
+## S-028 - UI Protocol Documentary Review
+
+* Date and authority: 2026-11-03, user's 17:15 +01:00 question about a testing
+  interface and whether Microsoft's best practice is always AG-UI
+* Status: completed public/local documentary analysis only
+* User intent, faithful English summary: obtain an interface for testing
+  the existing agent, whose local functions cannot be run by the playground
+  alone, and understand the recommended integration approach.
+
+Fresh [official sources](../../../../docs/research/sources.md#ag-ui-integration-follow-up)
+describe AG-UI as a protocol, not a ready-made user interface or mandatory
+Foundry component. Microsoft documents direct agent use as an alternative
+and recommends considering AG-UI for streaming, observable tool activity,
+interactive components, state synchronization and approval interactions.
+The overview links CopilotKit as an ecosystem frontend component option.
+
+This fits a reusable learning/demo interface with chat, visible tool activity,
+STANDARD/EXPRESS selection, exact-proposal approve/reject controls, current/
+historical facts and usage. A minimal direct local web UI remains a simpler
+alternative when only quick testing is needed. The AG-UI option is a
+recommendation to evaluate, not an accepted implementation requirement.
+
+The current application uses its own Projects Responses loop and a managed
+named/versioned prompt agent, not an Agent Framework `Agent`. The documented
+Python package installs framework integration; using that sample unchanged
+would not preserve this runtime automatically. Design must assess a thin
+protocol adapter without replacing the managed agent or inventing another
+orchestration workflow. Compatibility has not been tested.
+
+Human approval must still bind the exact proposal through trusted backend
+operations; a browser message/state flag cannot self-authorize execution.
+Follow Microsoft's trusted frontend-server boundary rather than exposing
+privileged raw AG-UI inputs directly to an untrusted browser. UI progress
+events also must not present unvalidated final evidence as completed output.
+The existing runtime has metadata callbacks but does not yet implement
+token streaming; AG-UI availability alone does not add that behavior.
+
+No UI stack, framework migration, deployment or new live test is approved
+by this clarification. No source code, dependencies, tenant state, run
+artifacts or published agent changed; no authenticated access occurred.
+Proposed next activity: bounded UI design/compatibility assessment, preserving
+the current advisor/tools/session and human-action safeguards.
+
+## S-023 - Agent-Led Design and Prompt Lifecycle Review
+
+* Date and authority: 2026-11-03, user's explicit request for document,
+  knowledge-base and prior-analysis review; analysis and tracking only
+* Status: completed documentary review, not implementation authorization
+* User intent, faithful English summary: move toward the original agent-learning
+  goal, make agent/tool/data boundaries visible, and revisit prompt management
+  with GenAIOps rather than retaining a minimal embedded prompt.
+
+### Findings Against the Existing Baseline
+
+Accepted D-009/RQ-011 already prioritize agent learning over deterministic
+orchestration. D-010 describes agent-led analysis within a thin approval flow;
+D-012 selects a named/versioned Foundry prompt agent with a Python tool driver.
+These do not require a fixed CLI phase per reasoning step.
+The completed S-022 case remains valid technical evidence, but is not evidence
+that the agent can independently manage an open-ended conversation.
+
+Observed source boundaries:
+
+* `foundry.py` mixes agent instructions, initial case prompt, SDK definition,
+  generic Responses continuation and usage monitoring.
+* `walkthrough.py` derives instructions using literal string replacement,
+  adds stage-specific prompts and imposes comparison/proposal/execution stages.
+* `tools.py`, `store.py` and `domain.py` already separate tool contracts,
+  durable business state and arithmetic. Synthetic facts are still defined
+  in code rather than a separately versioned scenario asset.
+
+The prompt is optimized for the successful narrow contract, including exact
+JSON copying; a longer version of that prompt alone would not create autonomy.
+Both application sequencing and instruction design need revision.
+
+### Fresh Official Evidence and Limits
+
+Consulted 2026-11-03:
+
+* [Prompt-agent definition](../../../../docs/research/sources.md#prompt-agent-definition-follow-up):
+  saved prompt-agent versions
+  include model, instructions and tools. Keep this managed resource; no
+  hosted/harness migration is needed merely to separate local modules.
+* [Prompt lifecycle training](../../../../docs/research/sources.md#prompt-lifecycle-training-follow-up):
+  Microsoft training explicitly
+  describes separate `.txt`/`.md` prompts and Git-based development, testing,
+  review and promotion. Its SDK examples use older API shapes; current S02's
+  `PromptAgentDefinition`/`create_version` path takes precedence for code.
+* [Existing GenAIOps guidance](../../../../docs/knowledge/genaiops.md):
+  behavior is a release of code, instructions, model, tools, data and policies,
+  not a prompt file alone. Its 100-case dataset and pipeline are proposals,
+  not requirements already accepted for this compact demo.
+* Fresh S23 and [evaluation-target checks](../../../../docs/research/sources.md#evaluation-targets-follow-up)
+  distinguish turn/conversation evaluation, process
+  evaluation and runtime targets. S32 supports instruction/tool-description
+  optimization but explicitly cannot evaluate client-side function execution
+  during tool-description optimization. Native optimization is not an
+  end-to-end reservation test.
+
+No tenant queries, inference, evaluation, installation or deployment occurred.
+No specific Prompty/Prompt flow integration was verified for this SDK path.
+They are not prerequisites for a source-controlled text instruction asset.
+Repository documentary validation initially rejected adding S34...S36 because
+the original S01...S33 baseline is intentionally fixed. New public sources
+are recorded as named follow-up sections instead; no test was weakened.
+After that correction, all 10 documentary/link checks passed.
+Application tests were not rerun because no executable code changed.
+
+### Recommended Direction
+
+One managed agent should conduct the conversation: recover relevant facts,
+compare feasible options, explain trade-offs, ask for missing preferences,
+prepare the selected proposal and report the authoritative result.
+It may give a conditional recommendation but must not invent a permanent
+cost-versus-speed policy or select on the planner's behalf.
+The client loop should transport messages, dispatch tools and enforce limits,
+not prescribe a tool sequence for every reasoning turn.
+
+Keep human selection/approval as trusted application events, exact proposal
+binding, freshness checks, role checks and atomic/idempotent reservation in
+deterministic code. Natural-language claims by the model are not approval.
+Retain a minimal pending-approval/resume control, not a workflow engine.
+The model need not repeat every read tool on every turn merely to pass a
+sequence test; evidence requirements must follow the actual operation.
+
+Recommended separation, not yet implemented: agent definition module and
+one explicit instruction file; generic runtime; existing tool contracts and
+dispatcher; existing SQLite store and business rules; a synthetic scenario
+asset and a small versioned evaluation dataset. Avoid a directory hierarchy
+for every class or a new framework.
+
+For prompt management, start with one stable `.txt` instruction path tracked
+by Git, plus explicit configuration/provenance. Do not fork prompts into
+`v1`, `v2`, `v3` source copies or derive production instructions by `.replace`.
+Use an assembled instruction hash and record agent version, tool schemas,
+resolved model information, scenario/policy and evaluation dataset versions.
+If source is uncommitted, record that fact/content hashes, not a fabricated
+release commit. Git tracks source; Foundry versions track published definitions.
+They do not synchronize automatically, including changes made in the portal.
+
+Instructions should cover mission, fact/tool grounding, uncertainty,
+planner trade-offs, application approval boundary, conversation behavior,
+tool-error/uncertain-outcome handling and concise evidence-based explanations.
+Do not request hidden chain-of-thought or hardcode the successful EXPRESS
+answer. A couple of behavioral examples may help but must not overlap the
+held-out acceptance cases.
+
+Evaluation should compare the current fixed-flow baseline with the candidate
+on outcomes, not an identical tool order: grounded alternatives, missing
+preference clarification, irrelevant/no-impact input, infeasible options,
+rejected approval, false approval/injected instructions, stale proposals,
+and uncertain/duplicate execution. Offline fixtures prove contracts, not
+actual model quality. Authorized live evaluation of the complete local
+dispatcher is a separate later activity.
+
+### Release and Recovery Caveat
+
+The existing named endpoint follows the latest version; the baseline CLI
+already stops on a version mismatch. Do not promise historical-version
+routing, traffic splitting or instant rollback without verifying a supported
+route. The proposed local increment must not publish the candidate or make
+retained v2 sessions invoke a different definition. Preserve S-022 artifacts.
+Future authorized publication must verify the assembled definition and
+record actual version/endpoint behavior. Recovery may require a controlled
+republish of a prior artifact, not merely editing a local prompt file.
 
 ## S-020 Fresh Source Check and Preflight Boundary
 

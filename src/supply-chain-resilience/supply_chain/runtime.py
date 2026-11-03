@@ -1,4 +1,4 @@
-"""Read-only managed-agent adapter; the local business tools remain SDK-free."""
+"""Bounded Responses/function-calling transport, independent of agent instructions."""
 
 from __future__ import annotations
 
@@ -7,46 +7,22 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal
 from time import perf_counter
+from typing import ClassVar, Protocol
 
-from azure.ai.projects.models import FunctionTool, PromptAgentDefinition
 from openai import OpenAI
 from openai.types.responses import Response
 from openai.types.responses.response_input_param import FunctionCallOutput, ResponseInputParam
 
 from .domain import ToolError
-from .tools import FUNCTION_TOOL_SPECS, ToolSession
 
 
-READ_TOOL_NAMES = frozenset({
-    "read_planning_snapshot", "read_transfer_policy", "compare_transfer_options",
-})
-INSTRUCTIONS = """You are the supply-chain learning demo's managed Foundry agent.
-Use only the supplied synthetic facts. First read the planning snapshot and
-transfer policy, then compare the transfer options using the provided tools.
-Do not invent data, probabilities, stock movements or an optimal choice.
-Explain the extra cost versus delivery-margin trade-off; the planner decides.
-Do not create a proposal, approve anything or execute a transfer.
-Return a JSON object with exactly two keys: options and explanation.
-options must copy the complete options array from compare_transfer_options,
-including quantity, cost, arrival_day, completion_day, delivery_margin_days,
-feasible and reasons. explanation must be a nonempty English string explaining
-the trade-off and the fact that no stock has moved. Do not use Markdown fences.
-"""
-PROMPT = (
-    "The controller-board supplier receipt has been delayed. Read the current "
-    "planning facts and policy, compare STANDARD and EXPRESS for both customer "
-    "commitments, and explain the trade-off without choosing for the planner."
-)
-
-
-def agent_definition(deployment: str) -> PromptAgentDefinition:
-    tools = [FunctionTool(**spec) for spec in FUNCTION_TOOL_SPECS
-             if spec["name"] in READ_TOOL_NAMES]
-    return PromptAgentDefinition(model=deployment, instructions=INSTRUCTIONS, tools=tools)
+class FunctionDispatcher(Protocol):
+    def dispatch(self, name: str, arguments_json: str) -> dict[str, object]: ...
 
 
 @dataclass(frozen=True)
 class RunLimits:
+    _MAX_MODEL_REQUESTS: ClassVar[int] = 10
     model_requests: int = 10
     tool_calls: int = 20
     total_tokens: int = 100_000
@@ -58,9 +34,9 @@ class RunLimits:
                       self.output_tokens_per_request):
             if type(value) is not int or value < 1:
                 raise ToolError("invalid_limits", "Run limits must be positive integers.")
-        if (self.model_requests > 10 or self.tool_calls > 20 or self.total_tokens > 100_000
+        if (self.model_requests > self._MAX_MODEL_REQUESTS or self.tool_calls > 20 or self.total_tokens > 100_000
                 or not self.spend_eur.is_finite() or not 0 < self.spend_eur <= 10):
-            raise ToolError("invalid_limits", "This demo cannot exceed the S-020 approved limits.")
+            raise ToolError("invalid_limits", "The requested limits exceed the permitted demo bounds.")
 
 
 @dataclass(frozen=True)
@@ -105,9 +81,9 @@ class RunUsage:
         }
 
 
-class ReadOnlyAgentLoop:
+class AgentRuntime:
     def __init__(
-        self, client: OpenAI, session: ToolSession, *, pricing: Pricing,
+        self, client: OpenAI | None, session: FunctionDispatcher, *, pricing: Pricing,
         limits: RunLimits | None = None,
         on_event: Callable[[dict[str, object]], None] | None = None,
     ) -> None:
@@ -117,8 +93,6 @@ class ReadOnlyAgentLoop:
         self.limits = limits if limits is not None else RunLimits()
         self.usage = RunUsage()
         self.seen_call_ids: set[str] = set()
-        self.called_tools: set[str] = set()
-        self.comparison: dict[str, object] | None = None
         self.on_event = on_event
 
     def _event(self, name: str, **fields: object) -> None:
@@ -128,6 +102,8 @@ class ReadOnlyAgentLoop:
     def _request(
         self, conversation_id: str, inputs: str | ResponseInputParam,
     ) -> Response:
+        if self.client is None:
+            raise ToolError("missing_client", "Model turns require an explicit Responses client.")
         if self.usage.usage_unreconciled:
             raise ToolError("uncertain_request", "An uncertain request cannot be retried automatically.")
         if self.usage.model_requests >= self.limits.model_requests:
@@ -171,13 +147,8 @@ class ReadOnlyAgentLoop:
             raise ToolError("response_failed", f"Model response did not complete successfully: {response.status}.")
         return response
 
-    def run(self, conversation_id: str) -> dict[str, object]:
-        if self.usage.model_requests:
-            raise ToolError("already_started", "Use a fresh loop for a separately authorized run.")
-        return self._turn(conversation_id, PROMPT)
-
     def _allowed_tools(self) -> frozenset[str]:
-        return READ_TOOL_NAMES
+        raise NotImplementedError
 
     def _dispatch(self, name: str, arguments: str) -> dict[str, object]:
         return self.session.dispatch(name, arguments)
@@ -212,9 +183,6 @@ class ReadOnlyAgentLoop:
                 )
                 if result.get("status") == "error":
                     raise ToolError("tool_failed", f"{call.name} failed: {json.dumps(result['error'])}")
-                self.called_tools.add(call.name)
-                if call.name == "compare_transfer_options":
-                    self.comparison = result
                 outputs.append(FunctionCallOutput(
                     type="function_call_output", call_id=call.call_id,
                     output=json.dumps(result),
@@ -222,19 +190,4 @@ class ReadOnlyAgentLoop:
             inputs = outputs
 
     def _final(self, text: str) -> dict[str, object]:
-        if self.called_tools != READ_TOOL_NAMES or self.comparison is None:
-            raise ToolError("ungrounded_answer", "The real agent did not call all three required fact tools.")
-        try:
-            answer: object = json.loads(text)
-        except json.JSONDecodeError as error:
-            raise ToolError("invalid_answer", "The final answer is not the required JSON object.") from error
-        if (not isinstance(answer, dict) or set(answer) != {"options", "explanation"}
-                or json.dumps(answer["options"], sort_keys=True) != json.dumps(
-                    self.comparison.get("options"), sort_keys=True
-                )
-                or not isinstance(answer["explanation"], str) or not answer["explanation"].strip()):
-            raise ToolError("invalid_answer", "The answer must preserve the tool's exact options and explain them.")
-        return {
-            "status": "completed", "answer": answer,
-            "called_tools": sorted(self.called_tools), "usage": self.usage.summary(self.pricing),
-        }
+        raise NotImplementedError

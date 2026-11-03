@@ -1,17 +1,242 @@
 ---
 title: "State of supply-chain-resilience"
-description: "S-022 completed: real human-approved reservation, persistent result and local execution trace verified."
+description: "S-029 clarifies direct SDK rationale and verifies framework support for existing managed agents; migration and cloud work remain unapproved."
 ms.date: "2026-11-03"
 project_id: "supply-chain-resilience"
 kind: "foundry-solution"
-phase: "implementation"
-step_id: "S-022"
+phase: "design"
+step_id: "S-029"
 step_revision: 1
 step_status: "completed"
 autonomy: "single-step"
 ---
 
 ## Objective and Resume Point
+
+S-029 answered the user's 17:19 +01:00 question about not using Microsoft
+Agent Framework. D-012 selected managed versus hosted agent ownership, not
+an incompatibility with or user rejection of the framework. The handcrafted
+Projects/Responses loop was the initial implementation choice.
+Fresh Microsoft documentation verifies Python `FoundryAgent` support for
+an existing named/versioned Prompt Agent and its matching local functions.
+See [S-029 findings](research/evidence.md#s-029---why-the-current-runtime-does-not-use-agent-framework).
+
+Given the UI and future multi-agent learning direction, the recommended
+next activity is bounded framework-integration assessment before building
+a custom AG-UI adapter. Preserve the existing managed agent and business/
+approval/evidence/budget safeguards. Compatibility is not yet demonstrated.
+The clarification authorizes no migration, UI code, installation, cloud
+access or live run. Earlier S-028/S-027 checkpoints below remain historical.
+
+S-028 completed the requested documentary clarification on 2026-11-03 at
+17:15 +01:00. Microsoft documents AG-UI as an optional standardized protocol
+for interactive/streamed agent UIs, with CopilotKit as a frontend ecosystem
+option, not a mandatory Microsoft interface or automatic Foundry binding.
+The existing custom Responses runtime would need an assessed adapter; do
+not replace the managed agent with a sample framework agent.
+See [S-028 findings](research/evidence.md#s-028---ui-protocol-documentary-review)
+and the [fresh sources](../../../docs/research/sources.md#ag-ui-integration-follow-up).
+
+The user wants a testing interface but has not selected a stack or approved
+implementation, framework migration, hosting or another cloud test.
+Proposed next activity is bounded UI design/compatibility assessment,
+retaining exact human approval, current/historical facts and safe backend
+execution. No source/dependency/cloud/run artifact changed during this
+analysis. The following entries preserve the completed S-027 and live history.
+
+S-027 revision 2 is complete and its local authorization consumed.
+The originally failing temporal-evidence regression now passes: authentic
+pre-write facts appear in `answer.historical_evidence`, current facts in
+`answer.evidence`; changed/unknown facts and omission of the mandatory current
+post-write result remain errors. History persists without reconstructing
+missing evidence or migrating stopped sessions. The model still receives
+the same published prompt/schema and returns the same two-key contract.
+
+The retired read-only and staged adapters, CLIs, legacy definition factories
+and unused runtime hook/accumulator are removed. Useful runtime/usage/batch/
+call-ID safeguards now test the current advisor; the SDK-free manual tool
+exercise and historical prompt assets remain. All 95 combined tests, 34
+independent SDK-free tests and ten documentary/link checks pass. Definition
+call-site compatibility and application syntax checks pass.
+See [A-018](implementation/log.md#a-018---s-027-revision-2-evidence-separation-and-legacy-retirement).
+
+No Azure access, publication, inference, data deletion or recovery occurred.
+S-026 remains stopped with exactly one reservation, unchanged source hash,
+14 requests/11 tools/48,338 tokens and W-B 80/70/10, W-A 20.
+The one next proposed activity is a bounded fresh live case using the
+unchanged v3 definition, after a separate explicit operational contract.
+Do not resume/rebind the executed S-026 session. No live correction result
+is claimed yet. Earlier checkpoints below are retained as history.
+
+Q-028 accepts separately labeled historical/current evidence and explicitly
+requests deleting no-longer-needed code afterward. S-027 revision 2 adds
+retirement of verified obsolete driver paths and their direct tests/docs,
+while preserving active runtime/business safeguards, useful regression
+coverage, prompt provenance assets, all run data and historical decisions.
+No authenticated/cloud action, stopped-run transition or execution retry.
+
+On 2026-11-03 at 17:02 +01:00 the user explicitly requested the proposed
+local correction and asked whether verification is agent-side and whether
+the historical walkthrough is still required. This authorizes S-027's
+local-only scope, not publication, cloud calls or stopped-session recovery.
+Q-028 asks the one output decision before implementation: retain authentic
+pre-write facts as separately labeled historical evidence, or return only
+current facts. The post-write result remains mandatory in either case.
+The current advisor does not import the historical walkthrough; that module
+is retained for its own CLI/tests and v2 baseline, not changed or removed here.
+The following S-026 outcome remains unchanged.
+
+S-026 revision 2 has ended: version 3 genuinely conducted the conversation
+through separately approved STANDARD reservation and durable-result read-back,
+but its final answer failed `ungrounded_answer`. This is not a full acceptance
+pass. The three returned evidence objects are unchanged actual tool outputs,
+but include pre-write snapshot/policy invalidated by the application after
+the write. Read-only response/history inspection confirmed this mismatch;
+there was no additional inference or automatic retry.
+
+Exactly one proposal/request exists. Request
+`682a1ce9-1600-4e75-bae9-c0338df29f82` is bound to the approved proposal
+`bf144275-ec8f-4ad3-bdd2-b63b9ff4616f`. W-B is 80/70/10, W-A 20,
+snapshot 2; no physical movement. Human approval preceded execution.
+Cumulative usage: 14 requests, 11 tools, 48,338 tokens; conservative estimate
+EUR 0.96676. All usage is reconciled. The failed-turn `running=true` stop
+remains; no process is active and no write/turn may be blindly retried.
+All 101 offline tests and ten documentary/link checks passed; this does not
+supersede the live failure. See [A-017](implementation/log.md#a-017---s-026-live-agent-led-validation).
+
+S-026 operational authority is consumed; preserve the run and existing cloud
+version. Proposed next step S-027 is a local-only correction of the evidence
+handoff and its regression tests, without weakening stale-state controls.
+It is not authorized, implemented, published or tested live.
+The following paragraphs retain earlier checkpoints, not current approvals.
+
+Q-026 explicitly approved S-026 revision 2's twenty cumulative requests and
+local correction/source transition. Q-027 independently approved the exact
+STANDARD proposal and its synthetic reservation. Apply/test the narrow
+allowance correction, audit/rebind the completed session without resetting
+usage or uncertainty flags, then record approval via the human application
+path and continue the same v3 conversation. No new cloud version/session.
+
+S-026 revision 1 paused safely before reservation: the real agent refreshed
+all three fact tools then created the selected STANDARD proposal
+`bf144275-ec8f-4ad3-bdd2-b63b9ff4616f`. Final evidence matches tool results.
+Usage is 9 requests, 7 tools, 20,229 input + 2,116 output = 22,345 tokens,
+estimate EUR 0.4469, fully reconciled. One request remains under revision 1;
+do not start an execution that cannot finish read-back within that allowance.
+Independent inspection confirmed source 80/30/50 and zero durable requests.
+Q-026 requests revision 2's explicit twenty-request allowance and bounded
+local correction/audited source transition, without resetting usage.
+Q-027 independently requests exact proposal approval; both are still open.
+
+Q-025 answered STANDARD for the S-026 case. Record the trusted planner event
+and continue the existing v3 conversation to proposal creation only.
+No exact-proposal approval or reservation is authorized by this selection.
+
+S-026 checkpoint: candidate version `3` published and full definition read-back
+verified; prior latest v2 matched the expected baseline before creation.
+Tenant/deployment preflight succeeded in the declared directory; deployment
+is `gpt-6.1-sol` version `2026-09-29`, GlobalStandard capacity 100.
+Fresh session: `artifacts/local/supply-chain-s026`, run
+`db045073-fa0e-44e5-82d3-c0b561f8b96b`, conversation
+`conv_09d5d47071f1bef3001lDv2uXr1YNpD42jnUYQxUDWFYy87Dug`.
+
+The first real conversational turn succeeded with exact authoritative evidence.
+Actual tool order was snapshot, policy, comparison, selected by the agent
+rather than a candidate CLI reasoning stage. It explained both alternatives
+in Italian and requested preference; no planner choice/proposal/reservation.
+Usage: 4 model requests, 3 tools, 5,037 input + 1,067 output = 6,104 tokens;
+conservative estimate EUR 0.12208, not invoice. No unreconciled usage.
+Independent local inspection confirmed source 80/30/50, destination 20.
+Q-025 is open for this new case's actual planner choice.
+
+Q-024 explicitly authorizes S-026 revision 1 on 2026-11-03. Publication and
+one live conversation are in progress within the declared tenant/project/model
+and 10-request/20-tool bounds. No planner choice or business approval is
+inferred. No authenticated operation preceded this consent.
+
+On 2026-11-03 at 16:43 +01:00 the user asked to verify that it works.
+S-026 revision 1 proposes one candidate publication and one bounded live
+conversation in the existing explicit tenant/project/model. Q-024 requests
+operational consent before any authenticated access, publication or inference.
+The new version would become latest; v1/v2 and existing runs remain retained.
+Human selection and exact-proposal business approval are not inferred.
+The candidate remains unpublished and no cloud action has started.
+
+S-025 revision 1 is completed. Q-023 explicitly approved local reorganization
+with agent-specific/shared tool ownership. The sole advisor now owns its
+definition, prompts, conversation controls and tool schemas/dispatcher in
+`supply_chain/agents/resilience_advisor`; evaluation cases are agent-scoped.
+Common runtime, business rules/store and solution data remain reusable.
+The runtime uses a dispatcher protocol, not advisor-specific imports.
+All 99 combined tests, 34 independent SDK-free tests and 10 documentary/link
+checks passed. Candidate and historical published instruction/definition
+content is regression-verified unchanged. Nested source participates in drift
+checks; old candidate/run artifacts were not migrated, reset or removed.
+See [A-016](implementation/log.md#a-016---s-025-revision-1-multi-agent-ready-source-layout).
+The local approval is consumed. There is still one unpublished candidate,
+not a multi-agent runtime. Cloud v2 is unchanged.
+Next proposed activity: separately scoped candidate publication/live validation;
+no cloud work has started or received operational consent.
+The following entries retain the earlier request and authorization history.
+
+Q-023 now explicitly approves S-025's local reorganization, clarifying that
+tools may be agent-specific or shared. The current advisor contracts and
+dispatcher move into its own package; the runtime, business operations and
+data remain reusable. No speculative shared-tool package or registry is added.
+Work is in progress with unchanged prompts, behavior and cloud resources.
+
+Latest request on 2026-11-03 at 16:34 +01:00: prepare the repository for
+multiple future agents, even though only the advisor is implemented now.
+Proposed D-014/S-025 revision 1 groups agent-owned definition, prompts and
+conversation controls in a named package, while retaining shared runtime,
+tools and solution data. Q-023 is open for the local structural increment.
+No application code was changed in response to this clarification.
+The previously proposed cloud-publication activity is deferred, not approved.
+S-024 completion and its unpublished status below remain valid history.
+
+Effective completed outcome on 2026-11-03: S-024 revision 1 implemented the
+agent-led local candidate with explicit instruction/definition assets,
+generic Responses runtime, conversational tool use, trusted human decisions,
+durable candidate state, versioned scenario and ten evaluation rubrics.
+All 96 combined tests (26 new), 34 independent SDK-free tests, dependency
+consistency and 10 documentary/link checks passed. Syntax checks passed;
+editor Azure import warnings are recorded without a strict-type-check claim.
+See [A-015](implementation/log.md#a-015---s-024-revision-1-agent-led-local-candidate).
+
+The candidate has no fixed compare/propose/execute reasoning commands.
+Only capabilities/approval/write invariants remain deterministic. v1/v2
+instruction content is regression-verified unchanged; cloud v2 and the
+completed S-022 run were not touched. No candidate publication, authenticated
+Azure access, inference, evaluation or installation occurred.
+S-024 consent is consumed. The one next proposed activity is candidate
+publication and bounded live conversational validation, with explicit
+operational scope/targets/budget still required; not started.
+The entries below retain the prior authorization/research history.
+
+S-024 revision 1 is in progress. At 16:22 +01:00 on 2026-11-03 the user
+replied "procedi" to the single proposed local increment. This free-form
+confirmation authorizes the declared local implementation/tests only;
+no cloud access, publication, inference, installation or Git operation.
+D-013 is accepted for that bounded candidate implementation. Existing
+v1/v2 definitions and the completed S-022 run must remain compatible.
+The entries below retain the preceding research and baseline history.
+
+Effective update on 2026-11-03 after the user's 16:15 request: S-023 documentary
+review is completed. The user wants the original agent-learning objective,
+explicit agent/tool/data separation and verified prompt/GenAIOps practices.
+The [review](research/evidence.md#s-023---agent-led-design-and-prompt-lifecycle-review)
+confirms a gap between the fixed-flow baseline and an agent-led conversation.
+Recommended D-013 preserves the managed Foundry agent and deterministic
+write/approval checks, separates agent instructions from generic transport,
+and uses lightweight prompt-as-code with versioned evaluations.
+
+The [S-024 revision 1 local increment](plan/plan.md#s-024-revision-1-proposed-local-agent-led-increment)
+is proposed, not approved. No code, environment or cloud operation occurred
+during S-023; only public/local reading and tracking/source-register updates.
+The original S-022 completion below remains valid positive baseline evidence,
+not proof that conversational agent autonomy is complete. Its authority
+remains consumed; cloud v2 and the retained successful run are unchanged.
+Resume by confirming or revising S-024, not by starting a new live case.
 
 Effective completed outcome on 2026-11-03: S-022 revision 1 passed the real
 end-to-end synthetic walkthrough on `supply-chain-resilience-advisor` v2.

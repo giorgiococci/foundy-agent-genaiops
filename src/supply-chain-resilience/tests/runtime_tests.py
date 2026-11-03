@@ -1,24 +1,20 @@
-"""Offline SDK adapter tests; run with the project-local Foundry environment."""
+"""Shared Responses runtime checks against the current advisor and real SDK objects."""
 
 from __future__ import annotations
 
-import contextlib
-import io
 import json
 import tempfile
 import unittest
 from decimal import Decimal
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from openai.types.responses import Response
 
-from foundry_demo import main
 from supply_chain import DemoActor, DemoRole, DemoStore, ToolError, ToolSession
-from supply_chain.foundry import (
-    READ_TOOL_NAMES, Pricing, ReadOnlyAgentLoop, RunLimits, agent_definition,
-)
+from supply_chain.agents.resilience_advisor.conversation import AdvisorConversation
+from supply_chain.agents.resilience_advisor.definition import READ_TOOL_NAMES, definition
+from supply_chain.runtime import Pricing, RunLimits
 
 
 def response(
@@ -45,23 +41,25 @@ def response(
     })
 
 
-class FoundryAdapterTests(unittest.TestCase):
+class RuntimeTests(unittest.TestCase):
     def setUp(self) -> None:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        self.store = DemoStore(Path(temporary.name) / "baseline.sqlite3")
+        self.store = DemoStore(Path(temporary.name) / "runtime.sqlite3")
         self.store.initialize()
         self.actor = DemoActor("demo-viewer", DemoRole.VIEWER)
         self.session = ToolSession(self.store, self.actor)
         self.client = MagicMock()
-        self.client.responses.input_tokens.count.return_value = SimpleNamespace(input_tokens=100)
         self.pricing = Pricing(Decimal("2"), Decimal("10"), "offline test fixture, not a live rate")
-        self.loop = ReadOnlyAgentLoop(self.client, self.session, pricing=self.pricing)
+        self.loop = self.new_loop()
+
+    def new_loop(self, **limits) -> AdvisorConversation:
+        return AdvisorConversation(self.client, self.session, pricing=self.pricing, limits=RunLimits(**limits))
 
     def final_answer(self) -> str:
         return json.dumps({
-            "options": self.store.compare_options(self.actor)["options"],
-            "explanation": "EXPRESS costs five more for one extra day of margin. No stock has moved.",
+            "message": "EXPRESS costs five more for one extra day of margin. No stock has moved.",
+            "evidence": [self.store.compare_options(self.actor)],
         })
 
     def successful_responses(self) -> list[Response]:
@@ -74,32 +72,32 @@ class FoundryAdapterTests(unittest.TestCase):
 
     def assert_run_error(self, code: str) -> None:
         with self.assertRaises(ToolError) as caught:
-            self.loop.run("conversation-test")
+            self.loop.reply("conversation-test", "Explain the delay.")
         self.assertEqual(caught.exception.code, code)
 
-    def test_sdk_definition_exposes_exactly_three_read_tools(self) -> None:
-        definition = agent_definition("deployment-test")
-        self.assertEqual(definition.kind, "prompt")
-        self.assertEqual(definition.model, "deployment-test")
-        self.assertIsNotNone(definition.tools)
-        self.assertEqual({tool.name for tool in definition.tools}, READ_TOOL_NAMES)
-        for tool in definition.tools:
+    def test_sdk_definition_exposes_exactly_six_strict_advisor_tools(self) -> None:
+        agent = definition("deployment-test")
+        self.assertEqual(agent.kind, "prompt")
+        self.assertEqual(agent.model, "deployment-test")
+        self.assertEqual({tool.name for tool in agent.tools}, READ_TOOL_NAMES | {
+            "create_transfer_proposal", "execute_approved_transfer", "read_transfer_result",
+        })
+        for tool in agent.tools:
             self.assertTrue(tool.strict)
             self.assertFalse(tool.parameters["additionalProperties"])
 
-    def test_real_sdk_response_objects_and_call_ids_continue_same_conversation(self) -> None:
+    def test_sdk_call_ids_continue_same_conversation_without_stock_effects(self) -> None:
         before = self.store.read_snapshot(self.actor)
         self.client.responses.create.side_effect = self.successful_responses()
-        result = self.loop.run("conversation-test")
+        result = self.loop.reply("conversation-test", "Explain the delay.")
         self.assertEqual(result["status"], "completed")
-        self.assertEqual(result["called_tools"], sorted(READ_TOOL_NAMES))
+        self.assertEqual(self.loop.turn_tools, READ_TOOL_NAMES)
         self.assertEqual(self.loop.usage.model_requests, 3)
         self.assertEqual(self.loop.usage.tool_calls, 3)
         self.assertEqual(self.loop.usage.total_tokens, 360)
         self.assertEqual(self.store.read_snapshot(self.actor), before)
         requests = self.client.responses.create.call_args_list
-        self.assertEqual([request.kwargs["conversation"] for request in requests],
-                         ["conversation-test"] * 3)
+        self.assertEqual([request.kwargs["conversation"] for request in requests], ["conversation-test"] * 3)
         outputs = requests[1].kwargs["input"]
         self.assertEqual([item["call_id"] for item in outputs], ["call-1", "call-2"])
         self.assertEqual([item["type"] for item in outputs], ["function_call_output"] * 2)
@@ -111,7 +109,7 @@ class FoundryAdapterTests(unittest.TestCase):
             self.assertEqual(request.kwargs["truncation"], "disabled")
         self.client.responses.input_tokens.count.assert_not_called()
 
-    def test_forbidden_tool_stops_before_dispatch(self) -> None:
+    def test_forbidden_tool_stops_entire_batch_before_dispatch(self) -> None:
         self.client.responses.create.return_value = response((
             ("read_planning_snapshot", "safe", "{}"),
             ("execute_approved_transfer", "forbidden", '{"proposal_id":"injected"}'),
@@ -121,8 +119,7 @@ class FoundryAdapterTests(unittest.TestCase):
         dispatch.assert_not_called()
 
     def test_batch_tool_limit_stops_before_any_dispatch(self) -> None:
-        self.loop = ReadOnlyAgentLoop(self.client, self.session, pricing=self.pricing,
-                                     limits=RunLimits(tool_calls=1))
+        self.loop = self.new_loop(tool_calls=1)
         self.client.responses.create.return_value = self.successful_responses()[0]
         with patch.object(self.session, "dispatch") as dispatch:
             self.assert_run_error("tool_limit")
@@ -131,7 +128,7 @@ class FoundryAdapterTests(unittest.TestCase):
     def test_repeated_and_empty_call_ids_are_rejected(self) -> None:
         for ids in (("same", "same"), ("", "second")):
             with self.subTest(ids=ids):
-                self.loop = ReadOnlyAgentLoop(self.client, self.session, pricing=self.pricing)
+                self.loop = self.new_loop()
                 self.client.responses.create.return_value = response((
                     ("read_planning_snapshot", ids[0], "{}"),
                     ("read_transfer_policy", ids[1], "{}"),
@@ -153,34 +150,27 @@ class FoundryAdapterTests(unittest.TestCase):
         self.assertEqual(self.client.responses.create.call_count, 1)
 
     def test_token_threshold_is_checked_after_actual_usage(self) -> None:
-        self.loop = ReadOnlyAgentLoop(self.client, self.session, pricing=self.pricing,
-                                     limits=RunLimits(total_tokens=119))
+        self.loop = self.new_loop(total_tokens=119)
         self.client.responses.create.return_value = response(text="{}")
         self.assert_run_error("token_limit")
         self.assertEqual(self.client.responses.create.call_count, 1)
         self.assertEqual(self.loop.usage.total_tokens, 120)
 
     def test_cost_threshold_is_checked_after_actual_usage(self) -> None:
-        for ceiling, expected in ((Decimal("0.00119"), "spend_limit"),
-                                  (Decimal("0.00120"), "ungrounded_answer")):
+        for ceiling, expected in ((Decimal("0.00119"), "spend_limit"), (Decimal("0.00120"), "invalid_answer")):
             with self.subTest(ceiling=ceiling):
-                self.loop = ReadOnlyAgentLoop(self.client, self.session, pricing=self.pricing,
-                                             limits=RunLimits(spend_eur=ceiling))
+                self.loop = self.new_loop(spend_eur=ceiling)
                 self.client.responses.create.return_value = response(text="{}")
                 self.assert_run_error(expected)
 
     def test_aggregate_token_limit_includes_prior_response_usage(self) -> None:
-        self.loop = ReadOnlyAgentLoop(self.client, self.session, pricing=self.pricing,
-                                     limits=RunLimits(total_tokens=120))
-        self.client.responses.create.return_value = response((
-            ("read_planning_snapshot", "one", "{}"),
-        ))
+        self.loop = self.new_loop(total_tokens=120)
+        self.client.responses.create.return_value = response((("read_planning_snapshot", "one", "{}"),))
         self.assert_run_error("token_limit")
         self.assertEqual(self.client.responses.create.call_count, 1)
 
     def test_request_limit_stops_the_loop(self) -> None:
-        self.loop = ReadOnlyAgentLoop(self.client, self.session, pricing=self.pricing,
-                                     limits=RunLimits(model_requests=1))
+        self.loop = self.new_loop(model_requests=1)
         self.client.responses.create.return_value = self.successful_responses()[0]
         self.assert_run_error("request_limit")
         self.assertEqual(self.client.responses.create.call_count, 1)
@@ -188,10 +178,10 @@ class FoundryAdapterTests(unittest.TestCase):
     def test_unsupported_token_count_is_never_called(self) -> None:
         self.client.responses.input_tokens.count.side_effect = TimeoutError("count unavailable")
         self.client.responses.create.side_effect = self.successful_responses()
-        self.assertEqual(self.loop.run("conversation-test")["status"], "completed")
+        self.assertEqual(self.loop.reply("conversation-test", "Explain the delay.")["status"], "completed")
         self.client.responses.input_tokens.count.assert_not_called()
 
-    def test_unreconciled_usage_is_explicit_in_summary(self) -> None:
+    def test_unreconciled_usage_is_explicit_and_stops_before_request(self) -> None:
         self.loop.usage.usage_unreconciled = True
         self.assertTrue(self.loop.usage.summary(self.pricing)["usage_unreconciled"])
         self.assert_run_error("uncertain_request")
@@ -200,10 +190,10 @@ class FoundryAdapterTests(unittest.TestCase):
     def test_lost_response_marks_usage_unknown_and_cannot_retry(self) -> None:
         self.client.responses.create.side_effect = TimeoutError("lost response")
         with self.assertRaisesRegex(TimeoutError, "lost response"):
-            self.loop.run("conversation-test")
+            self.loop.reply("conversation-test", "Explain the delay.")
         self.assertTrue(self.loop.usage.usage_unreconciled)
         self.assertEqual(self.loop.usage.model_requests, 1)
-        self.assert_run_error("already_started")
+        self.assert_run_error("uncertain_request")
         self.assertEqual(self.client.responses.create.call_count, 1)
 
     def test_missing_usage_remains_unreconciled(self) -> None:
@@ -211,6 +201,13 @@ class FoundryAdapterTests(unittest.TestCase):
         result.usage = None
         self.client.responses.create.return_value = result
         self.assert_run_error("missing_usage")
+        self.assertTrue(self.loop.usage.usage_unreconciled)
+
+    def test_invalid_usage_remains_unreconciled(self) -> None:
+        result = response(text="{}")
+        result.usage.total_tokens += 1
+        self.client.responses.create.return_value = result
+        self.assert_run_error("invalid_usage")
         self.assertTrue(self.loop.usage.usage_unreconciled)
 
     def test_incomplete_response_stops_and_accounts_for_usage(self) -> None:
@@ -224,28 +221,31 @@ class FoundryAdapterTests(unittest.TestCase):
         self.assertEqual(self.loop.usage.total_tokens, 4197)
         self.assertEqual(self.client.responses.create.call_count, 1)
 
-    def test_hallucinated_or_missing_grounding_is_not_a_success(self) -> None:
+    def test_hallucinated_grounding_without_tools_is_not_a_success(self) -> None:
         self.client.responses.create.return_value = response(text=self.final_answer())
         self.assert_run_error("ungrounded_answer")
 
     def test_invalid_final_shapes_are_rejected(self) -> None:
-        numeric_boolean = json.loads(self.final_answer())
-        numeric_boolean["options"][0]["feasible"] = 1
-        wrong_cost = json.loads(self.final_answer())
-        wrong_cost["options"][0]["cost"] = 91
-        for text in ("not json", "[]", '{"options":[],"explanation":"invented"}',
-                     json.dumps(numeric_boolean), json.dumps(wrong_cost)):
+        for text in ("not json", "[]", '{"options":[],"explanation":"invented"}'):
             with self.subTest(text=text):
-                self.loop = ReadOnlyAgentLoop(self.client, self.session, pricing=self.pricing)
-                responses = self.successful_responses()
-                responses[-1] = response(text=text)
-                self.client.responses.create.side_effect = responses
+                self.loop = self.new_loop()
+                self.client.responses.create.side_effect = self.successful_responses()[:-1] + [response(text=text)]
                 self.assert_run_error("invalid_answer")
+
+    def test_changed_numeric_or_boolean_evidence_is_rejected(self) -> None:
+        for field, value in (("feasible", 1), ("cost", 91)):
+            with self.subTest(field=field):
+                self.loop = self.new_loop()
+                answer = json.loads(self.final_answer())
+                answer["evidence"][0]["options"][0][field] = value
+                self.client.responses.create.side_effect = self.successful_responses()[:-1] + [
+                    response(text=json.dumps(answer)),
+                ]
+                self.assert_run_error("ungrounded_answer")
 
     def test_invalid_limits_and_unverified_prices_are_rejected(self) -> None:
         for fields in ({"model_requests": 11}, {"tool_calls": 21}, {"total_tokens": 100001},
-                       {"total_tokens": True}, {"spend_eur": Decimal("NaN")},
-                       {"spend_eur": Decimal("11")}):
+                       {"total_tokens": True}, {"spend_eur": Decimal("NaN")}, {"spend_eur": Decimal("11")}):
             with self.subTest(fields=fields), self.assertRaises(ToolError):
                 RunLimits(**fields)
         for rate in (Decimal("NaN"), Decimal("Infinity"), Decimal("0"), Decimal("-1")):
@@ -253,54 +253,3 @@ class FoundryAdapterTests(unittest.TestCase):
                 Pricing(rate, Decimal("10"), "test")
         with self.assertRaises(ToolError):
             Pricing(Decimal("2"), Decimal("10"), "")
-
-    def test_cli_run_without_pricing_stops_before_any_azure_client(self) -> None:
-        with patch("foundry_demo.AIProjectClient") as project:
-            with contextlib.redirect_stderr(io.StringIO()) as stderr:
-                code = main(["run", "--endpoint", "https://example.invalid/api/projects/demo",
-                             "--deployment", "test", "--tenant", "test"])
-        self.assertEqual(code, 1)
-        self.assertIn("unverified_pricing", stderr.getvalue())
-        project.assert_not_called()
-
-    def test_cli_reuses_named_version_without_creating_an_agent(self) -> None:
-        with patch("foundry_demo.AzureCliCredential"), patch("foundry_demo.AIProjectClient") as factory:
-            project = factory.return_value.__enter__.return_value
-            project.deployments.get.return_value.as_dict.return_value = {"name": "test"}
-            project.agents.get_version.return_value = SimpleNamespace(
-                name="supply-chain-resilience-advisor", version="1",
-                definition=agent_definition("test"),
-            )
-            project.agents.get.return_value.versions.latest.version = "1"
-            client = project.get_openai_client.return_value.__enter__.return_value
-            client.conversations.create.return_value = SimpleNamespace(id="conversation-offline")
-            with patch("foundry_demo.ReadOnlyAgentLoop") as loop_factory:
-                loop_factory.return_value.run.return_value = {"status": "completed"}
-                with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
-                    code = main([
-                        "run", "--endpoint", "https://example.invalid/api/projects/demo",
-                        "--deployment", "test", "--tenant", "test",
-                        "--input-eur-per-million", "5", "--output-eur-per-million", "20",
-                        "--price-source", "offline fixture",
-                    ])
-        self.assertEqual(code, 0)
-        project.agents.get_version.assert_called_once_with("supply-chain-resilience-advisor", "1")
-        project.agents.create_version.assert_not_called()
-
-    def test_cli_stops_before_inference_if_named_endpoint_version_changed(self) -> None:
-        with patch("foundry_demo.AzureCliCredential"), patch("foundry_demo.AIProjectClient") as factory:
-            project = factory.return_value.__enter__.return_value
-            project.deployments.get.return_value.as_dict.return_value = {"name": "test"}
-            project.agents.get_version.return_value = SimpleNamespace(
-                name="supply-chain-resilience-advisor", version="1", definition=agent_definition("test"),
-            )
-            project.agents.get.return_value.versions.latest.version = "2"
-            with contextlib.redirect_stderr(io.StringIO()):
-                code = main([
-                    "run", "--endpoint", "https://example.invalid/api/projects/demo",
-                    "--deployment", "test", "--tenant", "test",
-                    "--input-eur-per-million", "5", "--output-eur-per-million", "20",
-                    "--price-source", "offline fixture",
-                ])
-        self.assertEqual(code, 1)
-        project.get_openai_client.assert_not_called()

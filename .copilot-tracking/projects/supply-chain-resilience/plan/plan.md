@@ -1,12 +1,18 @@
 ---
 title: "Implementation Plan for supply-chain-resilience"
 description: "Proposed learning-first increments for a managed Foundry prompt agent with a thin Python driver."
-ms.date: "2026-11-02"
+ms.date: "2026-11-03"
 plan_version: 2
 status: "three-milestone-demo-completed-local-tracing"
 ---
 
 ## Current Version 2 - Three Learning Milestones
+
+Current planning qualification: the S-022 fixed-flow implementation is a
+verified baseline, not fulfillment of the agent-led experience requested
+on 2026-11-03. See the proposed S-024 increment below and
+[S-023 findings](../research/evidence.md#s-023---agent-led-design-and-prompt-lifecycle-review).
+No earlier consumed approval is extended to that increment.
 
 Current completion on 2026-11-03: S-022 revision 1 completed milestone 3 with
 explicit Q-020 scope, Q-021 one-case EXPRESS selection and separate exact
@@ -72,6 +78,211 @@ The current contract and actual consent are in
 The following version-1 sections are retained as historical planning evidence;
 their old sequence/status wording is superseded by this current section.
 Their cloud safety boundaries still apply.
+
+## S-026 Revision 1 Proposed Live Conversational Validation
+
+* Status: stopped at nine requests and superseded by revision 2's explicit
+  allowance extension. Q-024 authorized the original declared cloud case.
+* Objective: publish the locally tested agent-led definition and verify one
+  real synthetic conversation with the application-side tool dispatcher.
+* Target: existing project
+  `https://ai-aif-demo-01.services.ai.azure.com/api/projects/ai-aif-demo-prg-01`,
+  tenant `db60e921-9c3c-4fd4-98d1-4445db7ab425`,
+  deployment `gpt-6.1-sol`, agent `supply-chain-resilience-advisor`.
+* Authorized actions if confirmed: verify explicit tenant/current deployment
+  and existing latest definition; stop on unexpected drift. Create at most
+  one candidate agent version, read it back and verify the full definition.
+  The new version becomes latest for the named endpoint; retain v1/v2.
+  Create one conversation and one fresh local synthetic candidate session
+  under ignored `artifacts/local/supply-chain-s026`. No existing run overwrite.
+* Test: user-level supplier-delay message; let the agent choose fact/tool
+  order, explain alternatives and request preference. Ask the user for the
+  actual one-case choice, record it through the human event, then continue
+  conversationally to an exact proposal. Ask separately for exact-proposal
+  approval/rejection. Only if approved may the same conversation request
+  the synthetic reservation and read its durable result.
+* Global limits: 10 model requests, 20 function calls, 4,096 requested output
+  tokens per response; 100,000 aggregate tokens and EUR 10 monitored after
+  actual usage, not hard pre-call cutoffs. No SDK automatic retries.
+* Pricing: retain the documented conservative EUR 5/20 per-million estimate,
+  not actual billing; no new pre-count requirement. Stop on missing usage.
+* Acceptance: actual definition/version verified; genuine function calls and
+  exact authoritative evidence; choice/approval outside model authority;
+  no reservation before approval; inspect local trace and durable SQLite
+  result from a separate process. Report actual tools/order, requests/tokens,
+  estimate, outcome and limitations, not a general quality certification.
+* Local scope: candidate CLI/runtime, state/trace and canonical tracking;
+  narrowly related compatibility corrections with offline regression checks
+  only if a concrete failure requires them. Never retry an uncertain call
+  or blindly repeat a write to fix a validation failure.
+* Excluded: new infrastructure or model deployments, IAM, harness/hosted
+  migration, other agents, API/MCP, Azure telemetry export, paid evaluation
+  or optimizer jobs, installations, deletion/cleanup, commits/pushes.
+* Recovery: preserve agent versions/conversation/local evidence on failure;
+  reconcile durable state, record blocker and stop. No automatic rollback,
+  new version, new session or extra test beyond the above allowance.
+* Consent boundary: agreeing to this technical test is not a permanent
+  planner preference or approval of a not-yet-created business proposal.
+
+## S-026 Revision 2 Proposed Request-Allowance Extension
+
+* Status: blocked at final-answer acceptance; live attempt ended and
+  authority consumed. Q-026 authorized this revision and Q-027 independently
+  approved the exact proposal. Revision 1 history is retained.
+* Observed reason: actual agent refreshed snapshot, policy and comparison
+  before creating the STANDARD proposal. Cumulative usage is 9 requests,
+  7 tools, 22,345 tokens, estimate EUR 0.4469; fully reconciled, no write.
+* Change: allow 20 cumulative model requests for this same case, retaining
+  20 tools, 100,000-token/EUR 10 post-response thresholds, output limit and
+  no automatic retries. Never reset the 9 requests or create another session.
+* Local correction: separate the advisor's maximum request policy from the
+  historical ten-request baseline, persist an explicit per-session allowance
+  defaulting to ten, and regression-test both limits and restoration.
+  No new cloud definition/version or prompt change.
+* Explicit source transition if approved: audit that the current turn is
+  complete/reconciled, proposal remains unapproved and no request exists;
+  after local tests, rebind only this session's source-content hash and
+  allowance. Record old/new hashes in the log. Do not clear uncertainty,
+  alter evidence/call IDs/usage, or silently migrate any other run.
+* Existing source hash: `d87f70f707ec149ea0909ce73c18874c9e2dc14d35af6c2e2e60d23809667e9b`
+* Business action remains independent: Q-027 asks exact approval/rejection of
+  proposal `bf144275-ec8f-4ad3-bdd2-b63b9ff4616f`.
+* All unchanged target, exclusions, evidence and recovery requirements of
+  revision 1 apply. If the extension is declined, stop before a model
+  execution that cannot complete its required read-back within the allowance.
+* Actual outcome: reservation and post-write read-back verified, but final
+  evidence included authentic pre-write facts invalidated by the application,
+  triggering `ungrounded_answer`. Exactly one request, source 80/70/10,
+  destination 20. Fourteen requests, eleven tools, 48,338 tokens. Preserve
+  failed-turn stop; no retry or automatic source/session transition.
+
+## S-027 Revision 1 Proposed Local Evidence-Handoff Correction
+
+* Status: local implementation authorized by the user's 2026-11-03
+  17:02 +01:00 request; Q-028 clarifies historical/current output semantics.
+  No cloud or stopped-session recovery authority.
+* Objective: correct the S-026 historical/current evidence mismatch without
+  disguising old stock as current or relying on model-copied current facts.
+* Local scope: advisor response contract/adapter, directly related session
+  handling if required, regression tests and documentation.
+* Acceptance: reproduce the observed historical snapshot + policy + valid
+  durable-result case; distinguish historical explanation from current
+  authoritative outcome, reject invented/altered evidence, and preserve
+  approval, single-execution and mandatory post-write read-back guards.
+  Existing baseline behavior and all relevant tests must remain intact.
+* Risk/recovery: a contract change may require a new local definition hash
+  and subsequent separately authorized publication. Preserve old versions
+  and stopped S-026 state; do not rebind or resume that executed session.
+* Excluded: authenticated Azure access, publication, inference, new runs,
+  clearing S-026 stop flags, stock changes, dependencies, IAM, commit/push.
+* A later bounded live validation would require its own explicit contract;
+  this proposal does not authorize it.
+
+### Revision 2 Accepted Local Scope
+
+Status: completed locally; authorization consumed. All 95 combined tests,
+34 independent SDK-free tests and ten documentary/link checks passed.
+The originally failing live-shaped case now separates authentic historical
+facts from the mandatory current read-back. The old drivers are retired,
+useful safety coverage targets the active path, and the published definition
+is unchanged. No cloud run, data deletion or stopped-session transition.
+See [A-018](../implementation/log.md#a-018---s-027-revision-2-evidence-separation-and-legacy-retirement).
+
+Q-028 explicitly selects separate historical/current evidence and adds
+deletion of obsolete implementation code. Preserve revision 1 above as the
+original correction proposal; its cloud exclusions and acceptance remain.
+
+* Implement application-owned separation, retaining unchanged tool objects
+  and mandatory current post-write read-back. Preserve the two-key model
+  response contract and published prompt/schema/definition.
+* Persist history with existing session decisions; never rewrite or resume
+  the stopped S-026 run. Add regression tests for the observed failure,
+  changed/unknown facts, refreshed state, persistence and mandatory read-back.
+* Trace legacy callers before deleting retired drivers and their direct
+  tests. Retain active business/manual tools, shared runtime, useful runtime
+  regression checks and historical prompt assets; repair current docs and
+  mark historical source references as retired without erasing decisions.
+* No run-data deletion, cloud access, publication, inference, dependency
+  installation, IAM, commit or push. Validate locally with the relevant
+  Python suites and documentary/link checks.
+
+## S-025 Revision 1 Proposed Multi-Agent-Ready Source Layout
+
+* Status: completed; Q-023 explicitly approved with agent-specific tool ownership.
+  [A-016](../implementation/log.md#a-016---s-025-revision-1-multi-agent-ready-source-layout)
+  records 99 passing combined tests, independent SDK-free tests and
+  documentary checks. Approval consumed; no cloud work authorized.
+* Objective: prepare the solution source layout for multiple distinct agents,
+  while implementing and running only the existing resilience advisor.
+* Scope: move advisor definition, prompt assets, specialized conversation
+  controls and tool schemas/dispatcher under
+  `src/supply-chain-resilience/supply_chain/agents/resilience_advisor`;
+  place its evaluation dataset under `evals/resilience_advisor`. Update
+  package initializers, imports, asset paths, source hashing, related tests,
+  README and affected tracking links.
+* Shared boundaries: leave reusable Responses runtime, business rules/store
+  and solution data outside the per-agent package. The runtime depends only
+  on a dispatcher contract, not this advisor's tools. A future actually shared
+  tool can be extracted without duplicating domain/data operations.
+  The application session/CLI can still know the sole advisor explicitly.
+* Excluded: new agents, orchestrator, handoff, registry/plugin framework,
+  new dependencies, cloud access/publication/inference, IAM, resource changes,
+  telemetry export, existing-run migration/reset/deletion and commits/pushes.
+* Acceptance: unchanged instruction/definition hashes for historical v1/v2
+  and the current candidate; nested agent source participates in drift checks;
+  all 96 current tests, independent SDK-free tests and documentary/link checks
+  pass. Do not claim multi-agent behavior from source layout alone.
+* Cost/risk: no model spend; risks are broken imports/assets or incomplete
+  provenance after moves. Verify these locally and retain existing run artifacts.
+* Recovery: no cloud state changes; correct imports/assets locally, never
+  silently migrate old candidate fingerprints to bypass drift checks.
+
+## S-024 Revision 1 Proposed Local Agent-Led Increment
+
+* Status: completed locally; user's 2026-11-03 16:22 +01:00 "procedi"
+  authorized this single increment, not cloud publication or execution.
+  Actual files, 96 passing tests and limits are in
+  [A-015](../implementation/log.md#a-015---s-024-revision-1-agent-led-local-candidate);
+  implementation consent is consumed.
+* Objective: make the single managed agent the conversation/case coordinator,
+  expose code responsibilities and establish a minimal prompt-as-code baseline.
+* Expected result: a locally tested candidate definition/runtime and synthetic
+  evaluation cases; the existing cloud v2 remains unchanged.
+* Scope: `src/supply-chain-resilience` agent-definition/instruction assets,
+  generic runtime, CLI, tool/approval boundary, synthetic scenario data,
+  tests/evaluation cases and README; directly related canonical project
+  tracking. Reuse existing domain/store functions and dependencies.
+* Intended organization: a small agent module, explicit text instructions,
+  a generic runtime, existing tools/store/domain modules, scenario fixture
+  and evaluation data. Exact filenames follow the implementation's simplest
+  coherent layout; do not introduce a framework or one directory per class.
+* Behavior: user messages drive tool use; only pending human decisions block
+  continuation. Retain trusted exact selection/approval, stale checks,
+  reservation idempotency, cumulative budgets and explicit-error behavior.
+  Do not hardcode a tool sequence or treat model claims as human approval.
+* Prompt provenance: stable source file, instruction/schema hashes and
+  candidate configuration references; no fake cloud version or clean commit.
+* Excluded: authenticated Azure access, new agent versions/conversations,
+  inference, cloud evaluations/optimizer, harness/hosted migration, APIs/MCP,
+  telemetry export, IAM, resource changes, dependency installation, Git
+  commits/pushes and deletion/reset of existing run artifacts.
+* Acceptance: existing applicable business/SDK tests pass; preserve the
+  historical fixed-flow contract separately where necessary. Add tests for
+  generic continuation, more than one valid tool order, missing-preference
+  and approval pause/resume, no unauthorized effects, exact result grounding,
+  fixture/provenance loading and prompt/schema drift. Add a small versioned
+  scenario/rubric set; label offline model fixtures as simulations, not live
+  model-quality evidence. Run repository documentary/link checks.
+* Cost/risk: no model spend; risks are behavioral regression and accidental
+  endpoint-definition drift. Do not publish, and refuse mismatched live
+  definitions. Retain v1/v2 artifacts and the S-022 run.
+* Recovery: candidate remains local/unpublished; no cloud rollback needed.
+  Preserve old scenario and business invariants and distinguish incompatible
+  session formats explicitly rather than silently migrating completed runs.
+
+This was one cohesive local increment, not a renewed discovery questionnaire.
+Live publication and model-quality validation still require a later bounded
+contract; no such execution is authorized by this completed step.
 
 ## Objective and Authority
 

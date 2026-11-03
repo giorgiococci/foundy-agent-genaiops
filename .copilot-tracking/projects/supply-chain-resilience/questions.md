@@ -10,6 +10,137 @@ English summaries of Italian user answers are labeled translations.
 They are not verbatim English quotations. A selected domain is not
 approval of the assistant's initial scenario or architecture.
 
+## Q-024 - Publish and Verify the Agent-Led Candidate
+
+* Date: 2026-11-03
+* Status: answered on 2026-11-03
+* Reason: user asks to verify that the reorganized agent-led candidate works;
+  current 99 tests are offline and the candidate has not been published.
+* Recommendation: one bounded live conversation under S-026 revision 1,
+  in the previously used explicit project/tenant/model and same agent identity.
+* Alternatives: authorize declared publication/live test, or defer cloud work.
+* Scope/limits: at most one new version/conversation and fresh local session;
+  10 model requests, 20 tools, post-response 100,000-token/EUR 10 monitoring;
+  no provisioning, IAM, deletion, telemetry export, installations or Git writes.
+* Business choice and exact-proposal approval remain separate later questions.
+* Actual answer: native `ask_user` returned explicit authorization for the
+  publication and bounded test on the declared targets.
+* Interpretation: S-026 revision 1 is approved. No permanent preference or
+  exact-proposal approval follows; those remain separate human decisions.
+
+## Q-025 - Planner Choice in the Agent-Led Live Case
+
+* Date: 2026-11-03
+* Status: answered on 2026-11-03
+* Reason: the real agent explained both feasible alternatives and asked for
+  the planner's cost-versus-margin preference; it did not create a proposal.
+* Alternatives: STANDARD at 90, completion day 3 and margins 0/1; EXPRESS
+  at 95, completion day 2 and margins 1/2. Both transfer 40 boards under
+  ceiling 100. No unique recommendation without a user preference.
+* Context: S-026, managed agent v3, conversation
+  `conv_09d5d47071f1bef3001lDv2uXr1YNpD42jnUYQxUDWFYy87Dug`.
+  Four real requests, three tools, 6,104 tokens; no proposal/reservation.
+* Interpretation boundary: one-case selection only, not a permanent policy
+  or exact-proposal approval. Prior Q-021's EXPRESS choice is not reused.
+* Actual answer: native `ask_user` returned STANDARD.
+* Interpretation: record STANDARD for this case and let the conversation
+  prepare its proposal; no business approval or permanent preference.
+
+## Q-026 - Extend Only This Conversation's Request Allowance
+
+* Date: 2026-11-03
+* Status: answered on 2026-11-03
+* Reason: the agent refreshed facts before proposal creation and has used
+  9 of 10 requests; one remaining cannot complete execution plus read-back.
+* Recommendation: S-026 revision 2 permits 20 cumulative model requests,
+  unchanged 20 tools and post-response token/cost monitoring. Same existing
+  conversation, no counters reset and no new publication.
+* Local correction and audited source-hash transition are declared in revision 2;
+  historical ten-request baselines and uncertain-turn stops remain unchanged.
+* Alternative: keep ten and stop the live case before any reservation.
+* Actual answer: explicit authorization for 20 cumulative requests and the
+  described local correction/audited source transition. Existing usage retained.
+  This technical answer does not itself grant Q-027.
+
+## Q-027 - Exact STANDARD Proposal Approval
+
+* Date: 2026-11-03
+* Status: answered on 2026-11-03
+* Proposal: `bf144275-ec8f-4ad3-bdd2-b63b9ff4616f`, snapshot 1, policy P-1:1
+* Exact action: 40 BOARD-1, W-B to W-A, STANDARD, cost 90 under ceiling 100,
+  arrival day 2, assembly completion day 3, customer margins 0/1 days.
+* Current source on-hand/reserved/available 80/30/50; requested synthetic
+  reservation would produce 80/70/10. Destination stays at 20.
+* Alternatives: approve this exact synthetic reservation, reject, or wait.
+  No shipment, receipt, real stock or permanent planner preference.
+* Actual answer: explicit approval of this exact proposal and synthetic
+  reservation, returned independently from Q-026 in the same native form.
+  Record approval through the human-only application path after the local
+  correction and audit; no future proposal or physical movement is authorized.
+
+## Q-028 - Historical Facts in the Advisor Answer
+
+* Date: 2026-11-03
+* Status: answered on 2026-11-03
+* Authority context: user's 17:02 +01:00 request explicitly approves S-027's
+  proposed local correction. This question is about output semantics, not
+  another cloud or execution approval.
+* Reason: genuine pre-write snapshot/policy outputs explain before/after,
+  but must not be presented as the current authoritative state.
+* Recommendation: application separates unchanged known historical objects
+  into a labeled historical-evidence collection; current evidence must still
+  include the exact mandatory post-write read-back. Keep model reasoning,
+  human guards and the two-key model response contract unchanged.
+* Alternative: expose only current evidence, omitting historical objects
+  from the delivered evidence. Never silently accept old state as current.
+* Original proposed scope: advisor adapter/session-compatible history field,
+  local tests/docs.
+  Preserve the executed S-026 artifacts; no cloud, prompt publication,
+  migration, retry, deletion or historical-walkthrough retirement.
+* Actual answer, faithful English translation: option 1 is acceptable;
+  then delete code that is no longer needed to avoid an unmanageable repository.
+* Interpretation: separate historical/current evidence as proposed; also
+  remove demonstrably retired implementation paths and update their direct
+  tests/docs. Preserve business tools, useful regression coverage, prompt
+  provenance assets and actual historical run/decision evidence. This does
+  not authorize cloud access, deletion of run data or unrelated cleanup.
+  The user's explicit cleanup addition supersedes the original retirement
+  exclusion for obsolete source code only.
+
+## Q-023 - Multi-Agent-Ready Source Layout
+
+* Date: 2026-11-03
+* Status: answered on 2026-11-03 after the 16:34 request
+* Reason: user requested a source layout ready for multiple future agents,
+  not immediate creation of more agents.
+* Recommendation: S-025 revision 1 per-agent package with shared runtime,
+  tools, business state/data and agent-specific evaluation assets.
+* Alternatives: implement the declared local layout or revise it first.
+* Affected decision: proposed D-014; S-024's behavioral guarantees unchanged.
+* Scope: local moves/imports/provenance/tests/documentation only, preserving
+  current behavior and existing runs. No new agents, framework or cloud work.
+* Actual answer, faithful English summary: proceed with the proposed local
+  reorganization, but tools can be agent-specific as well as shared.
+* Interpretation: explicit S-025 local implementation consent with an ownership
+  clarification. Put current advisor contracts/dispatcher with that agent;
+  extract truly shared tools only when there is actual reuse. Do not treat
+  reusable business/data operations as requiring shared model-tool exposure.
+* Outcome: [A-016](implementation/log.md#a-016---s-025-revision-1-multi-agent-ready-source-layout)
+  records the completed local change and verification; consent consumed.
+
+## S-024 Local Implementation Consent
+
+* Date: 2026-11-03 at 16:22 +01:00
+* Actual free-form answer: "procedi"
+* Context: the single local agent-led modular refactor and prompt-as-code
+  increment presented after S-023, not an unanswered native form
+* Interpretation: implement/test the unpublished candidate within the declared
+  application and tracking scope. No cloud publication, inference, IAM,
+  resource changes, environment changes or Git commits/pushes.
+* Outcome: [A-015](implementation/log.md#a-015---s-024-revision-1-agent-led-local-candidate)
+  records local implementation and validation. Consent consumed; no subsequent
+  operational approval or exact business approval is inferred.
+
 ## Q-001 - Supply Chain Direction
 
 * Date and phase: 2026-11-02, discovery

@@ -1,0 +1,13 @@
+{
+  "id": "controller-board-delay",
+  "version": 1,
+  "business_model": "HUB-1-BOARD-1-two-orders-v1",
+  "snapshot": {
+    "version": 1,
+    "local_stock": 20,
+    "source_stock": 80,
+    "source_reserved": 30,
+    "cost_cap": 100,
+    "policy_version": "P-1:1"
+  }
+}

@@ -1,4 +1,4 @@
-"""Function schemas and a bounded dispatcher; no HTTP, MCP or SDK dependency."""
+"""Advisor-owned function schemas and dispatcher; no HTTP, MCP or SDK dependency."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import json
 import logging
 import sqlite3
 
-from .domain import DemoActor, ToolError
-from .store import DemoStore
+from ...domain import DemoActor, ToolError
+from ...store import DemoStore
 
 
 LOGGER = logging.getLogger(__name__)

@@ -1,8 +1,34 @@
 ---
 title: "Analysis of supply-chain-resilience"
 description: "Initial business framing and documented realism of supply-chain exception scenarios."
-ms.date: "2026-11-02"
+ms.date: "2026-11-03"
 ---
+
+## S-023 Learning-Goal Correction
+
+On 2026-11-03 the user explicitly requested an agent-led experience, clear
+agent/tool/data code separation and a renewed prompt-management/GenAIOps
+review. This is a faithful English summary, not a verbatim quotation.
+The existing positive S-022 test remains valid, but the fixed phase driver
+is a baseline rather than fulfillment of conversational agent autonomy.
+The [documentary review](evidence.md#s-023---agent-led-design-and-prompt-lifecycle-review)
+records source verification, the current architecture gap and recommendation.
+
+* RQ-013, confirmed user expectation: make agent definition/instructions,
+  runtime transport, tools and data responsibilities explicit without
+  overengineering; reinforces the earlier code-organization request.
+* RQ-014, confirmed requested analysis: verify prompt lifecycle practices
+  against the knowledge base and current public Microsoft sources, including
+  GenAIOps. A particular file format or pipeline has not been accepted yet.
+* RQ-011 remains effective: agent learning must drive the demo. Recommend
+  agent-led information gathering and conversation, not adding more agents.
+
+The proposed D-013/S-024 direction narrows the application to tool execution,
+human approval and invariant enforcement, retaining D-012's managed Foundry
+agent. It revises D-008's detailed phase enforcement if accepted; the learning
+goal, selected business scenario and approval/write boundary do not change.
+No application-code changes or further cloud authorization follow from this
+analysis request.
 
 ## Use Case and Expected Value
 
