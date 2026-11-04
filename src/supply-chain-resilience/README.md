@@ -14,7 +14,8 @@ prescribe compare/propose/execute reasoning stages.
 
 Microsoft Agent Framework `FoundryAgent` now owns model/tool continuation.
 There is one runtime path, not a framework wrapper around the old loop.
-The framework migration is verified offline, not yet against Azure.
+The framework migration is verified offline and by one bounded live
+STANDARD case in S-032 on 2026-11-04.
 
 The published agent is `supply-chain-resilience-advisor`, version `3`.
 S-026 exercised actual investigation, STANDARD choice, exact human approval,
@@ -22,7 +23,11 @@ one reservation and post-write read-back. Its final answer failed a local
 evidence check because it also included genuine pre-write facts.
 S-027 corrects that handoff locally by separating current and historical
 evidence, with regression tests. The published prompt/schema/definition did
-not change. **The correction has not yet been validated in another live run.**
+not change. S-032 now verifies that correction through Agent Framework:
+the final answer separates genuine pre-write facts from the current durable
+reservation result and passes validation. Exactly one proposal/request
+exists; W-B ends at 80 on hand / 70 reserved / 10 available, W-A remains 20.
+This is a successful synthetic case, not a general model-quality certification.
 See the [implementation log](../../.copilot-tracking/projects/supply-chain-resilience/implementation/log.md).
 
 ## Source Layout
@@ -36,6 +41,7 @@ See the [implementation log](../../.copilot-tracking/projects/supply-chain-resil
 | [conversation.py](supply_chain/agents/resilience_advisor/conversation.py) | Interaction state, trusted human decisions, guarded tool dispatch and current/historical evidence validation |
 | [tools.py](supply_chain/agents/resilience_advisor/tools.py) | Advisor-owned function contracts and dispatcher |
 | [runtime.py](supply_chain/runtime.py) | Framework chat/function safety middleware: whole-batch guards, call IDs, cumulative limits, usage and metadata events; no orchestration loop |
+| [observability.py](supply_chain/observability.py) | Shared trace provider/export lifecycle, per-agent off/metadata/content policy and native-span correlation |
 | [session.py](supply_chain/session.py) | Native framework-session persistence, artifact/SDK drift checks, exclusive lock and uncertainty stop |
 | [domain.py](supply_chain/domain.py) | Synthetic rules, option costs, feasibility and delivery margins; no SDK or database |
 | [store.py](supply_chain/store.py) | SQLite snapshots, proposals, human approval and atomic reservation |
@@ -45,6 +51,7 @@ See the [implementation log](../../.copilot-tracking/projects/supply-chain-resil
 | [test_domain.py](tests/test_domain.py), [test_workflow.py](tests/test_workflow.py) | Business rules, transactions, concurrency, failures and manual CLI |
 | [runtime_tests.py](tests/runtime_tests.py) | Actual framework invocation and SDK HTTP serialization with offline service responses, batch/call-ID checks, limits and failure behavior |
 | [advisor_tests.py](tests/advisor_tests.py) | Framework conversations, evidence roles, trusted human controls, native-session persistence and mocked cloud-binding guards |
+| [observability_tests.py](tests/observability_tests.py) | Native spans, concurrent policy isolation, privacy, explicit export failure and shutdown flush |
 
 The [agents namespace](supply_chain/agents) can accommodate future agents;
 only [resilience_advisor](supply_chain/agents/resilience_advisor) exists.
@@ -175,7 +182,8 @@ exists. `FoundryAgent` uses a versioned `agent_reference` on the non-preview
 project Responses endpoint. All reasoning turns use this same
 command; no compare/propose/execute model stages are prescribed.
 It cannot publish an agent. Matching v3 remains compatible with the local
-definition, but another live case still requires explicit operational consent.
+definition. S-032 verified one new live case; any further live case still
+requires explicit operational consent.
 
 ### Retained Failed Run
 
@@ -243,6 +251,73 @@ The ten [evaluation cases](evals/resilience_advisor/cases.json) are synthetic
 rubrics, not a passed scorecard or held-out benchmark. Local event inspection
 is not distributed OpenTelemetry/Azure Monitor tracing.
 
+## Shared Foundry Tracing
+
+The CLI defaults to `--telemetry off`: no destination lookup or local trace
+export. Opt in on an authorized `chat` with `--telemetry metadata` or
+`--telemetry content`. Both use the existing project's linked Application
+Insights, discovered through the public `project.connections` API; no telemetry resource or
+agent version is created. Linking Insights alone does not instrument Python.
+
+| Policy | Exported data |
+| ------ | ------------- |
+| `off` | No locally exported spans for that agent or its tools/model calls |
+| `metadata` | Native agent/model/tool spans, IDs, timings, status and token counts; no messages or tool payloads |
+| `content` | Metadata plus synthetic turn input/validated output and tool arguments/results |
+
+`TelemetryPolicy` and a task-local `agent_trace(...)` scope are shared.
+The advisor owns `DEFAULT_TELEMETRY_POLICY` in
+[conversation.py](supply_chain/agents/resilience_advisor/conversation.py);
+the CLI explicitly overrides it with the chosen flag. Programmatic callers
+can pass `telemetry_policy=TelemetryPolicy("metadata")` when constructing
+the conversation. A future agent can reuse the scope and tool callback
+adapter without inheriting an advisor class or sharing its business state.
+
+One provider is initialized at CLI bootstrap. Agent Framework's
+process-global sensitive recording remains disabled: enabling content for
+one agent cannot turn on native sensitive capture for another, including
+concurrent tasks. Existing native spans are reused; a `supply_chain.turn`
+parent correlates application validation with agent/model/tool children.
+Content belongs to that turn and the tool spans, not every intermediate
+model request. System instructions, raw SDK session state, arbitrary log
+events and exception text are not exported. Payloads are bounded to 6,000
+characters with explicit JSON truncation; common credential keys/patterns
+are redacted. This is not a general-purpose data-loss prevention system:
+content mode is approved only for synthetic, non-secret data.
+
+The current exporter is pinned to `azure-monitor-opentelemetry-exporter`
+`1.0.0b58` (beta), with OTel SDK `1.45.1`. Only traces are configured, not
+automatic HTTP/log/metric instrumentation. Auxiliary exporter statistics/
+control-plane workers and offline retry storage are disabled. The connection
+string is neither printed nor persisted in candidate artifacts.
+The installed Projects 2.7 telemetry convenience method accepts only API-key
+credentials. Shared discovery also handles the observed project-managed
+identity connection whose Insights connection string is in metadata.
+Missing, ambiguous or unsupported layouts fail explicitly, without printing
+credentials or changing the Azure connection.
+
+The returned `telemetry.trace_id` and local `telemetry.started` metadata event
+identify the trace for Foundry/Application Insights queries. CLI shutdown
+flushes the provider on success and errors. Export failure is explicit and
+does not authorize replaying an already completed model operation.
+Successful export is not proof of ingestion or portal visibility; verify the
+specific trace in the linked resource, allowing typical ingestion delay.
+Old conversations are not retroactively exported.
+
+S-034 verified one bounded read-only live case on 2026-11-04 in linked
+Insights `ai-ai-demo-01`: all seven expected spans arrived (turn, agent,
+two model calls and three tools), with correlation and selected synthetic
+content. Initial partial visibility resolved after ingestion delay.
+The case used 3,361 tokens with a conservative model estimate of EUR 0.06722;
+zero proposals/reservations and unchanged stock were independently verified.
+Backend ingestion was queried; the portal UI was not independently opened.
+See [A-022](../../.copilot-tracking/projects/supply-chain-resilience/implementation/log.md#a-022---s-034-shared-per-agent-observability).
+
+For a separately authorized bounded tracing case, initialize a new directory
+with `--model-request-limit 5 --tool-call-limit 10 --total-token-limit 30000
+--spend-eur-limit 2`. These limits are persisted and restored without changing
+existing sessions. Token/cost bounds remain post-response monitoring.
+
 ## SDK-Free Manual Tool Exercise
 
 The manual adapter demonstrates the same business functions without a model:
@@ -287,7 +362,8 @@ the intended Azure CLI tenant. `AzureCliCredential` uses that explicit
 directory, not an implicit credential fallback or automatic login change.
 Terminal validation uses Python 3.12.10, SQLite 3.49.1, framework core
 1.24.0, Foundry adapter 1.16.0, OpenAI adapter 1.18.0, Projects 2.7.0,
-Identity 1.27.0 and OpenAI 3.38.0. Projects 2.7.0 satisfies the adapter's
+Identity 1.27.0, OpenAI 3.38.0, OTel SDK 1.45.1 and Azure Monitor exporter
+1.0.0b58 (beta). Projects 2.7.0 satisfies the adapter's
 `>=2.2.0,<2.8.0` requirement; do not upgrade Projects independently.
 This is not a supported-version matrix.
 
@@ -299,7 +375,8 @@ src\supply-chain-resilience\.venv\Scripts\python.exe -B -m unittest discover -s 
 node --test scripts\test-copilot-customizations.mjs
 ```
 
-There are 34 SDK-free tests and 105 combined tests. Retired-driver-specific
+There are 34 SDK-free tests and 122 combined tests, including 17 tracing
+tests. Retired-driver-specific
 tests were removed; relevant runtime and human-action safeguards remain
 covered on the current path. The broader selector includes optional SDK
 simulations, not cloud inference. The framework itself runs in these tests;

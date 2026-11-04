@@ -11,6 +11,7 @@ from azure.ai.projects.aio import AIProjectClient
 
 from ...domain import ToolError
 from ...runtime import ToolSafety
+from ...observability import traced_tool
 from .conversation import AdvisorConversation
 from .tools import FUNCTION_TOOL_SPECS
 
@@ -21,7 +22,7 @@ def create_agent(
     tools = [
         FunctionTool(
             name=spec["name"], description=spec["description"],
-            input_model=spec["parameters"], func=partial(conversation.invoke_tool, spec["name"]),
+            input_model=spec["parameters"], func=traced_tool(partial(conversation.invoke_tool, spec["name"])),
             result_parser=json.dumps,
         )
         for spec in FUNCTION_TOOL_SPECS
@@ -29,6 +30,7 @@ def create_agent(
     safety = conversation.safety
     agent = FoundryAgent(
         project_client=project, agent_name="supply-chain-resilience-advisor",
+        id=f"supply-chain-resilience-advisor:{agent_version}",
         agent_version=agent_version, allow_preview=False, tools=tools,
         middleware=[safety, ToolSafety(safety)], timeout=60,
         function_invocation_configuration={

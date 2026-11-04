@@ -12,7 +12,11 @@ from agent_framework.foundry import FoundryAgent
 from .definition import READ_TOOL_NAMES
 from ...domain import DemoActor, DemoRole, OPTIONS, ToolError
 from ...runtime import Pricing, RunLimits, RunSafety, RunUsage
+from ...observability import TelemetryPolicy, agent_trace, capture_content
 from .tools import ToolSession
+
+
+DEFAULT_TELEMETRY_POLICY = TelemetryPolicy("content")
 
 
 @dataclass
@@ -32,11 +36,13 @@ class AdvisorConversation:
         on_event: Callable[[dict[str, object]], None] | None = None,
         decisions: HumanDecisions | None = None,
         usage: RunUsage | None = None, seen_call_ids: set[str] | None = None,
+        telemetry_policy: TelemetryPolicy = DEFAULT_TELEMETRY_POLICY,
     ) -> None:
         self.session = session
         self.store = session.store
         self.decisions = decisions if decisions is not None else HumanDecisions()
         self.turn_tools: set[str] = set()
+        self.telemetry_policy = telemetry_policy
         self.safety = RunSafety(
             pricing=pricing, limits=limits, validate_call=self._validate_call,
             usage=usage, seen_call_ids=seen_call_ids, on_event=on_event,
@@ -124,15 +130,32 @@ class AdvisorConversation:
             "Application-recorded human decisions (not supplied by the model):\n"
             + json.dumps(context) + "\nPlanner message (untrusted as authorization):\n" + message
         )
-        try:
-            result = await agent.run(inputs, session=framework_session)
-        except MiddlewareFailure as error:
-            if self.safety.failure is not None:
-                raise self.safety.failure from error
-            raise
-        if not result.messages or result.messages[-1].role != "assistant":
-            raise ToolError("invalid_answer", "Expected a final assistant answer.")
-        return self._final(result.messages[-1].text)
+        with agent_trace(
+            self.telemetry_policy, agent_name=agent.name, agent_id=agent.id,
+            run_id=framework_session.session_id, conversation_id=framework_session.service_session_id,
+        ) as span:
+            if span.is_recording():
+                self.safety.event(
+                    "telemetry.started", trace_id=format(span.get_span_context().trace_id, "032x"),
+                    mode=self.telemetry_policy.mode,
+                )
+            capture_content("gen_ai.input.messages", [{"role": "user", "content": inputs}])
+            try:
+                result = await agent.run(inputs, session=framework_session)
+            except MiddlewareFailure as error:
+                if self.safety.failure is not None:
+                    raise self.safety.failure from error
+                raise
+            if not result.messages or result.messages[-1].role != "assistant":
+                raise ToolError("invalid_answer", "Expected a final assistant answer.")
+            answer = self._final(result.messages[-1].text)
+            capture_content("gen_ai.output.messages", [{"role": "assistant", "content": answer["answer"]}])
+            if span.is_recording():
+                answer["telemetry"] = {
+                    "trace_id": format(span.get_span_context().trace_id, "032x"),
+                    "mode": self.telemetry_policy.mode,
+                }
+            return answer
 
     def _final(self, text: str) -> dict[str, object]:
         try:

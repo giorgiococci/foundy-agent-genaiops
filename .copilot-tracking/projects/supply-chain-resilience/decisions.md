@@ -1,8 +1,35 @@
 ---
 title: "Decisions for supply-chain-resilience"
 description: "Confirmed business scope and boundaries of the supply-chain demo."
-ms.date: "2026-11-03"
+ms.date: "2026-11-04"
 ---
+
+## D-017 - Shared Tracing and Explicit Per-Agent Content
+
+* Status: accepted in Q-034; implemented locally under S-034 revision 1
+* Date: 2026-11-04
+* Authority: user's cross-agent observability request and explicit synthetic
+  content/bounded live-validation choices
+* Decision: one shared OTel provider and Azure Monitor trace exporter, with
+  task-local off/metadata/content policy. The advisor owns its policy.
+  CLI export is off unless explicitly selected.
+* Privacy: keep native process-global sensitive recording disabled.
+  Capture only selected synthetic turn/tool content under the active agent
+  scope, with bounded size, known-key redaction and allowlisted exported
+  attributes. Do not export arbitrary events, exception text, instructions,
+  raw sessions, credentials or tracking documents.
+* Simplicity: reuse native framework agent/model/tool spans; one application
+  turn parent includes validation and correlation. No business-agent base
+  class, registry, plugin system, second agent or new telemetry resource.
+* Lifecycle: discover the existing project's linked destination without
+  exposing its connection string; flush on success/error and explicitly
+  report delivery failures without retrying model/business operations.
+* Dependencies: OTel SDK 1.45.1 and Azure Monitor exporter 1.0.0b58 (beta),
+  compatible with the approved framework generation.
+* Alternative rejected: toggle framework sensitive settings per agent,
+  which would leak policy across concurrent agents in this SDK generation.
+* Evidence: [A-022](implementation/log.md#a-022---s-034-shared-per-agent-observability)
+  and the [implementation sources](../../../docs/research/sources.md#shared-tracing-implementation-follow-up).
 
 ## D-016 - Direct Microsoft Agent Framework Runtime
 

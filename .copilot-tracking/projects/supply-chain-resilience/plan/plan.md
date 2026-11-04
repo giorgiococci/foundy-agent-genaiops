@@ -8,6 +8,101 @@ status: "three-milestone-demo-completed-local-tracing"
 
 ## Current Version 2 - Three Learning Milestones
 
+## S-034 Revision 1 Shared Observability with Per-Agent Policy
+
+* Status: completed on 2026-11-04; Q-034's synthetic-content and bounded
+  live/Insights authority is consumed. All seven expected spans are ingested.
+  See [A-022](../implementation/log.md#a-022---s-034-shared-per-agent-observability).
+* Authority: user explicitly requests implementation, shared across agents,
+  with per-agent logging choices and no unnecessary framework.
+* Objective: one shared OTel/Azure Monitor setup and a small explicit policy
+  for each agent: disabled, metadata, or explicitly opted-in synthetic content.
+* Local scope: shared observability module, advisor factory policy, CLI
+  bootstrap/lifecycle and correlation, dependency manifest/application environment,
+  offline capture/privacy/flush/error tests, README and tracking.
+* Simplicity: no registry, superclass, plugin system, second agent, automatic
+  evaluator, telemetry provisioning or extra instrumentation layers.
+* Privacy: framework content settings are process-global in the installed
+  package. Do not toggle them per agent or let one agent enable payload capture
+  for others; keep shared setup safe and enforce explicit per-agent policy.
+  Never print connection strings or export credentials, authorization headers,
+  real data, entire session state or tracking documents.
+* Acceptance: actual in-memory spans demonstrate per-agent isolation, model/
+  tool/run/conversation correlation, selected content policy and shutdown flush.
+  Existing business/human/evidence/uncertainty behavior remains unchanged.
+  Export failure is explicit, never a successful trace-visibility claim.
+* Live scope if explicitly chosen in Q-034: same S-032 project/tenant/model/
+  managed advisor v3, read linked Insights configuration without exposing it,
+  one fresh read-only conversation/run with at most five model requests and
+  ten tools, 4,096 output tokens per request, post-response 30,000-token/
+  EUR 2 monitoring. Query only the associated trace/run IDs for ingestion
+  verification. No proposals, approvals, execution or historical-run resume.
+* Cost/risk: local dependencies must satisfy pinned framework constraints;
+  Azure export incurs existing Insights ingestion/retention charges and
+  the optional validation has model spend. Confirm destination and content
+  policy before authenticated access or export.
+* Recovery: correct only implementation defects; stop uncertain model calls
+  without retry/rebind. Do not replay old writes or broaden cloud permissions.
+* Excluded: infrastructure/IAM/account changes, new agent versions, UI,
+  run migration/deletion/rebinding, commits/pushes and undeclared cloud access.
+
+## S-033 Revision 1 Trace Visibility Diagnosis
+
+* Status: completed, 2026-11-04; user's diagnostic request only
+* Scope: current application source/package inspection and fresh public
+  tracing documentation; no authenticated Azure access, code or installs.
+* Result: local metadata exists, but no configured OpenTelemetry SDK/provider/
+  Azure Monitor exporter in the application. Waiting alone cannot export
+  missing spans. Typical 2-5 minute ingestion guidance applies after setup.
+* Evidence: [S-033](../research/evidence.md#s-033---why-live-conversations-are-not-visible-as-foundry-traces).
+* Proposed next activity: a bounded observability increment before UI work,
+  with declared exporter destination/content policy, compatible dependencies,
+  CLI flush and one separately approved new trace-validation case.
+  No implementation, telemetry export or live test is authorized here.
+
+## S-032 Revision 1 Fresh Live Framework Validation
+
+* Status: completed on 2026-11-04; Q-031 authority consumed.
+  Q-032 selected STANDARD; Q-033 separately approved the exact proposal.
+  [A-021](../implementation/log.md#a-021---s-032-live-framework-validation)
+  records successful real invocation, one reservation and verified final
+  current/historical evidence; nine requests/twelve tools/37,168 tokens.
+* Objective: verify the actual Agent Framework path against the unchanged
+  managed advisor v3, not merely offline service simulations.
+* Target: project
+  `https://ai-aif-demo-01.services.ai.azure.com/api/projects/ai-aif-demo-prg-01`,
+  tenant `db60e921-9c3c-4fd4-98d1-4445db7ab425`, deployment `gpt-6.1-sol`,
+  agent `supply-chain-resilience-advisor`, exact version `3`.
+* Scope: tenant-bound authenticated checks, exact published-definition
+  verification, one new framework conversation and new local synthetic run
+  under `artifacts/local/supply-chain-s032`; CLI/model interaction and
+  inspection of metadata, usage, evidence and durable SQLite outcome.
+* Limits: 20 cumulative model requests, 20 tools, 4,096 output tokens per
+  request; aggregate 100,000-token/EUR 10 post-response monitoring.
+  Conservative estimate uses EUR 20 per million tokens, not actual billing.
+* Human gates: pause for STANDARD/EXPRESS preference; independently pause
+  for approval/rejection of the exact resulting proposal. Operational test
+  consent grants neither choice nor execution approval.
+* Acceptance: actual managed-version response, framework-chosen tool use,
+  exact grounded facts, persisted continuation/usage, human-gated one-time
+  synthetic reservation and mandatory current post-write read-back with
+  historical evidence correctly separated. No shipping or real data.
+* Recovery: stop on unexpected identity/definition drift, failed/uncertain
+  request or tool/evidence failure. Inspect durable effects locally; no
+  blind retry, session rebind/reset or automatic model/thread repair.
+  Report defects before any source/dependency change.
+* Excluded: publication/new agent versions, provisioning/IAM, login-account
+  changes, UI/AG-UI, external telemetry, installs, old-run migration/deletion/
+  resume,   source changes, commits and pushes. No operational work preceded consent.
+
+### Proposed Next Activity After S-032
+
+Design a bounded local testing interface for the now live-verified framework
+agent: chat, observable tool activity, explicit option/approval controls and
+current/historical evidence. Select direct integration versus AG-UI based
+on the agreed learning goals. This is a proposal only, not UI implementation,
+deployment, package installation or another live conversation.
+
 ## S-031 Revision 1 Explicit Agent Factory
 
 * Status: completed locally, 2026-11-04; Q-030 authority consumed.

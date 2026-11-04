@@ -29,6 +29,7 @@ EVALUATIONS = ROOT / "evals" / "resilience_advisor" / "cases.json"
 SDK_PACKAGES = (
     "agent-framework-core", "agent-framework-foundry", "agent-framework-openai",
     "azure-ai-projects", "azure-identity", "openai",
+    "opentelemetry-sdk", "azure-monitor-opentelemetry-exporter",
 )
 
 
@@ -50,6 +51,9 @@ class SessionRecord:
     evaluation_sha256: str
     sdk_versions: dict[str, str]
     model_request_limit: int = 10
+    tool_call_limit: int = 20
+    total_token_limit: int = 100_000
+    spend_eur_limit: int = 10
     format: str = "supply-chain-framework-1"
     run_id: str = field(default_factory=lambda: str(uuid4()))
     running: bool = False
@@ -72,15 +76,22 @@ class CandidateSession:
         self.advisor = AdvisorConversation(
             ToolSession(self.store, DemoActor("demo-planner", DemoRole.PLANNER)),
             pricing=Pricing(Decimal("5"), Decimal("20"), "Conservative demo estimate; not an invoice"),
-            limits=RunLimits(model_requests=record.model_request_limit), decisions=record.decisions,
+            limits=RunLimits(
+                model_requests=record.model_request_limit, tool_calls=record.tool_call_limit,
+                total_tokens=record.total_token_limit, spend_eur=Decimal(record.spend_eur_limit),
+            ), decisions=record.decisions,
             usage=record.usage, seen_call_ids=set(record.seen_call_ids), on_event=self._event,
         )
 
     @classmethod
     def initialize(
         cls, directory: Path, deployment: str, *, model_request_limit: int = 10,
+        tool_call_limit: int = 20, total_token_limit: int = 100_000, spend_eur_limit: int = 10,
     ) -> CandidateSession:
-        RunLimits(model_requests=model_request_limit)
+        RunLimits(
+            model_requests=model_request_limit, tool_calls=tool_call_limit,
+            total_tokens=total_token_limit, spend_eur=Decimal(spend_eur_limit),
+        )
         snapshot = load_snapshot()
         record = SessionRecord(
             deployment=deployment, provenance=provenance(deployment),
@@ -88,6 +99,8 @@ class CandidateSession:
             evaluation_sha256=asset_fingerprint(EVALUATIONS),
             sdk_versions={name: version(name) for name in SDK_PACKAGES},
             model_request_limit=model_request_limit,
+            tool_call_limit=tool_call_limit, total_token_limit=total_token_limit,
+            spend_eur_limit=spend_eur_limit,
         )
         directory.mkdir(parents=True, exist_ok=False)
         candidate = cls(directory, record)

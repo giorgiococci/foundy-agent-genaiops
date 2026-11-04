@@ -1,8 +1,90 @@
 ---
 title: "Logical Architecture Research for supply-chain-resilience"
 description: "S-004 comparison, freshly verified official evidence, proposed boundaries, and unresolved design choices."
-ms.date: "2026-11-03"
+ms.date: "2026-11-04"
 ---
+
+## S-034 - Shared Policy and Actual Trace Ingestion
+
+* Date: 2026-11-04
+* Authority: Q-034 and S-034 revision 1
+* Outcome: shared tracing implemented; all seven live spans verified in
+  the existing linked Application Insights
+* Sources: [implementation follow-up](../../../../docs/research/sources.md#shared-tracing-implementation-follow-up)
+* Execution evidence: [A-022](../implementation/log.md#a-022---s-034-shared-per-agent-observability)
+
+Installed framework global sensitive switches cannot serve as per-agent
+policy. A task-local scope plus sampler/correlation processor and allowlisted
+export supports off, metadata and selected synthetic content independently.
+Native sensitive capture stays globally off; existing agent/chat/tool spans
+remain the instrumentation source. One application parent includes final
+validation. No speculative multi-agent registry or inheritance is needed.
+Offline native and concurrent-policy tests prove isolation; a real threaded
+batch-export test also verifies complete flush after context exit.
+
+The actual linked Insights connection uses `ProjectManagedIdentity` with
+its connection string in metadata. Projects 2.7's convenience method rejects
+that layout, before any conversation/inference. Public `connections.list/get`
+supports explicit handling of the observed layout and API-key connections.
+Unsupported/ambiguous/missing layouts fail closed; connection values were
+never displayed, stored in candidate artifacts or copied into tracking.
+
+The sole live read-only case used two model requests and three tools.
+Actual linked-resource query results eventually contained all seven expected
+spans for trace `cc4f5d7e2c1e90743c06f80ccfbf0001`, with parent/run/
+conversation/managed-version correlation and selected content-presence flags.
+Initial partial visibility was ingestion delay, not a basis for replaying
+inference or claiming missing tool instrumentation. Queries remained scoped
+to that trace, and no transcripts/payloads were copied into tracking.
+Backend ingestion is established; independent portal rendering is not.
+
+## S-033 - Why Live Conversations Are Not Visible as Foundry Traces
+
+* Date: 2026-11-04
+* Authority: user's 09:00 +01:00 diagnostic question; local/public reading only
+* Status: completed explanation; no implementation or cloud inspection
+* Sources: [fresh observability check](../../../../docs/research/sources.md#framework-tracing-diagnostic-follow-up)
+
+The current application emits local metadata to `events.jsonl` through the
+session event callback. No application Python source configures OpenTelemetry
+providers, Azure Monitor export or content recording. The manifest contains
+framework/Projects/Identity/OpenAI packages, not Azure Monitor exporters.
+Actual application-environment inspection finds `opentelemetry-api==1.45.1`,
+but no `opentelemetry-sdk`, `azure-monitor-opentelemetry` or Azure Monitor
+exporter. The default tracer provider is `ProxyTracerProvider`. Checked
+exporter endpoint/connection-string environment variables are absent; only
+presence was inspected, no configuration values were printed.
+
+The installed environment is decisive; current framework documentation's
+general statement about included OTel dependencies is not proof that its
+optional packages are installed in this application's pinned generation.
+There is no configured application-to-Application-Insights export path.
+Waiting cannot cause these missing client spans to appear retrospectively.
+S-032 deliberately authorized local metadata only, excluding external telemetry.
+
+Fresh Microsoft documentation distinguishes service-side traces for portal
+execution from client-side spans for local model/tool/application calls.
+Foundry's trace view reads exported telemetry in linked Application Insights;
+linking that resource is not equivalent to instrumenting the local process.
+The client tracing guide says traces typically appear after 2-5 minutes
+once configured, not a visibility SLA or an explanation for missing export.
+Persisted Conversations and exported distributed traces are distinct stores.
+Trace metadata and full message/tool payload capture are also distinct:
+content recording is an explicit sensitive-data choice, not a prerequisite
+for basic tracing.
+
+Recommended next increment: assess/configure the pinned framework's supported
+OTel provider and Azure Monitor exporter, target the project's linked Insights
+resource without exposing its connection string, correlate agent identity,
+conversation and run, flush on CLI shutdown, and validate one new bounded
+live trace. Avoid duplicate model instrumentation. Keep sensitive content off
+unless separately agreed even for synthetic data. Existing run telemetry
+cannot be retroactively reconstructed by waiting; do not replay writes.
+
+No Azure configuration, ingestion, portal filters or RBAC were inspected:
+the user's linked-Insights statement is accepted as context, not independently
+verified. Server-side trace presence is not established by this local diagnosis.
+No environment/package/code/cloud/run changes occurred.
 
 ## S-030 - Installed Framework API and Safety Verification
 

@@ -21,13 +21,18 @@ from supply_chain.agents.resilience_advisor.agent import create_agent
 from supply_chain.agents.resilience_advisor.definition import definition, provenance
 from supply_chain.domain import ToolError
 from supply_chain.session import CandidateSession
+from supply_chain.observability import Mode, TelemetryPolicy, linked_insights_connection_string, start_azure_tracing
 
 
-async def chat(candidate: CandidateSession, message: str, endpoint: str, tenant: str, agent_version: str) -> dict[str, object]:
+async def chat(
+    candidate: CandidateSession, message: str, endpoint: str, tenant: str,
+    agent_version: str, *, telemetry: Mode = "off",
+) -> dict[str, object]:
     candidate.ensure_ready()
     if not message.strip():
         raise ToolError("empty_message", "A nonempty planner message is required.")
     record = candidate.record
+    candidate.advisor.telemetry_policy = TelemetryPolicy(telemetry)
     if record.agent_version is not None and (record.agent_version != agent_version or record.endpoint != endpoint):
         raise ToolError("agent_mismatch", "The session is bound to another published version or project.")
     async with AzureCliCredential(tenant_id=tenant, process_timeout=60) as credential:
@@ -38,16 +43,24 @@ async def chat(candidate: CandidateSession, message: str, endpoint: str, tenant:
             if (published.version != agent_version
                     or published.definition.as_dict() != definition(record.deployment).as_dict()):
                 raise ToolError("candidate_unpublished", "The exact published version does not match this candidate; no inference is permitted.")
-            async with create_agent(project, agent_version, conversation=candidate.advisor) as agent:
-                if candidate.framework_session is None:
-                    record.endpoint = endpoint
-                    record.agent_version = agent_version
-                    record.running = True
-                    candidate.save()
-                    candidate.framework_session = await agent.create_conversation(session_id=record.run_id)
-                    record.running = False
-                    candidate.save()
-                return await candidate.reply(agent, message)
+            tracing = start_azure_tracing(
+                await linked_insights_connection_string(project)
+            ) if telemetry != "off" else None
+            try:
+                async with create_agent(project, agent_version, conversation=candidate.advisor) as agent:
+                    if candidate.framework_session is None:
+                        record.endpoint = endpoint
+                        record.agent_version = agent_version
+                        record.running = True
+                        candidate.save()
+                        candidate.framework_session = await agent.create_conversation(session_id=record.run_id)
+                        record.running = False
+                        candidate.save()
+                    result = await candidate.reply(agent, message)
+                    return result
+            finally:
+                if tracing is not None:
+                    tracing.close()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -62,8 +75,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--endpoint", default=os.environ.get("FOUNDRY_PROJECT_ENDPOINT"))
     parser.add_argument("--tenant", default=os.environ.get("FOUNDRY_TENANT_ID"))
     parser.add_argument("--agent-version")
-    parser.add_argument("--model-request-limit", type=int, choices=[10, 20], default=10,
+    parser.add_argument("--telemetry", choices=["off", "metadata", "content"], default="off",
+                        help="Export selected per-agent traces to linked Insights; content is for synthetic data only.")
+    parser.add_argument("--model-request-limit", type=int, choices=range(1, 21), default=10,
                         help="Initial candidate allowance; does not change an existing session.")
+    parser.add_argument("--tool-call-limit", type=int, default=20)
+    parser.add_argument("--total-token-limit", type=int, default=100_000)
+    parser.add_argument("--spend-eur-limit", type=int, default=10)
     args = parser.parse_args(argv)
     try:
         if args.command in ("definition", "init") and not args.deployment:
@@ -78,6 +96,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "init":
             candidate = CandidateSession.initialize(
                 directory, args.deployment, model_request_limit=args.model_request_limit,
+                tool_call_limit=args.tool_call_limit, total_token_limit=args.total_token_limit,
+                spend_eur_limit=args.spend_eur_limit,
             )
             result = candidate.inspect()
         else:
@@ -89,7 +109,10 @@ def main(argv: list[str] | None = None) -> int:
                 elif args.command == "chat":
                     if not all((args.message, args.endpoint, args.tenant, args.agent_version)):
                         raise ToolError("missing_configuration", "Chat needs message, explicit endpoint/tenant and a published agent version.")
-                    result = asyncio.run(chat(candidate, args.message, args.endpoint, args.tenant, args.agent_version))
+                    result = asyncio.run(chat(
+                        candidate, args.message, args.endpoint, args.tenant, args.agent_version,
+                        telemetry=args.telemetry,
+                    ))
                 else:
                     candidate.ensure_ready()
                     conversation = candidate.advisor

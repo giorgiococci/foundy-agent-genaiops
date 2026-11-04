@@ -24,6 +24,97 @@ approval of the assistant's initial scenario or architecture.
   framework/advisor tests passed. Local authority consumed; no cloud test
   or old-run transition occurred.
 
+## Q-031 - Fresh Live Agent Framework Case
+
+* Date: 2026-11-04
+* Status: answered
+* Reason: user requests proceeding to the test after the local migration
+  and factory extraction; completed local steps grant no cloud authority.
+* Recommendation: authorize S-032 revision 1's one new conversation against
+  existing managed v3 in `ai-aif-demo-prg-01`, deployment `gpt-6.1-sol`,
+  explicit recorded tenant and new `artifacts/local/supply-chain-s032`.
+* Bounds: 20 cumulative model requests, 20 tools, 4,096 output tokens per
+  request; post-response 100,000-token/EUR 10 monitoring, not a billing cap.
+* Human boundary: separate later planner preference and exact-proposal approval.
+* Alternatives: authorize declared live case, or defer it.
+* Exclusions: new publication/resources/IAM, UI, installs/source changes,
+  old-run transition, commits/pushes.
+* Actual answer: native `ask_user` returned `authorize` for the declared
+  S-032 revision 1 live perimeter.
+* Interpretation: execute only this new bounded case. Neither planner option
+  nor exact-proposal approval follows from operational consent.
+* Outcome: S-032 completed successfully within bounds; nine requests/twelve
+  tools/37,168 tokens, estimate EUR 0.74336. Authority consumed.
+
+## Q-032 - Planner Preference for the Live Framework Case
+
+* Date: 2026-11-04
+* Status: answered
+* Context: S-032's actual v3 agent investigated with snapshot, policy and
+  comparison, then requested cost-versus-margin preference.
+* Run: `4be32fdd-8618-4cff-9814-a1129005df69`; two requests, three tools,
+  3,530 tokens, conservative estimate EUR 0.0706; usage reconciled.
+* Alternatives: STANDARD costs 90, completion day 3, margins C-1/C-2 0/1;
+  EXPRESS costs 95, completion day 2, margins 1/2. Both move 40 synthetic
+  boards within ceiling 100. No unique preference is assumed.
+* Boundary: this answer selects the one-case option only; it is not exact
+  proposal approval or a permanent policy. No proposal/request exists.
+* Actual answer: native `ask_user` returned `STANDARD`.
+* Interpretation: record this option through the trusted local selection
+  event and continue the same bounded conversation toward a pending proposal.
+  Reservation remains forbidden until separate exact-proposal approval.
+
+## Q-033 - Exact STANDARD Proposal Approval for S-032
+
+* Date: 2026-11-04
+* Status: answered
+* Exact proposal: `8cf76b82-25fd-40d6-98f6-795a5d3a43fa`, snapshot 1,
+  policy `P-1:1`, 40 BOARD-1 from W-B to W-A, STANDARD, cost 90 under ceiling
+  100, arrival day 2, completion day 3, C-1/C-2 margins 0/1 days.
+* Current facts: source 80 on hand / 30 reserved / 50 available; destination
+  20. No request or stock mutation. Trusted selected option is STANDARD.
+* Proposed effect: approve this exact ID through the human-only operation;
+  allow the agent to request one idempotent source reservation of 40 boards,
+  then read the durable result. Expected source 80/70/10, destination 20.
+* This is neither physical shipping nor receipt, purchasing or production.
+* Alternatives: approve, reject, or pause without a human decision.
+* Usage: five requests, seven tools, 14,120 tokens, conservative EUR 0.2824;
+  within Q-031 limits. No operational allowance extension is requested.
+* Actual answer: native `ask_user` returned `approve` for the displayed
+  exact ID and synthetic reservation.
+* Interpretation: record human approval for this proposal only and continue
+  the same bounded conversation through reservation and durable read-back.
+* Outcome: exactly one request `beb714bc-e587-4c45-8486-e7796962e3dd`;
+  final answer and mandatory read-back passed. Source 80/70/10,
+  destination 20. This approval does not authorize another proposal/run.
+
+## Q-034 - Per-Agent Content Policy and Observability Validation Scope
+
+* Date: 2026-11-04
+* Status: answered
+* User request, faithful English summary: implement tracing with shared
+  cross-agent infrastructure and per-agent choice of logged data, without
+  overengineering.
+* Proposed implementation: S-034 revision 1, common setup/export and a small
+  per-agent disabled/metadata/content policy; no custom agent framework.
+* Decision 1: advisor metadata only, or explicit opt-in synthetic messages
+  and tool payloads. Safe default is metadata; credentials are always excluded.
+* Decision 2: local implementation/dependencies/offline validation only,
+  or also authorize linked-Insights discovery/export and one new bounded
+  read-only live case in the previously declared project/tenant/model/v3,
+  with five requests/ten tools/30,000-token/EUR 2 monitoring and scoped trace
+  ingestion queries. Existing runs remain untouched.
+* No selected default or assumed answer is recorded as consent.
+* Actual answer: native `ask_user` returned `synthetic_content` and
+  `live_readonly`.
+* Interpretation: authorize S-034 revision 1 implementation/dependencies,
+  explicit synthetic advisor content export and the declared bounded
+  read-only live/Insights verification. No writes or historical-run transition.
+* Outcome: S-034 completed; the declared authority is consumed. One actual
+  read-only live conversation produced all seven expected spans in linked
+  Insights. No proposals/reservations or historical-run transitions occurred.
+  See [A-022](implementation/log.md#a-022---s-034-shared-per-agent-observability).
+
 ## Q-029 - Direct Agent Framework Migration and Compatible SDKs
 
 * Date: 2026-11-03

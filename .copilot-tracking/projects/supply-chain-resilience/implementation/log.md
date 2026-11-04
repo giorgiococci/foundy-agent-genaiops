@@ -6,6 +6,206 @@ ms.date: "2026-11-04"
 
 ## Activity Log
 
+## A-022 - S-034 Shared Per-Agent Observability
+
+* Date: 2026-11-04
+* Authority: S-034 revision 1 and Q-034 (`synthetic_content`, `live_readonly`)
+* Status: completed; local checks and full live trace ingestion verified
+* Branch: existing `feat/agent-framework`; no commits or pushes
+
+Added shared trace setup, task-local off/metadata/content policy, native
+span correlation, bounded synthetic turn/tool payload capture and allowlisted
+export. Native framework sensitive recording remains globally disabled.
+The advisor owns its policy; no agent registry, base class or second agent
+was introduced. CLI tracing defaults to off and flushes on both success
+and errors. Export failure is explicit; it must never replay an inference.
+Linked destination credentials, raw session state and exception messages
+are not exported. Automatic logging/HTTP/metric instrumentation, auxiliary
+exporter workers and offline retry storage are not enabled.
+
+Added compatible OTel SDK 1.45.1 and Azure Monitor exporter 1.0.0b58
+(beta) after manifest changes. The configured package feed lacked SDK
+1.45.2; installing compatible 1.45.1 succeeded and `pip check` is clean.
+Persisted lower per-run request/tool/token/spend limits for the authorized
+case; defaults and existing business/human/evidence guards remain unchanged.
+
+All 85 framework/advisor/observability tests pass, including 14 new tracing
+tests; all 34 independent SDK-free tests and ten documentary/link tests
+pass. In-memory export proves actual native agent/chat/tool spans, shared
+trace/run/conversation/managed-version correlation, concurrent policy
+isolation, off suppression, selected content, redaction/truncation and
+explicit failure/flush lifecycle. A sampler regression initially discarded
+creation-time native tool attributes; returning the input attributes from
+the sampler fixed the cause and the native-span assertions now pass.
+Pylance verifies syntax and three compatible advisor-constructor call sites.
+Its selected interpreter still cannot resolve `agent_framework.observability`;
+no complete dependency-aware editor type-check is claimed.
+
+Read-only Azure preflight verifies the declared tenant and subscription.
+The SDK identifies linked Insights `ai-ai-demo-01` in `rg-ai-demo`, app ID
+`b9fddc55-43ec-4cfa-afcb-92e25e345f48`. The connection string is not printed
+or persisted. A guessed resource-group lookup failed; subsequent exact-name
+discovery also exposed an unrelated stale CLI default group. An empty
+process-local default resolved the named account without changing user
+configuration or account selection.
+
+One new read-only S-034 case and trace-scoped ingestion verification remain
+pending; no live inference or export success is claimed at this checkpoint.
+S-026 and S-032 artifacts remain unchanged.
+
+The first CLI attempt stopped during destination discovery, before creating
+any Foundry conversation or invoking a model/tool. SDK 2.7's convenience
+method accepts only `ApiKeyCredentials`; the actual linked AppInsights
+connection uses discriminator `ProjectManagedIdentity` and stores
+`ApplicationInsightsConnectionString` in metadata. Only credential types/
+presence flags were inspected, never the value.
+Shared discovery now uses public `connections.list/get(include_credentials=True)`
+and explicitly supports that observed layout plus typed API-key credentials.
+Missing/ambiguous/unsupported layouts fail closed. Two regression tests
+cover the actual SDK models and layouts; all 87 framework/advisor/tracing
+tests now pass, including 16 observability tests.
+
+The unused local run `801e1dbf-695a-4c7b-83f3-872e23997437` in
+`artifacts/local/supply-chain-s034` is preserved with zero requests/tools,
+`running=false` and no native conversation. It is not rebound after the fix.
+The sole actual live case will use a fresh `supply-chain-s034-trace` directory;
+no failed inference is retried and no historical artifacts are changed.
+
+### S-034 Live Acceptance and Closure
+
+The fresh source-bound run is `3d76b303-14d3-49f4-9bbc-30ab9d9a89e6`,
+source hash `4515903c0d2dc2c9010437d98ce2bf51e9ac25fdffa41bdea94dfe5b8c98eaa2`.
+Its persisted limits are five requests, ten tools, 30,000 total tokens,
+4,096 output per request and EUR 2 post-response monitoring.
+Exact managed v3 definition verification passed before creating conversation
+`conv_071fdfaffd6a052400gEPfRdg7iCInnGw43WZQGaH93cVqDQ1k`.
+The agent called snapshot/policy/comparison and returned a grounded comparison
+requesting human preference. It created no proposal or reservation.
+
+Trace `cc4f5d7e2c1e90743c06f80ccfbf0001` was exported with content mode.
+The linked Application Insights resource is:
+`/subscriptions/39a7dab3-b9c0-4eeb-a13b-5dfac542c2fd/resourceGroups/rg-ai-demo/providers/microsoft.insights/components/ai-ai-demo-01`.
+Queries were scoped to this exact operation ID and a one-hour time window,
+projecting metadata/content-presence flags rather than message/tool payloads.
+The first query used workspace table names in resource context and failed
+semantically; App Insights `requests`/`dependencies` tables are correct here.
+Initial queries found three spans. After allowing ingestion delay, the direct
+Application Insights query API returned all seven, with executable assertions:
+
+| Span | Count | Verified content |
+| ---- | ----- | ---------------- |
+| `supply_chain.turn` | 1 | Synthetic input and validated output |
+| `invoke_agent supply-chain-resilience-advisor` | 1 | Metadata only |
+| `chat gpt-6.1-sol-2026-09-29` | 2 | Metadata and native usage |
+| `execute_tool` | 3 | Exact call IDs, arguments and results |
+
+Every span succeeded and carries the same run/conversation and managed
+`supply-chain-resilience-advisor:3` identity. Parent IDs form the turn/agent/
+model-and-tool hierarchy. Content on the turn and tools is intentional;
+intermediate native chat content and system instructions are not captured.
+The actual backend ingestion is verified; the portal UI was not opened.
+
+Independent read-only SQLite checks assert zero proposals and requests;
+W-B stays 80 on hand / 30 reserved / 50 available and W-A 20.
+There is no selected option, approval or proposal ID. Native reload/readiness
+passes, `running=false` and usage is reconciled. Eleven local metadata events
+include exactly one `telemetry.started` trace reference and no human decision.
+
+Actual usage: two model requests, three tools, input 2,405/output 956 =
+3,361 tokens. Conservative upper model estimate EUR 0.06722, not an invoice
+and excluding Insights ingestion/retention. All declared bounds hold.
+An added threaded batch-export regression verifies all seven spans still
+export after leaving the task-local agent scope; all 17 observability tests pass.
+
+Final application checks pass: 88 framework/advisor/tracing tests and 34
+SDK-free tests on the independent interpreter (122 total). All ten repository
+documentary/link tests, `pip check` and whitespace checks pass. The link test
+caught a relative-path depth error in D-017; its targeted correction is
+verified. Final runtime-source/SDK provenance still matches the live run,
+without rebind. Pylance verifies generated syntax and all nine CLI chat call
+sites; the documented unresolved framework import in its editor environment
+prevents claiming a complete dependency-aware editor type-check.
+
+S-034 revision 1 is completed and its authority is consumed. No additional
+live turn/query follows automatically. No agent publication, infrastructure/
+IAM/account change, UI, historical-run reset/rebind, commit or push occurred.
+
+## A-021 - S-032 Live Framework Validation
+
+* Date: 2026-11-04
+* Authority: Q-031 explicit operational consent, S-032 revision 1
+* Status: completed; bounded live STANDARD case passed end to end
+* Scope: existing managed advisor v3, approved project/tenant/deployment,
+  one new framework conversation and synthetic local run; no publication
+
+CLI tenant check matches the declared tenant and subscription
+`39a7dab3-b9c0-4eeb-a13b-5dfac542c2fd`; no account selection/login change.
+Initialized new `artifacts/local/supply-chain-s032` without overwrite:
+run `4be32fdd-8618-4cff-9814-a1129005df69`, source hash
+`93acfc813cfcaef9cad816982abf1c53a7c7ee302bf77081187513e494d2aab2`,
+definition hash `46e916cf4ce54c524d41472d24e506d83d26eea91c9b1d001623502fed254da2`.
+Exact v3 definition verification succeeded before framework conversation creation.
+Conversation: `conv_01eac5775d3b907400OGYGM6XDDrp4uzxBGT7nDIU7ABOxd3ig`.
+
+The actual agent requested snapshot, policy and comparison in one model batch;
+local functions executed sequentially through framework middleware. The next
+response correctly explained shortage 40, delayed assembly day 7, STANDARD
+90/day 3/margins 0/1 and EXPRESS 95/day 2/margins 1/2, then requested human
+preference. All three evidence objects matched real outputs.
+No proposal or request exists; source 80/30/50 and destination 20 unchanged.
+
+First-turn usage: two model requests, three tools, input 2,435/output 1,095,
+total 3,530 tokens, conservative upper estimate EUR 0.0706.
+Local reload/readiness passes; native conversation persisted, `running=false`,
+usage reconciled. Metadata trace confirms correlated service/tool calls.
+The framework's warning about omitting local tool declarations is expected:
+the stored managed definition owns schemas, local functions supply dispatch.
+Pause for Q-032; no selection or approval is inferred from older runs.
+
+Q-032 explicitly selected STANDARD. Recorded the trusted local selection,
+then continued the same conversation. The agent refreshed snapshot/policy/
+comparison and created proposal `8cf76b82-25fd-40d6-98f6-795a5d3a43fa`:
+40 BOARD-1 W-B to W-A, cost 90, arrival day 2, completion day 3.
+It returned exact grounded details and waited for human approval.
+Durable lookup confirms proposed status, approved=false, no request or stock
+mutation. Source remains 80/30/50; destination 20.
+Cumulative usage: five requests, seven tools, input 11,823/output 2,297,
+total 14,120 tokens, estimated upper cost EUR 0.2824; usage reconciled.
+Pause for Q-033 exact-ID approval; the one-case preference does not authorize
+reservation.
+
+Q-033 explicitly approved the exact proposal and synthetic reservation.
+Recorded human approval through the local application operation, then
+continued the same managed-v3 conversation. The agent chose snapshot,
+policy and comparison refresh, then `execute_approved_transfer`, followed
+by `read_transfer_result`. Its final answer passed application validation,
+returning one exact current durable result and three separately labeled
+historical fact objects. It correctly distinguished reservation from
+shipping/receipt and planned dates from completed events.
+
+Final request: `beb714bc-e587-4c45-8486-e7796962e3dd`.
+Read-only SQLite confirms exactly one proposal and one request. Stock is
+W-B 80 on hand / 70 reserved / 10 available; W-A remains 20. Snapshot
+pending-request count is one. Trace assertions confirm human approval
+precedes execution, which precedes completed durable read-back; the execution
+tool was called exactly once.
+
+Final cumulative usage: nine model requests, twelve tools, input 33,484/
+output 3,684 = 37,168 tokens. Conservative upper estimate EUR 0.74336,
+not actual billing. All usage is reconciled, `running=false`, native session
+reload/readiness passes and all declared operational limits were respected.
+The 44 local metadata events contain no prompt/arguments/result/message
+payload fields. All ten documentary/link checks passed.
+
+S-032 revision 1 is completed for this positive live case; its authority is
+consumed. No further model turn or operation follows automatically.
+No source/dependency change was needed, no publication/provisioning/IAM
+change or run reset/retry occurred. S-026 and its historical failed acceptance
+remain untouched. This proves this managed-v3 framework integration and
+current/historical handoff for one case, not general model quality or UI support.
+The one proposed next activity is bounded local testing-UI design, without
+implementation, hosting or cloud spend unless separately authorized.
+
 ## A-020 - S-031 Explicit Agent Factory
 
 * Date: 2026-11-04

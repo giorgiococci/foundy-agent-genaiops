@@ -1,17 +1,161 @@
 ---
 title: "State of supply-chain-resilience"
-description: "S-031 explicit agent factory completed locally; fresh bounded live validation remains separately proposed."
+description: "S-034 shared per-agent observability completed with all seven live spans verified in linked Insights."
 ms.date: "2026-11-04"
 project_id: "supply-chain-resilience"
 kind: "foundry-solution"
 phase: "implementation"
-step_id: "S-031"
+step_id: "S-034"
 step_revision: 1
 step_status: "completed"
 autonomy: "single-step"
 ---
 
 ## Objective and Resume Point
+
+S-034 revision 1 is completed; Q-034's operational authority is consumed.
+One shared trace provider/exporter and task-local per-agent off/metadata/
+synthetic-content policy are implemented, without business-agent base classes
+or a registry. CLI tracing defaults to off; native global sensitive capture
+remains disabled. Selected turn/tool content does not enable another agent's
+payload capture. Export failure is explicit; shutdown flushes on errors too.
+
+The sole actual live case in `artifacts/local/supply-chain-s034-trace`
+passed: run `3d76b303-14d3-49f4-9bbc-30ab9d9a89e6`, conversation
+`conv_071fdfaffd6a052400gEPfRdg7iCInnGw43WZQGaH93cVqDQ1k`,
+trace `cc4f5d7e2c1e90743c06f80ccfbf0001`. After initial partial ingestion,
+trace-scoped queries verified all seven successful spans in linked Insights
+`ai-ai-demo-01`: one turn, one agent, two model calls and three tools.
+IDs, parent relationships, run/conversation/managed-version correlation and
+selected content-presence flags match. The portal UI was not independently
+opened; the actual linked backend ingestion, not just local export, is proven.
+
+Usage: two requests, three tools, input 2,405/output 956 = 3,361 tokens;
+conservative estimated model cost EUR 0.06722, excluding Insights charges.
+All declared bounds hold. Zero proposals/requests, source 80/30/50 and
+destination 20; no selection/approval, `running=false`, usage reconciled
+and native-session reload/readiness verified.
+The unused pre-inference directory is preserved without reset/rebind.
+S-026 and S-032 remain untouched.
+See [A-022](implementation/log.md#a-022---s-034-shared-per-agent-observability).
+
+Final checks pass: 88 framework/advisor/tracing tests plus 34 SDK-free tests
+on the independent interpreter, ten documentary/link tests, `pip check`
+and patch whitespace. Runtime source/SDK fingerprints still exactly match
+the completed live case, with no rebind. Pylance syntax/signature checks pass;
+the known editor-interpreter unresolved framework import remains documented,
+not presented as a successful full editor type-check.
+
+No new version, infrastructure/IAM/account change, UI, commit or push occurred.
+No more inference/export/queries are authorized by this completed step.
+One possible next activity is local testing-UI design under its own contract;
+do not implement or deploy it automatically.
+The following paragraphs retain execution history, not active authorizations.
+
+On 2026-11-04 at 09:03 +01:00 the user explicitly requests shared tracing
+implementation with per-agent logging choices and minimal complexity.
+S-034 revision 1 proposes one common OTel/Azure Monitor setup and a small
+per-agent policy; no superclasses or registry. Q-034 settles advisor
+content capture and local-only versus bounded live export/verification.
+The installed framework's sensitive-data switches are process-global:
+do not use global toggles as per-agent policy. Q-034 explicitly returned `synthetic_content` and `live_readonly`, authorizing
+the declared implementation, application dependencies and bounded export/
+read-only model/Insights verification. No proposal/reservation or historical
+run resume/rebind is permitted. See the [contract](plan/plan.md#s-034-revision-1-shared-observability-with-per-agent-policy).
+Local implementation now passes 85 framework/advisor/observability tests,
+34 independent SDK-free tests and all ten documentary/link checks.
+`pip check` is clean. OTel SDK 1.45.1 and Azure Monitor exporter 1.0.0b58
+are installed in the application environment. The feed did not contain
+SDK 1.45.2; compatible 1.45.1 was selected instead, without bypassing bounds.
+Per-agent policy is task-local; native sensitive capture stays globally off.
+The CLI defaults to off and supports explicit metadata/content export.
+
+Authenticated read-only preflight confirms the declared tenant/subscription
+and linked Insights `ai-ai-demo-01` in `rg-ai-demo`. Only nonsecret resource
+identities were displayed; the connection string was not printed or saved.
+The CLI's unrelated default resource group caused one discovery failure;
+process-local empty default-group configuration resolved the exact account.
+No account/login/resource/IAM configuration was changed.
+Proceed only with the one fresh S-034 read-only case, then trace-scoped
+ingestion verification. The live acceptance remains pending.
+Initial destination discovery failed before any conversation/model/tool
+operation because SDK 2.7's convenience method rejects the observed
+`ProjectManagedIdentity` connection layout. The shared public-connections
+implementation now supports that layout explicitly and passes all 87
+framework/advisor/tracing tests (16 observability). The unused local S-034
+run has zero requests/tools and no native conversation; preserve it rather
+than rebinding its source hash. Use fresh `supply-chain-s034-trace` for the
+single actual live conversation, then verify only its trace ingestion.
+See [A-022](implementation/log.md#a-022---s-034-shared-per-agent-observability).
+The following S-033 diagnosis remains historical.
+
+S-033 revision 1 completes the user's 2026-11-04 09:00 +01:00 tracing
+question using local inspection and fresh public documentation.
+The application's metadata callback writes only local events. Installed
+environment has OTel API but no SDK/Azure Monitor exporter; no provider/
+export setup exists in source. Waiting alone cannot produce absent local
+agent/tool spans in linked Application Insights.
+Conversations, trace metadata and opt-in sensitive message capture are
+distinct. Typical 2-5 minute visibility guidance applies after export setup.
+See [S-033 evidence](research/evidence.md#s-033---why-live-conversations-are-not-visible-as-foundry-traces).
+
+No Azure state, ingestion, portal filters or access permissions were inspected;
+do not claim a server-side trace diagnosis. No code/packages/environment,
+cloud or existing-run changes occurred. Proposed next step is a bounded
+observability increment before UI work, with explicit destination/content
+policy and separately authorized validation. No such implementation/export/
+live case has been approved. The completed S-032 record follows.
+
+S-032 revision 1 is completed end to end; Q-031 operational authority is
+consumed. Q-032 selected STANDARD, Q-033 independently approved exact
+proposal `8cf76b82-25fd-40d6-98f6-795a5d3a43fa`.
+The managed v3 agent investigated, proposed, executed once after human
+approval and read its durable result through Agent Framework.
+Final answer validation passed with current and historical evidence separated.
+Request `beb714bc-e587-4c45-8486-e7796962e3dd`; exactly one proposal/request.
+W-B 80/70/10, W-A 20; no shipping or receipt.
+
+Final usage: nine requests, twelve tools, input 33,484/output 3,684 =
+37,168 tokens; estimated upper cost EUR 0.74336. All usage reconciled,
+`running=false`, native session reload/readiness passes. Trace assertions
+verify approval before execution, read-back afterward, and exactly one
+execution call. All ten documentary/link tests pass.
+See [A-021](implementation/log.md#a-021---s-032-live-framework-validation).
+
+No source/dependency change, publication, provisioning/IAM, old-run transition,
+commit or push occurred. No further live turn is authorized. S-026 remains
+historical and untouched. One next proposed activity: bounded local design
+of a testing UI, not implementation/deployment or more cloud access.
+The following paragraphs retain in-progress history, not pending approvals.
+
+The user requests testing on 2026-11-04 at 08:52 +01:00.
+S-032 revision 1 runs one fresh live framework conversation against the
+existing managed v3; Q-031 returned explicit cloud/spending authorization.
+New directory: `artifacts/local/supply-chain-s032`; never reuse S-026.
+Allow at most 20 cumulative model requests, 20 tool calls, 4,096 output
+tokens per request and post-response 100,000-token/EUR 10 monitoring.
+Planner selection and exact-proposal approval remain separate later gates.
+Begin with preflight and new run initialization only; stop for separate
+planner selection and exact-proposal approval when requested by the agent.
+Actual first turn passed. Run `4be32fdd-8618-4cff-9814-a1129005df69`,
+conversation `conv_01eac5775d3b907400OGYGM6XDDrp4uzxBGT7nDIU7ABOxd3ig`.
+Two model requests, three tools, input 2,435/output 1,095 = 3,530 tokens;
+estimated upper cost EUR 0.0706. No proposal/request, source remains
+80/30/50 and destination 20. Native continuation and source drift checks pass,
+`running=false`, usage reconciled. Q-032 selected STANDARD for this case;
+record the trusted choice and continue to a proposal, then pause for exact
+human approval. No execution approval exists.
+Actual proposal `8cf76b82-25fd-40d6-98f6-795a5d3a43fa` is pending:
+40 BOARD-1 W-B to W-A, STANDARD, cost 90, completion day 3, margins 0/1.
+Local durable lookup matches, stock remains source 80/30/50 and destination
+20, no request, approved=false. Cumulative usage is five requests/seven tools,
+input 11,823/output 2,297 = 14,120 tokens, estimate EUR 0.2824.
+Native session is ready, not running, usage reconciled. Q-033 explicitly
+approved this exact proposal and synthetic reservation. Record the human
+application event, then continue the same bounded agent conversation;
+stop on any uncertainty rather than retrying.
+See the [step contract](plan/plan.md#s-032-revision-1-fresh-live-framework-validation).
+The following S-031 record is historical.
 
 S-031 revision 1 is complete locally; Q-030 approval is consumed.
 The user's 2026-11-04 08:47 +01:00 acceptance authorized the separation:

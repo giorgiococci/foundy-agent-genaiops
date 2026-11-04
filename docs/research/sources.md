@@ -372,6 +372,46 @@ settlement; application policy now prevents that extra request after failure.
 See the [bounded findings](../../.copilot-tracking/projects/supply-chain-resilience/research/evidence.md#s-030---installed-framework-api-and-safety-verification).
 No live Azure or AG-UI compatibility is claimed by this local verification.
 
+## Framework tracing diagnostic follow-up
+
+* Consulted: 2026-11-04, S-033 local/public diagnostic analysis only
+* Sources:
+  [Agent Framework observability](https://learn.microsoft.com/en-us/agent-framework/agents/observability),
+  [client-side agent tracing](https://learn.microsoft.com/en-us/azure/foundry/observability/how-to/trace-agent-client-side),
+  [tracing setup](https://learn.microsoft.com/en-us/azure/foundry/observability/how-to/trace-agent-setup),
+  [agent monitoring dashboard](https://learn.microsoft.com/en-us/azure/foundry/observability/how-to/how-to-monitor-agents-dashboard)
+* Evidence: local agent/tool spans require instrumentation/provider/export
+  setup; the framework does not install exporters by default. Azure Monitor
+  export feeds Application Insights and Foundry trace views. Linking Insights
+  and persisting a Conversation do not instrument a local application.
+* Timing: the client guide states typical trace visibility in 2-5 minutes
+  after setup; this is not a guaranteed SLA and cannot repair absent export.
+* Privacy: full prompt/response/tool-content recording is separate from
+  trace metadata and requires explicit sensitive-data consideration.
+* Limitations: installed pinned packages, not current documentation alone,
+  determine available APIs/dependencies. Local inspection confirms no OTel
+  SDK or Azure Monitor exporter in this application's environment. No Azure
+  ingestion/permissions/portal-state inspection occurred, and server-side
+  trace availability is not independently established.
+
+## Shared tracing implementation follow-up
+
+* Consulted: 2026-11-04, S-034 and explicit Q-034 authorization
+* Sources: the four official pages in the preceding diagnostic follow-up;
+  [OTel SDK package](https://pypi.org/project/opentelemetry-sdk/),
+  [Azure Monitor exporter](https://pypi.org/project/azure-monitor-opentelemetry-exporter/)
+* Installed implementation evidence: framework core 1.24.0 uses global
+  sensitive settings; native `FunctionTool`/chat/agent spans work with an
+  OTel provider. SDK 1.45.1 and exporter 1.0.0b58 satisfy pinned dependencies.
+  Exporter 1.0.0b58 is a beta package; do not describe it as GA.
+* Implementation: shared provider, task-local per-agent policy and allowlisted
+  trace export. Native sensitive capture remains off; selected synthetic
+  turn/tool content is explicit. No redundant automatic instrumentation.
+* Validation: in-memory native framework spans and concurrent-policy
+  isolation pass. Live ingestion is separately recorded in
+  [A-022](../../.copilot-tracking/projects/supply-chain-resilience/implementation/log.md#a-022---s-034-shared-per-agent-observability);
+  successful local export alone is not proof of portal visibility.
+
 ## Demo discovery supporting sources
 
 Consulted on 2026-11-02 for the pre-project demo comparison. These supplement
