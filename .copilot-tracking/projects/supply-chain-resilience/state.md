@@ -1,17 +1,75 @@
 ---
 title: "State of supply-chain-resilience"
-description: "S-029 clarifies direct SDK rationale and verifies framework support for existing managed agents; migration and cloud work remain unapproved."
-ms.date: "2026-11-03"
+description: "S-031 explicit agent factory completed locally; fresh bounded live validation remains separately proposed."
+ms.date: "2026-11-04"
 project_id: "supply-chain-resilience"
 kind: "foundry-solution"
-phase: "design"
-step_id: "S-029"
+phase: "implementation"
+step_id: "S-031"
 step_revision: 1
 step_status: "completed"
 autonomy: "single-step"
 ---
 
 ## Objective and Resume Point
+
+S-031 revision 1 is complete locally; Q-030 approval is consumed.
+The user's 2026-11-04 08:47 +01:00 acceptance authorized the separation:
+`agent.py` now provides `create_agent(...) -> FoundryAgent`;
+`AdvisorConversation` retains interaction state, human decisions, guarded
+dispatch and evidence checks. CLI and tests use the factory, with no wrapper
+class, alias or old construction method.
+All 71 framework/advisor tests passed; the extended factory-source drift
+regression passed, and all 15 application/test Python files parsed.
+Pylance verifies factory syntax and ten compatible call sites, although
+external SDK types remain unresolved as `Any` in that signature result.
+See [A-020](implementation/log.md#a-020---s-031-explicit-agent-factory).
+
+No behavior/definition/dependency change, cloud access, historical-run
+transition, commit or push occurred. Preserve source-drift protection;
+do not rebind existing runs after the extraction. The next proposed activity
+remains one fresh bounded live framework case under separate consent.
+The S-030 result below remains historical.
+
+S-030 revision 1 is complete locally on `feat/agent-framework`; Q-029's
+local migration authorization is consumed. The actual `FoundryAgent` owns
+function invocation/continuation, with no handwritten loop or legacy fallback.
+Exact managed-version targeting, human events, batch/tool/budget guards,
+current/historical evidence and durable native framework sessions are wired.
+All 105 combined application tests, 34 independent SDK-free tests and ten
+documentary/link checks pass; `pip check` and patch whitespace checks are
+clean, and Python syntax validation passes.
+See [D-016](decisions.md#d-016---direct-microsoft-agent-framework-runtime)
+and [A-019](implementation/log.md#a-019---s-030-direct-agent-framework-migration).
+
+Pylance environment selection did not persist and then its MCP transport
+failed; no successful editor type-check is claimed. The runtime environment
+and actual framework/SDK HTTP path are verified offline. Projects 2.7.0
+is used with the approved framework package generation, satisfying its bounds.
+
+No Azure authentication/access, inference/publication, UI/AG-UI, actual second
+agent, historical-run transition, commit or push occurred. Existing S-026
+artifacts remain untouched; new native-format sessions do not load or migrate
+old runs. Published v3 instruction/schema hashes remain unchanged.
+
+One next proposed activity: a fresh bounded live case through Agent Framework,
+with explicit operational limits and a new local directory/conversation.
+It is not authorized by completed S-030. Do not start it automatically or
+resume S-026. UI work also remains unapproved. The records below are historical.
+
+Q-029 explicitly authorizes S-030 revision 1: create the new local branch,
+update only application dependencies/environment and replace the old runtime
+directly with Agent Framework. No parallel legacy/fallback or cloud actions.
+
+At 17:22 +01:00 the user explicitly requested direct Agent Framework adoption,
+no legacy implementation, and preferably a new branch. The current worktree
+is clean on `main`. Q-029 presents S-030's concrete local contract because
+the current published framework adapter requires Projects below 2.8.0,
+whereas the application pins 2.10.0. Proposed compatible transition uses
+Projects 2.7.0 and a new local `feat/agent-framework` branch.
+No branch, environment, code or cloud changes preceded this question.
+Preserve managed-agent ownership and existing business/approval/evidence/
+budget/uncertainty safeguards. No UI, cloud operation or old-run transition.
 
 S-029 answered the user's 17:19 +01:00 question about not using Microsoft
 Agent Framework. D-012 selected managed versus hosted agent ownership, not

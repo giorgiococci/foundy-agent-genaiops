@@ -1,7 +1,7 @@
 ---
 title: "Questions and Answers for supply-chain-resilience"
 description: "Progressive answers and open business-scenario questions for supply-chain discovery."
-ms.date: "2026-11-03"
+ms.date: "2026-11-04"
 ---
 
 ## Translation Provenance
@@ -9,6 +9,53 @@ ms.date: "2026-11-03"
 English summaries of Italian user answers are labeled translations.
 They are not verbatim English quotations. A selected domain is not
 approval of the assistant's initial scenario or architecture.
+
+## Q-030 - Explicit Agent Factory and Conversation Responsibilities
+
+* Date: 2026-11-04
+* Status: answered through the user's explicit conversational acceptance
+* Context: user asked whether `agent.py` better communicates agent ownership.
+  The recommendation was a factory returning `FoundryAgent`, not merely
+  renaming the stateful class or introducing a wrapper agent class.
+* Actual answer, faithful English translation: "Perfect, that works for me."
+* Interpretation: authorize S-031 revision 1's local factory extraction,
+  caller/tests and related documentation only. No cloud/live/UI authority.
+* Outcome: factory extracted and callers/tests updated; all 71 focused
+  framework/advisor tests passed. Local authority consumed; no cloud test
+  or old-run transition occurred.
+
+## Q-029 - Direct Agent Framework Migration and Compatible SDKs
+
+* Date: 2026-11-03
+* Status: answered on 2026-11-03
+* User request, faithful English translation: switch directly to Agent
+  Framework, do not retain legacy/old code, preferably start a new branch.
+* Accepted direction: replace the handwritten generic Responses loop, not
+  add a second implementation. Preserve the named managed agent, domain/
+  tools, exact human approval, current/historical evidence and uncertainty guards.
+* Verified prerequisite: published `agent-framework-foundry==1.16.0`
+  requires `azure-ai-projects>=2.2.0,<2.8.0`, whereas this application pins
+  2.10.0. Framework core 1.24.0 and OpenAI adapter 1.18.0 are the current
+  compatible package generation; OpenAI 3.38.0 fits its declared bounds.
+* Recommendation: local S-030 revision 1 on a new `feat/agent-framework`
+  branch; change the application dependency manifest to compatible pinned
+  versions including Projects 2.7.0, update only its local environment, replace
+  old runtime/tests without a fallback, and run offline integration tests.
+* Worktree: clean on `main`; no branch or dependency changes yet.
+* Excluded: cloud/authenticated access, inference/publication, UI/AG-UI,
+  provisioning/IAM, run-data migration/deletion/retry, commits and pushes.
+* Alternative: stop before changing dependencies if the SDK transition is
+  not accepted; never ignore dependency constraints with forced installs.
+* Actual answer: explicit native-form authorization for S-030's new local
+  branch, compatible dependencies and complete local migration.
+* Interpretation: execute this local contract only; no cloud/UI work,
+  actual-run migration/deletion, commit or push is authorized.
+* Outcome: S-030 completed locally on `feat/agent-framework`, with one
+  framework runtime, native sessions, approved compatible dependencies and
+  105 passing application tests. See
+  [A-019](implementation/log.md#a-019---s-030-direct-agent-framework-migration)
+  for editor-validation limitations. This local authorization is consumed;
+  no live case or UI implementation follows automatically.
 
 ## Q-024 - Publish and Verify the Agent-Led Candidate
 

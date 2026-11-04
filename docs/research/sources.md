@@ -358,6 +358,20 @@ an application-pattern blog. The limitations of this research are in the
   behavior or AG-UI integration end to end. These need a bounded assessment.
   No packages were installed and no existing agent/session was invoked.
 
+### Local implementation verification on 2026-11-03
+
+Under separately authorized S-030, installed and inspected framework core
+1.24.0, Foundry adapter 1.16.0 and OpenAI adapter 1.18.0 with Projects 2.7.0.
+The [published package metadata](https://pypi.org/project/agent-framework-foundry/1.16.0/)
+requires Projects `>=2.2.0,<2.8.0`. Dependency consistency passes locally.
+Installed implementation and offline HTTP tests verify non-preview versioned
+`agent_reference`, local-only exact function schemas, per-service-call chat
+middleware, native session serialization and sequential local invocation.
+Fatal function middleware can otherwise trigger best-effort hosted-conversation
+settlement; application policy now prevents that extra request after failure.
+See the [bounded findings](../../.copilot-tracking/projects/supply-chain-resilience/research/evidence.md#s-030---installed-framework-api-and-safety-verification).
+No live Azure or AG-UI compatibility is claimed by this local verification.
+
 ## Demo discovery supporting sources
 
 Consulted on 2026-11-02 for the pre-project demo comparison. These supplement

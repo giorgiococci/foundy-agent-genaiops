@@ -1,12 +1,82 @@
 ---
 title: "Implementation Plan for supply-chain-resilience"
 description: "Proposed learning-first increments for a managed Foundry prompt agent with a thin Python driver."
-ms.date: "2026-11-03"
+ms.date: "2026-11-04"
 plan_version: 2
 status: "three-milestone-demo-completed-local-tracing"
 ---
 
 ## Current Version 2 - Three Learning Milestones
+
+## S-031 Revision 1 Explicit Agent Factory
+
+* Status: completed locally, 2026-11-04; Q-030 authority consumed.
+  See [A-020](../implementation/log.md#a-020---s-031-explicit-agent-factory)
+  for offline execution and editor-validation evidence.
+* Authority: user's 08:47 +01:00 acceptance of the single proposed factory/
+  conversation separation, not a new cloud operation
+* Objective: expose managed-agent composition in `agent.py` through a
+  `create_agent` function returning the actual `FoundryAgent`.
+* Scope: extract construction and bindings from the conversation class;
+  update CLI/test callers, source-layout documentation and tracking.
+  Keep conversation state, human events, guards and evidence in the
+  conversation module. Do not add a custom agent wrapper or compatibility alias.
+* Acceptance: actual framework offline tests, schemas/version/options,
+  exact human approval, cumulative limits, evidence and persistence remain
+  valid; source hashing includes the new module. Documentary checks pass.
+* Risk/recovery: imports/callback binding can break during extraction;
+  correct only this refactor and verify with existing tests. Preserve
+  drift checks and all historical artifacts rather than rebinding old runs.
+* Excluded: dependencies, Azure/authentication/inference/publication,
+  UI, runtime behavior changes, session migration, commits and pushes.
+
+## S-030 Revision 1 Direct Agent Framework Migration
+
+* Status: completed locally; Q-029 authority consumed. Actual framework
+  execution, native sessions and 105 offline application tests verified in
+  [A-019](../implementation/log.md#a-019---s-030-direct-agent-framework-migration).
+  Editor type-check could not complete because of environment/transport
+  issues; this limitation is recorded, not reported as a clean check.
+* Objective: one Agent Framework runtime connected to the existing managed
+  prompt-agent identity, not a local replacement agent or parallel legacy loop.
+* Git scope: create local `feat/agent-framework` from the currently clean
+  `main`; no stash, history rewrite, commit or push.
+* Local source scope: application dependency manifest/environment, shared
+  runtime replacement, advisor tool bindings/capability/evidence adapter,
+  durable framework sessions, CLI, regression suites and directly related docs.
+* Dependency scope: published Foundry adapter 1.16.0 requires Projects below
+  2.8.0; use compatible pinned Projects 2.7.0/core 1.24.0/OpenAI adapter
+  1.18.0 generation, retaining compatible identity/OpenAI pins. Install only
+  after manifest change and verify the resolved environment with `pip check`.
+* Acceptance: actual framework execution/function invocation exercised with
+  offline service responses; managed-agent binding and exact tool schemas;
+  trusted human selection/approval, single durable reservation, mandatory
+  post-write result, current/historical evidence, cumulative request/tool/
+  usage limits, metadata-only correlation, persistence/drift and uncertainty
+  stops. SDK-free business suite and documentary checks must remain valid.
+* Retirement: remove custom generic model/function loop and incompatible
+  tests/API surfaces. Do not retain a selectable fallback or migrate/alter
+  actual old runs. Preserve source-independent domain/store/data safeguards.
+* Cost/risk: no model spend; SDK/API and framework middleware differences
+  require local validation. Existing cloud compatibility is not claimed
+  without a later separately authorized live case.
+* Recovery: correct only migration-related defects; if a verified framework
+  limitation blocks required safety, record it and stop rather than bypassing
+  a guard or reinstating a silent fallback. Retain the local branch for review.
+* Excluded: UI/AG-UI implementation, authenticated Azure access, inference,
+  publication, provisioning/IAM, external telemetry, run-data deletion/reset/
+  rebind, installation outside the application environment, commits/pushes.
+
+### Proposed Next Activity After S-030
+
+Verify one fresh bounded live conversation through the framework using the
+unchanged managed v3 definition, a new native-format local directory and
+separate operational consent. Define request/tool/token/spend limits before
+authenticated access; human option selection and exact-proposal approval
+remain independent. Do not resume or migrate S-026. This activity has not
+started and is not authorized by local S-030 completion.
+
+## Earlier Milestone Planning History
 
 Current planning qualification: the S-022 fixed-flow implementation is a
 verified baseline, not fulfillment of the agent-led experience requested

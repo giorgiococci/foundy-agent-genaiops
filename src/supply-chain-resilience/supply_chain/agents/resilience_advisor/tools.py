@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+from typing import TypedDict
 
 from ...domain import DemoActor, ToolError
 from ...store import DemoStore
@@ -13,7 +14,14 @@ from ...store import DemoStore
 LOGGER = logging.getLogger(__name__)
 
 
-def _tool(name: str, description: str, properties: dict[str, object]) -> dict[str, object]:
+class FunctionSpec(TypedDict):
+    name: str
+    description: str
+    strict: bool
+    parameters: dict[str, object]
+
+
+def _tool(name: str, description: str, properties: dict[str, object]) -> FunctionSpec:
     return {
         "name": name, "description": description, "strict": True,
         "parameters": {
@@ -56,7 +64,8 @@ class ToolSession:
                 "error": {"code": "database_error", "message": "Database failure; no successful outcome is claimed."},
             }
 
-    def _dispatch(self, name: str, arguments_json: str) -> dict[str, object]:
+    @staticmethod
+    def validate_arguments(name: str, arguments_json: str) -> dict[str, str]:
         expected = {
             "read_planning_snapshot": (), "read_transfer_policy": (),
             "compare_transfer_options": (), "create_transfer_proposal": ("option",),
@@ -76,6 +85,10 @@ class ToolSession:
             if not isinstance(value, str) or not value.strip():
                 raise ToolError("invalid_arguments", f"{key} must be a nonempty string.")
             values[key] = value
+        return values
+
+    def _dispatch(self, name: str, arguments_json: str) -> dict[str, object]:
+        values = self.validate_arguments(name, arguments_json)
         if name == "read_planning_snapshot":
             return self.store.read_snapshot(self.actor)
         if name == "read_transfer_policy":

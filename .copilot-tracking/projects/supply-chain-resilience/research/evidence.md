@@ -4,6 +4,54 @@ description: "S-004 comparison, freshly verified official evidence, proposed bou
 ms.date: "2026-11-03"
 ---
 
+## S-030 - Installed Framework API and Safety Verification
+
+* Date: 2026-11-03
+* Authority: Q-029, local migration only
+* Sources: [managed integration](../../../../docs/research/sources.md#agent-framework-managed-foundry-integration-follow-up)
+  and installed package source/runtime inspection
+
+Verified framework core 1.24.0, Foundry adapter 1.16.0 and OpenAI adapter
+1.18.0 with Projects 2.7.0, Identity 1.27.0 and OpenAI 3.38.0.
+The Foundry package requires Projects `>=2.2.0,<2.8.0`; installing Projects
+2.10.0 alongside it would violate the declared constraint. `pip check` passes.
+
+`FoundryAgent(project_client=..., agent_name=..., agent_version=...,
+allow_preview=False)` uses the project Responses API and injects a versioned
+`agent_reference`. It strips local tool declarations and ignores dynamic
+service tool-selection overrides. The stored agent remains authoritative;
+matching `FunctionTool` instances provide local implementations. Existing
+exact JSON schemas are accepted as `input_model` without decorator-generated
+schema drift. `AgentSession.to_dict/from_dict` persists native continuation
+and provider state, rather than a custom reconstruction of conversation history.
+
+The installed client's function-invocation layer wraps chat middleware, so
+chat policy observes each actual service call and validates its complete
+function batch before invocation. Built-in `max_function_calls` is best-effort
+after a batch, not a substitute for the demo's strict pre-dispatch limit.
+Local invocation is configured sequentially; permissions and exact human
+decisions are also rechecked at dispatch.
+
+Ordinary function exceptions may become recoverable tool-error results.
+`MiddlewareFailure` is the documented fatal escape, but a service-managed
+conversation may trigger an additional best-effort settlement request.
+The demo latches fatal failure and rejects that request in chat middleware
+before network/accounting. Offline tests verify no sibling effect, model
+continuation or settlement I/O after fatal or unexpected function errors.
+This intentionally leaves interrupted hosted conversation state for inspection,
+not automatic repair. SDK retries are disabled on the actual framework client.
+
+Function middleware receives parsed results as `list[Content]`, not a raw
+JSON string. An initial offline regression exposed that mismatch; the adapter
+now checks one text content containing the authoritative JSON result. Response
+fixtures include the service conversation ID, matching native continuation
+rather than accidentally switching to response-ID continuation.
+
+The actual framework and real OpenAI HTTP serialization are exercised with
+offline service responses, including version binding, function outputs and
+one-request behavior on HTTP 503. No authenticated Azure access, inference
+or new publication occurred. Live compatibility and UI/streaming remain unverified.
+
 ## S-029 - Why the Current Runtime Does Not Use Agent Framework
 
 * Date and authority: 2026-11-03, user's 17:19 +01:00 clarification request

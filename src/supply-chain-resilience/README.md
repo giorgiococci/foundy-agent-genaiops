@@ -1,7 +1,7 @@
 ---
 title: "Supply Chain Resilience Agent"
 description: "Agent-led Foundry conversation, explicit prompt assets, Python function tools and human-approved synthetic reservations."
-ms.date: "2026-11-03"
+ms.date: "2026-11-04"
 ---
 
 ## What Runs Today
@@ -11,6 +11,10 @@ compares recovery options and conducts a conversation with the planner.
 The agent chooses its tools and reasoning order. Python executes the tools,
 records human decisions and enforces stock/approval safeguards; it does not
 prescribe compare/propose/execute reasoning stages.
+
+Microsoft Agent Framework `FoundryAgent` now owns model/tool continuation.
+There is one runtime path, not a framework wrapper around the old loop.
+The framework migration is verified offline, not yet against Azure.
 
 The published agent is `supply-chain-resilience-advisor`, version `3`.
 S-026 exercised actual investigation, STANDARD choice, exact human approval,
@@ -28,18 +32,19 @@ See the [implementation log](../../.copilot-tracking/projects/supply-chain-resil
 | [advisor_demo.py](advisor_demo.py) | Single managed-agent CLI: local preparation/inspection/human decisions and guarded chat; no publication |
 | [definition.py](supply_chain/agents/resilience_advisor/definition.py) | Current agent definition and instruction/schema fingerprints |
 | [advisor.txt](supply_chain/agents/resilience_advisor/prompts/advisor.txt) | Mission, investigation, human-decision boundary, failure behavior and model response contract |
-| [conversation.py](supply_chain/agents/resilience_advisor/conversation.py) | Agent-specific capabilities and current/historical evidence validation |
+| [agent.py](supply_chain/agents/resilience_advisor/agent.py) | `create_agent(...) -> FoundryAgent`: managed version binding, local functions, middleware and runtime options |
+| [conversation.py](supply_chain/agents/resilience_advisor/conversation.py) | Interaction state, trusted human decisions, guarded tool dispatch and current/historical evidence validation |
 | [tools.py](supply_chain/agents/resilience_advisor/tools.py) | Advisor-owned function contracts and dispatcher |
-| [runtime.py](supply_chain/runtime.py) | Shared Responses/function-output loop, call IDs, limits, usage and metadata events |
-| [session.py](supply_chain/session.py) | Durable state, artifact/SDK drift checks, exclusive lock and uncertainty stop |
+| [runtime.py](supply_chain/runtime.py) | Framework chat/function safety middleware: whole-batch guards, call IDs, cumulative limits, usage and metadata events; no orchestration loop |
+| [session.py](supply_chain/session.py) | Native framework-session persistence, artifact/SDK drift checks, exclusive lock and uncertainty stop |
 | [domain.py](supply_chain/domain.py) | Synthetic rules, option costs, feasibility and delivery margins; no SDK or database |
 | [store.py](supply_chain/store.py) | SQLite snapshots, proposals, human approval and atomic reservation |
 | [data.py](supply_chain/data.py), [scenario.json](data/scenario.json) | SDK-free input loader and versioned initial facts |
 | [cases.json](evals/resilience_advisor/cases.json) | Agent evaluation scenarios/rubrics, not measured results |
 | [demo.py](demo.py) | SDK-free manual tool exercise; not a local AI agent |
 | [test_domain.py](tests/test_domain.py), [test_workflow.py](tests/test_workflow.py) | Business rules, transactions, concurrency, failures and manual CLI |
-| [runtime_tests.py](tests/runtime_tests.py) | Real SDK response objects, batch/call-ID checks, limits, usage and failure behavior |
-| [advisor_tests.py](tests/advisor_tests.py) | Conversational simulations, evidence roles, trusted human controls, persistence and cloud-binding guards |
+| [runtime_tests.py](tests/runtime_tests.py) | Actual framework invocation and SDK HTTP serialization with offline service responses, batch/call-ID checks, limits and failure behavior |
+| [advisor_tests.py](tests/advisor_tests.py) | Framework conversations, evidence roles, trusted human controls, native-session persistence and mocked cloud-binding guards |
 
 The [agents namespace](supply_chain/agents) can accommodate future agents;
 only [resilience_advisor](supply_chain/agents/resilience_advisor) exists.
@@ -47,6 +52,12 @@ Each agent owns its prompts, definition, specialized controls, tool
 contracts/dispatcher and evaluation assets. Business rules, data, store and
 the generic runtime are shared solution capabilities. Tools are not
 automatically exposed to every agent.
+
+Start with [agent.py](supply_chain/agents/resilience_advisor/agent.py) to see
+how the agent is composed. Its factory returns the actual framework
+`FoundryAgent`, not a custom agent subclass or wrapper. It binds callbacks
+and safety middleware to the supplied conversation state. The CLI composes
+these objects; the conversation class does not construct its own agent.
 
 There is no speculative shared-tool directory, agent registry, orchestrator,
 web framework or hosted runtime. Extract a shared tool when another agent
@@ -82,9 +93,18 @@ This is Foundry function calling, not HTTP or MCP:
 
 1. The managed definition binds the model, instructions and function schemas.
 2. Foundry returns a function request with name, JSON arguments and call ID.
-3. Python dispatches it to the local business capability.
-4. The runtime returns `function_call_output` preserving the call ID.
-5. The agent continues within the same conversation.
+3. Chat middleware validates the complete batch before any local effect.
+4. Agent Framework invokes the matching local `FunctionTool` implementation
+   sequentially, with per-call guards and the existing business dispatcher.
+5. The framework returns `function_call_output` preserving the call ID and
+   continues through the native `AgentSession`.
+
+The managed definition remains authoritative. Local `FunctionTool` instances
+provide implementations with matching exact schemas; tool declarations are
+not sent alongside an agent reference. Do not rely on dynamic `tool_choice`
+or `parallel_tool_calls` enforcement by the service: this adapter ignores
+them. Application middleware enforces permissions, and the framework executes
+local functions sequentially.
 
 | Model-invocable function | Result |
 | ------------------------ | ------ |
@@ -149,8 +169,10 @@ the exact human decision without invoking the model. A rejected session
 does not silently reopen or create another proposal.
 
 `chat` takes `--message`, `--directory`, explicit project endpoint/tenant
-configuration and `--agent-version`. It verifies the complete latest cloud
-definition/version before inference. All reasoning turns use this same
+configuration and `--agent-version`. It retrieves and verifies that exact
+published cloud definition/version before inference, even if a newer version
+exists. `FoundryAgent` uses a versioned `agent_reference` on the non-preview
+project Responses endpoint. All reasoning turns use this same
 command; no compare/propose/execute model stages are prescribed.
 It cannot publish an agent. Matching v3 remains compatible with the local
 definition, but another live case still requires explicit operational consent.
@@ -163,14 +185,16 @@ or receipt. Its final-answer failure deliberately retained `running=true`
 as a stop flag; no process is active and usage is reconciled.
 Do not clear the flag, rewrite its source hash or retry the operation.
 
-Read the durable outcome without Azure/model access:
+Historical S-026 state is not accepted by the new runtime or its `inspect`
+command. Read its recorded JSON directly without Azure/model access:
 
 ```powershell
-src\supply-chain-resilience\.venv\Scripts\python.exe -B src\supply-chain-resilience\advisor_demo.py inspect --directory artifacts\local\supply-chain-s026
+Get-Content artifacts\local\supply-chain-s026\advisor-session.json
 ```
 
-Old staged sessions are not migrated into the advisor. Their retained JSON,
-SQLite and metadata trace remain read-only historical evidence.
+Neither old staged sessions nor pre-framework advisor sessions are migrated.
+Their retained JSON, SQLite and metadata trace remain read-only historical
+evidence. Use a fresh authorized directory for the new runtime.
 
 ## Persistence, Limits and GenAIOps
 
@@ -184,7 +208,7 @@ Each advisor directory contains:
 
 | File | Purpose |
 | ---- | ------- |
-| `advisor-session.json` | Bindings, fingerprints, SDK versions, human decisions, current/historical tool facts, call IDs, allowance and usage |
+| `advisor-session.json` | Format `supply-chain-framework-1`: native `AgentSession.to_dict()` state, bindings, fingerprints, SDK versions, human decisions, current/historical facts, call IDs, allowance and usage |
 | `planning.sqlite3` | Snapshot, exact proposal/approval and idempotent reservation |
 | `events.jsonl` | Correlated metadata, statuses, durations and usage; no prompt, arguments, result payloads or model text |
 | `advisor.lock` | Exclusive command lock; absent after normal completion |
@@ -195,6 +219,10 @@ State is checkpointed before network requests; failed/interrupted turns
 remain blocked instead of automatically retrying. History loading defaults
 to empty when absent; it does not bypass drift checks or reconstruct facts.
 These are local provenance controls, not signatures or a clean-commit claim.
+Native framework state is restored with `AgentSession.from_dict()`, not
+reconstructed from a transcript. It includes the service continuation
+reference and framework provider state. Keep runtime artifacts local; do not
+copy session payloads or conversation transcripts into project tracking.
 
 The runtime permits twenty tools and requests at most 4,096 output tokens
 per response. Cumulative 100,000-token/EUR 10 thresholds monitor reported
@@ -202,6 +230,10 @@ usage after each response and before the next request, not guaranteed
 pre-inference limits. Missing/lost usage stops the run as unreconciled.
 SDK automatic retries are disabled. The unsupported token-count endpoint
 is not called; the prior HTTP 405 is historical.
+Fatal function failures latch a stop before the framework's optional
+service-conversation settlement can make another request. There is no
+automatic thread repair or model retry; inspect durable effects first.
+Token streaming is not enabled by this migration, and AG-UI/UI code is absent.
 
 The estimate uses conservative EUR 5 input / EUR 20 output per million,
 charging all tokens at the higher rate. It is not an invoice, actual tariff,
@@ -253,8 +285,11 @@ Configure `FOUNDRY_PROJECT_ENDPOINT`, `FOUNDRY_MODEL_DEPLOYMENT` and
 `FOUNDRY_TENANT_ID` outside source control. The caller must be logged into
 the intended Azure CLI tenant. `AzureCliCredential` uses that explicit
 directory, not an implicit credential fallback or automatic login change.
-Terminal validation uses Python 3.12.10, SQLite 3.49.1, Projects 2.10.0,
-Identity 1.27.0 and OpenAI 3.38.0; this is not a supported-version matrix.
+Terminal validation uses Python 3.12.10, SQLite 3.49.1, framework core
+1.24.0, Foundry adapter 1.16.0, OpenAI adapter 1.18.0, Projects 2.7.0,
+Identity 1.27.0 and OpenAI 3.38.0. Projects 2.7.0 satisfies the adapter's
+`>=2.2.0,<2.8.0` requirement; do not upgrade Projects independently.
+This is not a supported-version matrix.
 
 From the repository root:
 
@@ -264,9 +299,11 @@ src\supply-chain-resilience\.venv\Scripts\python.exe -B -m unittest discover -s 
 node --test scripts\test-copilot-customizations.mjs
 ```
 
-There are 34 SDK-free tests and 95 combined tests. Retired-driver-specific
+There are 34 SDK-free tests and 105 combined tests. Retired-driver-specific
 tests were removed; relevant runtime and human-action safeguards remain
 covered on the current path. The broader selector includes optional SDK
-simulations, not cloud inference. All Python tests use isolated temporary
+simulations, not cloud inference. The framework itself runs in these tests;
+only service I/O is simulated, including HTTP transport-level checks.
+All Python tests use isolated temporary
 databases and remove only their own artifacts. They do not prove real IAM
 isolation or general model quality.

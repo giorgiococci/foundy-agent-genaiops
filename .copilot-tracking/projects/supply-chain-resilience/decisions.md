@@ -4,6 +4,34 @@ description: "Confirmed business scope and boundaries of the supply-chain demo."
 ms.date: "2026-11-03"
 ---
 
+## D-016 - Direct Microsoft Agent Framework Runtime
+
+* Status: accepted in Q-029 and implemented locally under S-030 revision 1
+* Date: 2026-11-03
+* Authority: user's explicit direct-migration/no-legacy request, followed by
+  Q-029's compatible-dependency and new-branch consent
+* Decision: use `FoundryAgent` for the existing named/versioned managed agent.
+  Agent Framework owns invocation and continuation; remove the handwritten
+  generic loop rather than retaining a selectable fallback.
+* Ownership: D-012's managed-agent choice, D-014's per-agent packages and
+  D-015's current/historical evidence remain. This replaces D-013's generic
+  custom-loop implementation choice, not its agent-led behavior or prompt lifecycle.
+* Business safeguards: selection/approval remain external application events.
+  Middleware validates the complete batch before dispatch, accounts for each
+  service call, and stops on fatal function failures without a settlement
+  request. Domain/store transactions remain source-independent.
+* Binding/persistence: explicit version lookup and non-preview versioned
+  `agent_reference`; native `AgentSession` serialization in a new format.
+  No silent latest-version substitution or historical-run migration.
+* Dependencies: approved Projects 2.7.0 with framework core 1.24.0, Foundry
+  1.16.0 and OpenAI adapter 1.18.0; preserve declared dependency bounds.
+* Alternatives rejected: retain both loops; disguise a direct-model local
+  agent as the managed agent; weaken safeguards to fit a sample.
+* Scope: local/offline integration only on `feat/agent-framework`; no UI,
+  AG-UI, actual second agent, cloud access/publication/inference or Git publication.
+* Evidence: [S-030 API findings](research/evidence.md#s-030---installed-framework-api-and-safety-verification)
+  and [A-019](implementation/log.md#a-019---s-030-direct-agent-framework-migration).
+
 ## D-013 - Agent-Led Conversation and Prompt-as-Code
 
 * Status: accepted for the local unpublished S-024 revision 1 candidate

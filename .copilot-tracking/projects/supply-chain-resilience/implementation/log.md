@@ -1,10 +1,148 @@
 ---
 title: "Implementation of supply-chain-resilience"
 description: "Authorized local business-tool implementation, module boundaries and verified test evidence."
-ms.date: "2026-11-03"
+ms.date: "2026-11-04"
 ---
 
 ## Activity Log
+
+## A-020 - S-031 Explicit Agent Factory
+
+* Date: 2026-11-04
+* Authority: Q-030, user's acceptance of the single local design recommendation
+* Status: local refactor verified on the existing `feat/agent-framework` branch
+* Scope: factory extraction, callers/tests, source-layout documentation and tracking
+
+The new [agent module](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor/agent.py)
+exposes `create_agent(project, agent_version, conversation=...) -> FoundryAgent`.
+It composes the managed version, exact local function implementations, middleware,
+limits and retry configuration. The returned object is the framework agent,
+not a custom agent class or wrapper.
+
+[AdvisorConversation](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor/conversation.py)
+retains interaction state, human decisions, guarded dispatch and current/historical
+evidence. Its public `invoke_tool` callback connects those controls to the factory.
+Removed its construction method; there is no alias or parallel creation path.
+CLI and all ten test/helper factory callers use the new module. Managed
+definition, prompts, tool schemas, dependencies and runtime behavior are unchanged.
+
+Verification:
+
+* All 71 framework/runtime/advisor tests passed in 3.009 seconds through the
+  extracted factory, including actual offline function invocation, serialized
+  HTTP requests, exact human gates, budgets, evidence and native-session restore
+* Extended the existing provenance regression to cover `agent.py` as well as
+  `tools.py`; the focused regression passed after that test change
+* All 15 current application/test Python files parsed under the application
+  interpreter; Pylance also reports no syntax errors in the new factory module
+* Pylance reports all ten factory call sites compatible, but renders external
+  SDK types as `Any`; this is not a clean dependency-aware editor type-check
+* No remaining Python references to the retired `build_agent` or private
+  `_invoke_tool` entry points
+* All ten documentary/link checks passed; `git diff --check` reports no
+  whitespace errors
+
+Existing uncommitted S-030 changes were retained. No Azure access, inference,
+publication, dependency installation, old-session migration/rebinding, commit
+or push occurred. Existing session source hashes intentionally drift after
+the extraction; no historical run was adjusted to bypass that protection.
+S-031 local approval is consumed. A fresh bounded live framework case remains
+the one proposed next activity and requires separate operational consent.
+
+## A-019 - S-030 Direct Agent Framework Migration
+
+* Date: 2026-11-03
+* Authority: Q-029, S-030 revision 1 local-only contract
+* Branch: `feat/agent-framework`, created from the clean `main`
+* Status: application implementation and offline integration verified
+* Boundary: no authenticated Azure access, inference, publication, UI,
+  actual-run migration/retry/deletion, commit or push
+
+### Single Framework Runtime
+
+Replaced the generic custom Responses loop with the actual Microsoft
+`FoundryAgent`. The [advisor](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor/conversation.py)
+owns its managed-agent construction, exact local `FunctionTool` bindings and
+business capability/evidence adapter. The framework executes functions and
+continues the conversation. There is no custom model loop or fallback.
+The [shared runtime module](../../../../src/supply-chain-resilience/supply_chain/runtime.py)
+now contains cumulative budget/call policy and framework middleware only.
+
+Chat middleware checkpoints each service request before I/O, reconciles
+raw SDK response usage/status and validates the whole function batch before
+any effect. Function middleware validates unused call IDs, emits metadata,
+checks authoritative results and propagates fatal failure. Calls are locally
+sequential. A failure latch prevents the framework's hosted-conversation
+settlement request from making extra I/O; no automatic recovery is attempted.
+Expected and unexpected function errors stop rather than becoming recoverable
+model inputs. Model request default remains ten, with explicit allowance up
+to twenty; tool/token/output/spend limits remain unchanged.
+
+The asynchronous [CLI](../../../../src/supply-chain-resilience/advisor_demo.py)
+uses tenant-bound credentials and an async Projects client with retries off.
+It retrieves the exact published version, checks its complete definition,
+then supplies versioned `agent_reference` through the framework's non-preview
+project endpoint. A newer latest version does not silently substitute for
+the requested one. No publication API is implemented. Native framework
+conversation creation is checkpointed, bound and reused.
+
+The [session adapter](../../../../src/supply-chain-resilience/supply_chain/session.py)
+persists actual `AgentSession.to_dict()` state and restores it using
+`from_dict()`, alongside current/historical facts, exact human decisions,
+call IDs, counters and source/asset/SDK provenance. Its new
+`supply-chain-framework-1` format rejects old runs without migration.
+Local inspection of those historical artifacts uses their recorded
+JSON/SQLite, not a legacy runtime path. Failed turns remain blocked.
+
+### Dependencies and Regression Evidence
+
+Updated the [manifest](../../../../src/supply-chain-resilience/requirements-foundry.txt)
+before installing only in the application's existing environment:
+framework core 1.24.0, Foundry 1.16.0, OpenAI adapter 1.18.0, Projects 2.7.0,
+Identity 1.27.0 and OpenAI 3.38.0. Projects 2.7.0 satisfies the adapter's
+declared `<2.8.0` ceiling. `pip check` reports no broken requirements.
+
+Validation:
+
+* All 105 combined application tests passed in 11.590 seconds
+* All 34 SDK-free business/manual tests passed independently in 3.018 seconds
+* All ten repository documentary/link checks passed; `git diff --check`
+  reports no whitespace errors
+* Actual framework function invocation is exercised, not replaced by a mocked
+  `agent.run`; network/service responses alone are simulated
+* Real OpenAI HTTP serialization verifies version reference, conversation,
+  matching tool outputs and absence of local tool declarations in requests
+* A real SDK HTTP 503 fixture makes exactly one request despite a client
+  fixture initially configured for retries; uncertain usage blocks continuation
+* Whole-batch capability/argument/call-ID/tool-count guards, trusted exact
+  selection/approval, stale approval, idempotency, mandatory read-back,
+  current/historical evidence and failure stops pass
+* Native session round-trip, bound conversation creation/reuse, cumulative
+  counters/call IDs, metadata-only trace and old-format refusal pass
+* All 14 current application/test Python files parsed under the application
+  interpreter; no remaining executable `AgentRuntime`, `AdvisorLimits` or
+  application-level model loop was found
+* Existing prompt/schema/definition fingerprint tests pass unchanged
+
+An initial full test process ended without a result (exit 1073807364).
+Focused rerun and subsequent full 105-test run passed.
+Initial targeted failures exposed framework `list[Content]` result handling
+and incomplete service-conversation fixtures; both were corrected and covered.
+
+Editor validation limitation: Pylance selected Python 3.14 rather than the
+application environment and reported `reportMissingImports` for framework/
+async Azure modules. An environment-update tool reported success but the
+next environment query still showed 3.14. Package inventory independently
+confirmed the modules in the application environment. Subsequent Pylance
+syntax requests failed at MCP transport initialization; no clean Pylance
+type-check result is claimed. Runtime signatures and all migrated call
+surfaces are exercised by the passing tests; interpreter-based syntax passes.
+
+S-026 artifacts were not rewritten, rebound, migrated, resumed or retried.
+Their failed live acceptance remains historical, not superseded by offline
+tests. The managed v3 prompt and schemas are unchanged. A fresh bounded live
+framework case is the one proposed next activity, requiring separate consent.
+No new inference or successful live migration is claimed.
 
 ## A-018 - S-027 Revision 2 Evidence Separation and Legacy Retirement
 

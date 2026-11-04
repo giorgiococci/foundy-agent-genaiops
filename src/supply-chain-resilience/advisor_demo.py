@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import logging
 import os
@@ -10,39 +11,43 @@ import sys
 
 from pathlib import Path
 
-from azure.ai.projects import AIProjectClient
+from agent_framework.exceptions import AgentFrameworkException
+from azure.ai.projects.aio import AIProjectClient
 from azure.core.exceptions import AzureError
-from azure.identity import AzureCliCredential
+from azure.identity.aio import AzureCliCredential
 from openai import OpenAIError
 
+from supply_chain.agents.resilience_advisor.agent import create_agent
 from supply_chain.agents.resilience_advisor.definition import definition, provenance
 from supply_chain.domain import ToolError
 from supply_chain.session import CandidateSession
 
 
-def chat(candidate: CandidateSession, message: str, endpoint: str, tenant: str, agent_version: str) -> dict[str, object]:
+async def chat(candidate: CandidateSession, message: str, endpoint: str, tenant: str, agent_version: str) -> dict[str, object]:
     candidate.ensure_ready()
     if not message.strip():
         raise ToolError("empty_message", "A nonempty planner message is required.")
     record = candidate.record
     if record.agent_version is not None and (record.agent_version != agent_version or record.endpoint != endpoint):
         raise ToolError("agent_mismatch", "The session is bound to another published version or project.")
-    with AzureCliCredential(tenant_id=tenant, process_timeout=60) as credential:
-        with AIProjectClient(endpoint=endpoint, credential=credential, retry_total=0) as project:
-            active = project.agents.get("supply-chain-resilience-advisor")
-            latest = active.versions.latest
-            if latest.version != agent_version or latest.definition.as_dict() != definition(record.deployment).as_dict():
-                raise ToolError("candidate_unpublished", "The active agent does not match this candidate; no inference is permitted.")
-            with project.get_openai_client(agent_name=active.name, max_retries=0, timeout=60) as client:
-                if record.conversation_id is None:
+    async with AzureCliCredential(tenant_id=tenant, process_timeout=60) as credential:
+        async with AIProjectClient(endpoint=endpoint, credential=credential, retry_total=0) as project:
+            published = await project.agents.get_version(
+                agent_name="supply-chain-resilience-advisor", agent_version=agent_version,
+            )
+            if (published.version != agent_version
+                    or published.definition.as_dict() != definition(record.deployment).as_dict()):
+                raise ToolError("candidate_unpublished", "The exact published version does not match this candidate; no inference is permitted.")
+            async with create_agent(project, agent_version, conversation=candidate.advisor) as agent:
+                if candidate.framework_session is None:
                     record.endpoint = endpoint
                     record.agent_version = agent_version
                     record.running = True
                     candidate.save()
-                    record.conversation_id = client.conversations.create().id
+                    candidate.framework_session = await agent.create_conversation(session_id=record.run_id)
                     record.running = False
                     candidate.save()
-                return candidate.reply(client, message)
+                return await candidate.reply(agent, message)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -84,10 +89,10 @@ def main(argv: list[str] | None = None) -> int:
                 elif args.command == "chat":
                     if not all((args.message, args.endpoint, args.tenant, args.agent_version)):
                         raise ToolError("missing_configuration", "Chat needs message, explicit endpoint/tenant and a published agent version.")
-                    result = chat(candidate, args.message, args.endpoint, args.tenant, args.agent_version)
+                    result = asyncio.run(chat(candidate, args.message, args.endpoint, args.tenant, args.agent_version))
                 else:
                     candidate.ensure_ready()
-                    conversation = candidate.loop(None)
+                    conversation = candidate.advisor
                     if args.command == "select":
                         if args.option is None:
                             raise ToolError("selection_required", "Supply the planner's explicit option.")
@@ -99,7 +104,7 @@ def main(argv: list[str] | None = None) -> int:
                     candidate.save()
         print(json.dumps(result, indent=2))
         return 0
-    except (ToolError, AzureError, OpenAIError, OSError, json.JSONDecodeError) as error:
+    except (ToolError, AgentFrameworkException, AzureError, OpenAIError, OSError, json.JSONDecodeError) as error:
         logging.error("%s: %s", type(error).__name__, error)
         print(json.dumps({"status": "error", "error": {
             "code": error.code if isinstance(error, ToolError) else type(error).__name__,

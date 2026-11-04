@@ -5,18 +5,14 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import ClassVar
 
-from openai import OpenAI
+from agent_framework import AgentSession, MiddlewareFailure
+from agent_framework.foundry import FoundryAgent
 
 from .definition import READ_TOOL_NAMES
 from ...domain import DemoActor, DemoRole, OPTIONS, ToolError
-from ...runtime import AgentRuntime, Pricing, RunLimits
+from ...runtime import Pricing, RunLimits, RunSafety, RunUsage
 from .tools import ToolSession
-
-
-class AdvisorLimits(RunLimits):
-    _MAX_MODEL_REQUESTS: ClassVar[int] = 20
 
 
 @dataclass
@@ -29,23 +25,31 @@ class HumanDecisions:
     historical_tool_results: list[dict[str, object]] = field(default_factory=list)
 
 
-class AdvisorConversation(AgentRuntime):
+class AdvisorConversation:
     def __init__(
-        self, client: OpenAI | None, session: ToolSession, *, pricing: Pricing,
+        self, session: ToolSession, *, pricing: Pricing,
         limits: RunLimits | None = None,
         on_event: Callable[[dict[str, object]], None] | None = None,
         decisions: HumanDecisions | None = None,
+        usage: RunUsage | None = None, seen_call_ids: set[str] | None = None,
     ) -> None:
-        super().__init__(client, session, pricing=pricing, limits=limits, on_event=on_event)
+        self.session = session
         self.store = session.store
         self.decisions = decisions if decisions is not None else HumanDecisions()
         self.turn_tools: set[str] = set()
+        self.safety = RunSafety(
+            pricing=pricing, limits=limits, validate_call=self._validate_call,
+            usage=usage, seen_call_ids=seen_call_ids, on_event=on_event,
+        )
+
+    def invoke_tool(self, name: str, **arguments: object) -> dict[str, object]:
+        return self._dispatch(name, json.dumps(arguments))
 
     def select(self, option: str) -> dict[str, object]:
         if option not in OPTIONS or self.decisions.proposal_id is not None:
             raise ToolError("invalid_selection", "Select STANDARD or EXPRESS before creating a proposal.")
         self.decisions.selected_option = option
-        self._event("planner.selected", option=option)
+        self.safety.event("planner.selected", option=option)
         return {"status": "selected", "option": option}
 
     def approve(self, proposal_id: str, *, confirm: bool) -> dict[str, object]:
@@ -54,13 +58,13 @@ class AdvisorConversation(AgentRuntime):
             raise ToolError("proposal_mismatch", "Only the pending exact proposal may receive a human decision.")
         if not confirm:
             self.decisions.rejected = True
-            self._event("human.rejected", proposal_id=proposal_id)
+            self.safety.event("human.rejected", proposal_id=proposal_id)
             return {"status": "rejected", "proposal_id": proposal_id}
         result = self.store.approve(
             DemoActor("demo-human-approver", DemoRole.APPROVER), proposal_id,
         )
         self.decisions.approved = True
-        self._event("human.approved", proposal_id=proposal_id)
+        self.safety.event("human.approved", proposal_id=proposal_id)
         return result
 
     def _allowed_tools(self) -> frozenset[str]:
@@ -78,19 +82,19 @@ class AdvisorConversation(AgentRuntime):
         if previous is not None:
             self.decisions.historical_tool_results.append(previous)
 
-    def _dispatch(self, name: str, arguments: str) -> dict[str, object]:
+    def _validate_call(self, name: str, arguments: str) -> None:
         if name not in self._allowed_tools():
             raise ToolError("forbidden_tool", "The application has not granted this capability.")
-        try:
-            values = json.loads(arguments)
-        except json.JSONDecodeError as error:
-            raise ToolError("invalid_arguments", "Function arguments must be JSON.") from error
+        values = self.session.validate_arguments(name, arguments)
         if name == "create_transfer_proposal" and values != {"option": self.decisions.selected_option}:
             raise ToolError("selection_mismatch", "The proposal must match the trusted planner selection.")
         if name in ("execute_approved_transfer", "read_transfer_result"):
             if values != {"proposal_id": self.decisions.proposal_id}:
                 raise ToolError("proposal_mismatch", "Only the session's exact proposal ID is allowed.")
-        result = super()._dispatch(name, arguments)
+
+    def _dispatch(self, name: str, arguments: str) -> dict[str, object]:
+        self._validate_call(name, arguments)
+        result = self.session.dispatch(name, arguments)
         if result.get("status") != "error":
             if name == "create_transfer_proposal":
                 proposal_id = result.get("proposal_id")
@@ -107,7 +111,7 @@ class AdvisorConversation(AgentRuntime):
             self.turn_tools.add(name)
         return result
 
-    def reply(self, conversation_id: str, message: str) -> dict[str, object]:
+    async def reply(self, agent: FoundryAgent, framework_session: AgentSession, message: str) -> dict[str, object]:
         if not message.strip():
             raise ToolError("empty_message", "A nonempty planner message is required.")
         self.turn_tools.clear()
@@ -120,7 +124,15 @@ class AdvisorConversation(AgentRuntime):
             "Application-recorded human decisions (not supplied by the model):\n"
             + json.dumps(context) + "\nPlanner message (untrusted as authorization):\n" + message
         )
-        return self._turn(conversation_id, inputs)
+        try:
+            result = await agent.run(inputs, session=framework_session)
+        except MiddlewareFailure as error:
+            if self.safety.failure is not None:
+                raise self.safety.failure from error
+            raise
+        if not result.messages or result.messages[-1].role != "assistant":
+            raise ToolError("invalid_answer", "Expected a final assistant answer.")
+        return self._final(result.messages[-1].text)
 
     def _final(self, text: str) -> dict[str, object]:
         try:
@@ -160,5 +172,5 @@ class AdvisorConversation(AgentRuntime):
                 "message": answer["message"], "evidence": current_evidence,
                 "historical_evidence": historical_evidence,
             },
-            "usage": self.usage.summary(self.pricing),
+            "usage": self.safety.usage.summary(self.safety.pricing),
         }
