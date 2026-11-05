@@ -1,12 +1,736 @@
 ---
 title: "Implementation Plan for supply-chain-resilience"
 description: "Proposed learning-first increments for a managed Foundry prompt agent with a thin Python driver."
-ms.date: "2026-11-04"
+ms.date: "2026-11-05"
 plan_version: 2
-status: "three-milestone-demo-completed-local-tracing"
+status: "sharepoint-source-knowledge-provisioned"
 ---
 
 ## Current Version 2 - Three Learning Milestones
+
+## S-048 Revision 1 Assign Existing Demo Readers
+
+* Status: completed as A-033 under Q-051/Q-052; authority consumed.
+  Exact users, exclusive reader memberships and unchanged folder ACLs
+  verified. Both users have zero assigned licenses; direct reader sign-in
+  and Foundry delegation remain separate, unapproved work.
+* Objective: assign the two manually created demo users to the existing
+  SharePoint reader groups. User-reported names are not verified identities.
+* Target: demo tenant db60e921-9c3c-4fd4-98d1-4445db7ab425 and
+  <https://mngenvmcap946525.sharepoint.com/sites/supply-chain-resilience-lab>.
+* Proposed exact aliases: UserDemo01 and UserDemo02 in
+  MngEnvMCAP946525.onmicrosoft.com, pending user confirmation.
+  Do not search broadly or select accounts by ambiguous display names.
+* Recommended matrix: UserDemo01 to group 10 only, UserDemo02 to group 11
+  only. General already grants both groups Read; Restricted Procurement
+  already grants only group 11 Read.
+* Included actions: targeted operator/exact-user verification, enabled
+  Member state and active directory-role checks; same-owner site/group,
+  membership, site-admin and folder ACL preflight; ensure the two site
+  principals, add only the agreed reader memberships and verify read-back.
+* Excluded: user creation, password/credential handling, license/role/consent
+  changes, account switching/elevation, folder ACL changes, broad inventory,
+  deletion, interactive test-user sign-in, runtime/OBO, inference and Git
+  publication. Preserve S-047's unused encrypted credential files untouched.
+* Acceptance: exact approved existing users, no observed admin role or
+  site-admin status, agreed exclusive reader matrix, unchanged folder ACLs.
+  Membership does not prove licenses, interactive allow/deny or Foundry OBO.
+* Cost/risk: document Read grants only; no purchase, new Azure resource or
+  model call. Stop if identities/rights/grants are ambiguous or unexpected;
+  preserve and report partial writes without escalation or automatic removal.
+* Alternatives: reversed mapping, targeted read-only preflight, or defer.
+
+## S-047 Revision 1 Two Entra Demo Users and Reader Membership
+
+* Status: blocked under Q-050/A-032. First create POST returns HTTP 403
+  Authorization_RequestDenied. Both users are confirmed absent and neither
+  SharePoint membership was changed.
+* Observed prerequisite gap: current operator has Global Reader only in
+  the successful transitive directory-role read. User Administrator is the
+  documented least-privileged administrator role for creating these users.
+  Do not activate/grant any role or consent automatically.
+* Preserved local partial state: two unused DPAPI-encrypted credentials
+  in LOCALAPPDATA/FoundryMultiAgentLab/credentials/
+  supply-chain-resilience-s047, restricted to the current Windows user.
+  Future resumption must explicitly handle these without overwriting them.
+* Next prerequisite: user checks/activates an eligible User Administrator
+  role through their approved process, if available, or obtains help from
+  an authorized administrator. No eligibility or role change is assumed.
+  Reconfirm execution after this pause before any new POST.
+* Objective: create two synthetic non-admin member users and assign each
+  to its intended existing site-local reader group.
+* Target: existing demo tenant db60e921-9c3c-4fd4-98d1-4445db7ab425 and
+  <https://mngenvmcap946525.sharepoint.com/sites/supply-chain-resilience-lab>.
+  Confirm its verified account domain and current operator before writing.
+* Proposed aliases: scr-planner-demo and scr-procurement-demo; display
+  names SCR Planner Demo and SCR Procurement Demo. Resolve exact names
+  and check collisions; do not adopt, reset or overwrite an existing user.
+* Reader matrix: planner to SharePoint group 10 only; procurement to group
+  11 only. Preserve existing folder ACLs, owners and empty-directory-group
+  design. Do not add users to site Members, Owners or administrator roles.
+* Credential option: cryptographically generated distinct temporary
+  passwords, force first-sign-in change, Windows DPAPI encrypted
+  credential file(s) outside the repository in LOCALAPPDATA/
+  FoundryMultiAgentLab/credentials. Verify local decryptability without
+  exposing plaintext. Secure passwords before create to avoid losing
+  credentials after a successful directory operation.
+* Alternative mode: create disabled accounts without enabling sign-in,
+  or perform only the targeted read-only preflight, as selected in Q-050.
+* Preflight: only operator/domain, two exact proposed users and the named
+  SharePoint groups/site. No broad directory inventory or permission grant
+  to make an unsupported client work. Use supported Graph v1.0 user create
+  and same-tenant owner-authenticated SharePoint membership operations.
+* Acceptance: two intended directory objects with selected enabled state;
+  no assigned administrator role or site-admin status; correct, exclusive
+  reader-group membership; no new license/role assignment; folder ACL
+  matrix unchanged. Distinguish configuration from actual user sign-in.
+* Risk/cost: new login identities and local credential material; no new
+  license purchase, direct assignment or Azure resource/model spend.
+  Existing tenant policies still apply. An unlicensed user may not be able
+  to use SharePoint even with correct group membership.
+* Excluded: app registration/consent, role elevation, MFA/security-default/
+  Conditional Access changes, license assignment, Entra groups, other-site
+  changes, existing-account password reset, deletion, user sign-in as those
+  accounts, Foundry/OBO integration, inference, delegation and remote Git.
+* Recovery: stop on collision, missing rights, ambiguous create result or
+  secure-storage failure. Preserve and report partial results with secrets
+  redacted; no blind POST retry or automatic deletion.
+* Source: [Graph create user](https://learn.microsoft.com/en-us/graph/api/user-post-users?view=graph-rest-1.0),
+  retrieved 2026-11-04, updated 2026-07-04; requires verified UPN domain,
+  accountEnabled, displayName, mailNickname and passwordProfile. Permissions
+  and operator role remain unverified; none are automatically granted.
+
+## S-046 Revision 1 SharePoint Site, Groups, Folder ACLs and Upload
+
+* Status: completed under Q-049 authorize_site_groups_upload_acl, A-031.
+  Authority consumed; reader groups remain empty as explicitly requested.
+* Outcome: one ready non-group-associated site; default Documents library;
+  General and Restricted Procurement have unique, exactly checked folder
+  grants. Two approved Word files in each folder inherit those grants.
+  Reader groups 10 and 11 are empty, cannot edit membership and cannot
+  self-join. Authenticated owner and associated owners retain Full Control.
+* Payload check: all four approved word/document.xml hashes match remote
+  reads exactly. SharePoint processed the ZIP packages, so full package
+  lengths/hashes are recorded separately rather than claimed identical.
+  No Foundry/SQL integration or two-user retrieval test occurred.
+* Objective: one actual SharePoint knowledge site with two permission-
+  separated folders and four approved synthetic Word documents.
+* Exact target:
+  <https://mngenvmcap946525.sharepoint.com/sites/supply-chain-resilience-lab>
+  in the previously verified demo tenant; title Supply Chain Resilience Lab.
+  Use a non-group-associated team site, English locale, current verified
+  demo caller as owner. No directory group, mailbox or Team is requested.
+* In scope: create at most one new site; check readiness; use/create one
+  document library; create General and Restricted Procurement; create two
+  site-local groups SCR Planning Readers and SCR Procurement Readers.
+  Preserve owners' Full Control; reader groups have no approval/write powers.
+* Matrix: General grants Read to both reader groups. Restricted Procurement
+  grants Read only to SCR Procurement Readers. Break inheritance on the
+  new protected scopes where necessary and remove broad/inherited grants
+  that would bypass this matrix, only in the newly created site.
+* Upload exactly Disruption Response Guide.docx and Transfer Evaluation
+  Guide.docx to General; Supplier Recovery Conditions.docx and Commercial
+  Escalation Guide.docx to Restricted Procurement. No PDFs or source copies.
+* Membership: initially empty groups unless a user-approved local mapping
+  supplies actual test users. No invented principal or automatic group-wide
+  membership grant. No personal account data in canonical tracking.
+* Acceptance: ready site at the approved URL; read back actual folder role
+  assignments and permission inheritance; two reader groups without elevated
+  roles; four correct filenames/lengths/content hashes; no anonymous, external
+  or tenant-wide grants created. Owners necessarily retain privileged access.
+* Explicit limitation: no two-user allow/deny claim until real non-admin
+  readers are assigned and tested. This is SharePoint setup, not Foundry
+  delegated retrieval, index readiness or OBO integration verification.
+* Methods: authenticated browser/SharePoint REST within the verified host,
+  normal UI file upload from the approved local files; no token export or
+  fallback to a different tenant/account. Recheck caller before first write.
+* Risks/cost: approximately 213 KB of payload plus site overhead against
+  existing SharePoint quota/licensing. No Azure resource or model spend.
+  A successful read does not prove site-creation or permission-change rights.
+* Stop controls: if target already exists, identity differs, rights fail or
+  provisioning result is ambiguous, inspect only this target's status and
+  report the blocker. No blind creation retry or adoption of an existing site.
+* Excluded: root/other-site ACL changes, Entra groups/users, consent/app
+  registration, privilege elevation, external invitations/sharing links,
+  runtime integration, publication, inference, SQL, delegation and remote Git.
+* Recovery: preserve and report named partial resources; deletion or an
+  alternate target requires separate consent. No automated rollback deletion.
+
+## S-045 Revision 1 SharePoint Corpus and Targeted Preflight
+
+* Status: completed under Q-047/Q-048, recorded in A-030; consent consumed.
+* Outcome: four English synthetic DOCX/PDF guides, each two pages, sources
+  retained beside outputs in session files/sharepoint-knowledge. Strict
+  content checks, all-page visual review and payload checks pass.
+  Word-dialect sources stay with standalone deliverables, not repo documents.
+* Browser preflight: expected demo account matches; root IsSiteAdmin=false;
+  proposed new URL returns SiteStatus=0. Neither result proves write/admin
+  authority. No remote write, upload, consent or account change occurred.
+* User request: create synthetic documents, a SharePoint site and two folders
+  with distinct access. Provisioning awaits exact targets/access matrix.
+* Objective: prepare four short English synthetic knowledge documents and
+  verify the named SharePoint target, existing group references and available
+  site/folder/upload/ACL operations before presenting an execution contract.
+* Suggested site name: Supply Chain Resilience Lab. Proposed folders:
+  General and Restricted Procurement. Planner readers can read General;
+  procurement readers can read both; owners retain administrative access.
+  No broad default member/visitor grant may bypass the restricted folder.
+* Draft content: disruption triage and transfer evaluation for General;
+  synthetic supplier recovery conditions and commercial/escalation guidance
+  for Restricted Procurement. Stable source IDs/version/date, explicit
+  synthetic status and no conflict with authoritative stock/cost/approval.
+* Local deliverables: standalone source/DOCX/PDF corpus in the session
+  files/sharepoint-knowledge folder; necessary canonical tracking stays in
+  this project. DOCX is the selected upload format after Q-048.
+  No application dependency or runtime change.
+* Read-only scope after consent: only the named tenant/site or parent,
+  current ownership/creation capability, named groups and relevant ACLs.
+  No broad tenant, directory or unrelated site inventory.
+* Acceptance: coherent draft contents and source metadata, named target
+  and access matrix, supported operation/permission evidence or explicit
+  blockers. Documentary checks cover Markdown links/structure.
+* Tool discovery so far: WorkIQ exposes SharePoint folder creation/upload
+  preparation and drive-item permissions; no SharePoint site creation or
+  inheritance-management action was returned. This is capability discovery,
+  not authenticated tenant verification or proof of write authority.
+* Actual preflight: current CLI tenant matches the authorized demo tenant;
+  Graph GET sites/root returns
+  <https://mngenvmcap946525.sharepoint.com>. Direct SharePoint REST read fails
+  with Unauthorized/invalid_request and requires interactive authentication.
+  Browser sign-in is open; no account logout/login or consent was performed.
+* Group refinement requested by user: propose two site-local reader groups
+  rather than new Entra/Microsoft 365 groups. Names and memberships remain
+  unapproved; site-owner privileges are not a valid denied-user test.
+* Excluded: site/group/user creation, upload, grants/inheritance changes,
+  admin consent, app registrations, external/anonymous sharing, deletion,
+  Foundry publication/integration/inference, SQL, delegation and Git changes.
+* Cost/risk: no provisioning or model cost in this step; drafts contain only
+  synthetic data. No secrets/tokens or personal identities in tracking.
+* Recovery: preserve drafts and report missing capability/permissions.
+  Do not replace source ACLs with prompt rules or broaden privileges.
+* Follow-up contract: exact site/folders, verified group IDs, upload format,
+  ACL changes, owners, storage impact, read-back and two-user allow/deny
+  checks; separate approval before the first remote state change.
+
+## S-044 Revision 3 Database OBO and RLS Feasibility
+
+* Status: deferred proposal after the 17:41 SharePoint document request.
+  No SQL execution was authorized or started.
+* Objective: define the smallest real user-delegated database slice before
+  choosing SharePoint solely as an easier alternative.
+* Candidate: existing Python/AG-UI chat, genuine Entra sign-in, a narrow
+  read-only function, Azure SQL with user-delegated tokens and a database
+  RLS security policy. No generic SQL tool or model-selected principal.
+* Knowledge option: a few short synthetic document/knowledge rows with
+  title/body/source/version and per-user access. This demonstrates protected
+  knowledge retrieval through a tool, not native Foundry file search or a
+  newly implemented semantic-RAG platform.
+* Design scope: local/public sources and canonical tracking; identify
+  identity/token audiences, API consent/SQL principals, exact Python driver
+  candidate, costs/prerequisites and user-owned history/cache boundaries.
+  No authenticated tenant inventory is included without separate consent.
+* Acceptance design: prove SQL sees user A versus B, same tool returns only
+  permitted rows, a direct forbidden-ID query cannot bypass RLS, and
+  authentication failures do not fall back to developer/agent credentials.
+  Keep restricted data out of other tool paths, context, citations and logs.
+* Simplicity: one table plus necessary access mapping/policy, one read-only
+  capability, two real test users. No purchasing writes, new agents, MCP
+  server, DAB deployment, vector engine or complex workflow.
+* Excluded: code/package changes, provisioning, IAM/consent/app registrations,
+  data ingestion, model runs, publication, delegation or Git operations.
+* Recovery: report unsupported token/driver/tenant constraints. SharePoint
+  remains an alternative; never label a shared SQL identity plus a model
+  user_id filter as true user OBO.
+
+## S-044 Revision 2 User-Scoped Knowledge Design
+
+* Status: superseded proposal by revision 3 after Q-046's database question.
+  No implementation was started.
+* Reason for revision: user prioritizes document location and least-privilege
+  user delegation/OBO, including future structured-data RLS, over adding
+  another business strategy immediately.
+* Objective: one small knowledge slice with genuine signed-in user identity
+  and effective per-document authorization, not a prompt-based permission.
+* Expected design: compare SharePoint delegated retrieval with Azure storage/
+  Search; define browser login and token audiences, resource enforcement,
+  citation projection, user-owned conversations/cache/audit, and two-user
+  allow/deny tests. Explicitly identify native/preview/custom components.
+* Separate follow-up: structured-data tool and real RLS; OBO authenticates
+  the user while database/API policies determine permitted rows.
+* Scope: local/public sources and canonical tracking only until an execution
+  contract is accepted. No tenant queries, app registrations, IAM/consent,
+  provisioning, ingestion, application edits, publication or inference.
+* Acceptance: actual identity at each boundary, no developer/agent-wide
+  fallback for denied user reads, no unauthorized snippets/titles/citations
+  entering the model context, no cross-user history/cache access.
+* Cost/recovery: no model spend or cloud state change in design. Keep v5
+  operational; report unsupported channel/delegation combinations instead
+  of silently approximating OBO with a user ID parameter.
+
+## S-044 Revision 1 Knowledge and Alternate Recovery Design
+
+* Status: superseded proposal by revision 2 after the 17:30 user direction;
+  no implementation was started.
+* Objective: define one learning-focused vertical slice: a small synthetic
+  knowledge corpus plus a second, advisory supplier-recovery strategy.
+* Expected outcome: explain the document/source contract, exact retrieval
+  integration candidate, one read-only business-tool contract, one alternate
+  scenario and a small set of measurable evaluations.
+* Analysis scope if approved: local application/contracts and current public
+  Foundry/Agent Framework knowledge/citation sources, canonical tracking.
+  Compare managed file search, reuse of an existing search index and bounded
+  local document reads without misrepresenting their different capabilities.
+* Acceptance: distinguish documents from authoritative operational facts and
+  human permission; define how citations survive the JSON/AG-UI/UI boundary;
+  identify actual domain and human-control changes for a non-transfer option.
+  Specify a missing/conflicting-document case and a transfer-infeasible case.
+* Excluded: application/package changes, authenticated tenant inventory,
+  document upload/index creation, infrastructure/IAM, publication, paid
+  inference/evaluation, ordering/reservation, delegation and Git publication.
+* Cost/recovery: no Azure operational change or model spend in this design
+  step. Report unsupported paths and prerequisites rather than automatically
+  adding infrastructure or a homegrown retrieval service.
+
+## S-043 Revision 1 Readable Data-Driven Explanations
+
+* Status: completed under Q-045/A-029; authority consumed.
+* Outcome: exact advisor v5 published/read-back verified; local `.env`
+  selects v5. All 164 Python/16 frontend/three offline wire tests pass;
+  final frontend build/type-check and offline browser rendering/reload pass.
+  No model inference, real human action or saved-case migration was performed.
+* Objective: a generic explanation style driven by authoritative dates,
+  entity labels and currency, not prompt examples tied to the fixture.
+* Local scope: scenario/domain/tool output and necessary persistence,
+  prompt, frontend rendering where required, exact-definition regression
+  tests, local `.env` version and README/tracking.
+* Proposed fixture convention: day 1 is 2026-11-09; consecutive calendar
+  days, not business days. Explicit EUR synthetic costs and descriptive
+  entity labels retaining stable IDs. These values belong to data only.
+* Prompt: explain impact, distinguish options and ask one clear question;
+  no fixed products, orders, warehouses, dates, costs or answer template
+  filled with scenario values. Missing context must not be invented.
+* Acceptance: unchanged quantities/cost/feasibility/approval rules; dates
+  map exactly to day slots; alternate calendar/labels/currency tests;
+  readable Markdown reaches the actual human question renderer; native
+  handoff and source-evidence guards remain intact.
+* Optional cloud scope only if selected in Q-045: verify the existing
+  tenant/project/advisor/deployment from Q-044, publish at most one new
+  advisor version after local checks, retrieve/compare its exact definition,
+  update local `.env` to that returned version. No model run is included.
+* User correction at 14:19 +01:00 permits necessary saved-case changes
+  and asks not to add migration complexity. Do not build a migration system.
+  Prefer a new chat for the new definition; do not rewrite historical
+  model utterances or manufacture human approvals.
+* Excluded: inference, human decision/reservation, resource/IAM/account
+  changes, new services/dependencies unless separately justified, delegation,
+  stopping user-owned servers, commits or pushes.
+* Cost/recovery: no model spend; no new resources. Do not delete versions
+  or bulk reset cases. If publication is ambiguous, stop without retry;
+  report actual state. Do not bind a new prompt to the old version.
+
+## S-040 Revision 1 Conversational Decision Handoff Design
+
+* Status: completed under Q-042/A-027; analysis authority consumed.
+  [The concrete contract](../research/analysis.md#s-040-conversational-decision-handoff-design)
+  recommends native human-request tools; Q-043 accepts that architecture.
+* Objective: one explicit human action per actual choice/approval, followed
+  by advisor continuation after backend verification, without an extra
+  Continue or fabricated user text. Preserve conversational language.
+* Scope: local frontend/backend/agent contract and installed SDK inspection,
+  current official Agent Framework/AG-UI/CopilotKit documentation, and
+  canonical analysis/decision/plan tracking. Verify native HITL/resume and
+  structured action-result support against the actual managed Foundry path.
+* Deliverable: one concrete interaction contract and implementation scope,
+  identifying any required managed definition/version changes rather than
+  disguising a translated/hidden synthetic user message as a native result.
+  Distinguish application decision latency from actual model inference.
+* Acceptance: explain exact selection and approval event provenance,
+  backend verification before continuation, language preservation, pending
+  UI feedback, double-submit protection, cancellation and reload behavior.
+  Retain selection versus approval separation and post-write read-back.
+* Excluded: application edits, package changes/installations, server/model
+  execution, authenticated tenant access, publication, infrastructure/IAM,
+  historical-run mutation, delegation, commits and pushes.
+* Cost/recovery: no Azure spend or operational state change. Preserve prior
+  technical evidence and user corrections. If native support is unsuitable,
+  report it and propose a truthful event-driven alternative rather than
+  forcing an unsupported SDK pattern.
+
+## S-041 Revision 1 Native Human Handoff Migration Proposal
+
+* Status: completed under Q-044/A-028. Operational authority consumed.
+  Published exact advisor v4, verified one real native human choice and
+  automatic proposal continuation, and stopped at pending approval.
+* Objective: replace action/Continue and invented user messages with the
+  selected native decision contract, not a second preview application.
+* Expected scope: human tool schemas/prompt/definition, native function
+  declarations, conversation/guard/session/UI binding, backend boundary,
+  CopilotKit core/hook/transport/lifecycle, related CLI surfaces, regression
+  fixtures and launch/tracking documentation.
+* Dependency: S-040's architecture decision. First establish actual pinned
+  framework/JS compatibility locally; do not assume installed capability is
+  an executed integration.
+* Real activation requires a new version of the existing managed advisor.
+  Before execution, present explicit publication target, live limits, exact
+  human-decision boundaries and acceptance/recovery. No publication or
+  inference is authorized by the analysis or architectural choice.
+* Acceptance direction: one real click per choice/approval, no invented
+  user text, same managed conversation/native call provenance, persistent
+  waiting and receipts, idempotent phases, no automatic inference on
+  mount/reload, explicit uncertainty, final evidence/read-back and language
+  preservation. Stop and report if private SDK interfaces would be needed.
+* Excluded by default: infrastructure/IAM, new service/provider/agent,
+  historical-run rebind/deletion, legacy fallback, delegation, commits/pushes.
+
+### Execution contract presented in Q-044
+
+* Revision: 1. User requests execution at 12:20 +01:00; cloud scope remains
+  conditional on Q-044, not inferred from that generic continuation.
+* Local scope: the existing application/frontend/tests/README, advisor
+  prompt/definition and native tool/session/guard bindings, and canonical
+  tracking. Keep current dependency pins unless a proven blocking
+  incompatibility requires a separate decision.
+* Checks: actual native Framework pause/function-output behavior; pinned
+  CopilotKit core runner and JS/Python wire tests; choice/approval/rejection,
+  duplicate/stale/cross-case input, cancellation/uncertainty, reload/restart,
+  one continuation, zero invented user messages, model-request budgets,
+  exact-proposal execution guards, frontend build/type-check and documentary
+  checks. Internal upstream fixtures are tests, never a user application.
+* Conditional cloud actions: verify the existing Q-044 target; publish at
+  most one new advisor version only after local gates; bind fresh cases to
+  that exact returned version. One real browser case may run through choice
+  and proposal, with expressly authorized EXPRESS preference, then stop
+  before human exact-proposal approval. Preserve v3 and all historical cases.
+* Limits: 10 native model requests, 20 tools, 40,000 aggregate tokens and
+  EUR 2 estimated monitoring, no telemetry export or automatic retries.
+* Actual: 4 requests, 6 tools including human requests, 7,760 reconciled
+  tokens and EUR 0.1552 conservative estimate, not actual billing.
+* Recovery: stop on an unknown SDK contract, target mismatch, source drift,
+  ambiguous consumption or exhausted limit. Keep native state/evidence;
+  no hidden user text, forced success or automatic retry/rebind. Stop all
+  bounded test servers; do not activate a persistent service implicitly.
+
+## S-042 Revision 1 Native Chat UX Review Proposal
+
+* Status: completed as the user's local feedback review at 14:16 +01:00.
+  Flow works according to the user; dense explanations and abstract day
+  numbers need improvement. S-043 is separately authorized by Q-045.
+* Objective: review the user's experience of the real v4 handoff before
+  adding more features. Do not infer UX acceptance from technical tests.
+* Scope direction: inspect feedback and existing evidence first. Any new
+  assistant-led live run or exact-proposal approval requires its own
+  explicit target/limits/decision contract.
+* Excluded: automatic model work, publication, infrastructure/IAM, historical
+  state mutation and Git publication.
+
+## S-037 Revision 1 CopilotKit Integration Analysis
+
+* Status: completed as analysis on 2026-11-04; local/public authority consumed
+* Outcome: [complete analysis](../research/analysis.md#s-037-copilotkit-integration-analysis)
+  and [A-024](../implementation/log.md#a-024---s-037-complete-copilotkit-analysis).
+  Ten documentary/link tests and whitespace pass. SDK integration and live
+  compatibility are not claimed.
+* Authority: user requests a complete analysis with CopilotKit after Q-039.
+  This selects the analysis candidate, not operational implementation.
+* Objective: establish a sourced, project-specific architecture and UX for
+  CopilotKit over the existing guarded AG-UI backend, with exact dependency,
+  licensing, human-decision and lifecycle considerations.
+* Scope: public official documentation/package/source reads, local source/
+  metadata inspection and canonical analysis/research/question/plan/state
+  updates. No authenticated tenant or subscription resource is in scope.
+* Included checks: source/API/package-metadata consistency, mapping to actual
+  backend behavior, acceptance-test design and repository documentary checks.
+  Distinguish documented capabilities from unexecuted integration hypotheses.
+* Acceptance: explain contextual choices/approval, actual-versus-offline
+  connection status, streaming/final validation, persistence, no-retry
+  cancellation, local architecture, version/licensing constraints, affected
+  files, risks and one proposed bounded implementation increment.
+* Excluded: application edits, dependency installation, package execution,
+  server startup, browser actions that run a model, Azure access/inference/
+  export/spend, hosted third-party services, published prompt/schema/version
+  changes, historical-run changes, delegation and Git publication.
+* Cost/recovery: no model/Azure cost; documentary updates only. Preserve
+  current runtime and historical decisions; unresolved compatibility becomes
+  an explicit implementation gate rather than a claimed successful test.
+
+## S-038 Revision 1 Local CopilotKit Compatibility Slice
+
+* Status: completed; explicitly approved on 2026-11-04 at 10:37 +01:00
+  in Q-040. Local authority is consumed. S-037 alone did not authorize it.
+* Outcome: [A-025](../implementation/log.md#a-025---s-038-local-copilotkit-compatibility-slice)
+  records build/type-check, 12 SDK tests, 3 actual-Python wire tests,
+  30 targeted Python tests, 10 documentary checks and browser acceptance.
+  Temporary fixture servers/data were stopped/removed. No live verification.
+* Resolved candidate: select available stable react-core 1.82.0, whose
+  published manifest confirms v2 exports and AG-UI JS 1.0.2. The configured
+  feed returns 404 for analysis candidate 1.84.1; direct public npm fails
+  TLS. This is an explicit final-pin selection within the candidate gate,
+  not a registry/TLS change, prerelease adoption or proven API compatibility.
+* Objective: prove a small CopilotKit v2 chat/transport/contextual-card slice
+  against the actual guarded Python AG-UI backend before replacing the
+  existing interface. This is not a new project or a new runtime agent.
+* Inputs: [S-037 analysis](../research/analysis.md#s-037-copilotkit-integration-analysis),
+  [proposed D-019](../decisions.md#d-019---copilotkit-chat-first-presentation-proposal),
+  Q-038/Q-039 and existing S-036 technical evidence.
+* Scope: after explicit approval, add a dedicated frontend manifest/lock,
+  React/TypeScript build and focused tests, compatible CopilotKit/AG-UI
+  dependencies, a case-bound direct local-development transport and one
+  styled CopilotKit chat/view with contextual comparison/proposal rendering.
+  Update only necessary UI metadata/test fixture/documentation surfaces.
+  Test through the existing guarded endpoint; do not construct another
+  native model/function loop or make a permanent parallel legacy UI.
+* Candidate baseline: observed react-core 1.84.1 and AG-UI JS 1.0.2.
+  Verify actual package availability, peers, API exports and licensing
+  before choosing the final lockfile. Preserve all proven Python pins.
+  The npm TLS failure is an explicit prerequisite; no certificate bypass,
+  unapproved registry/account change or silent version substitution.
+* Local targets: this repository's application and temporary loopback test
+  service with visibly simulated upstream responses. No tenant/subscription
+  resource or real model endpoint operation is in scope.
+* Included tests: build/type-check; actual Python SSE through the selected
+  JS SDK; multiple turns with only new user input on the wire; local token/
+  Origin protection; custom final-validation event; error and cancellation;
+  zero automatic inference on mount/reload/case switch or decision-only
+  actions; contextual cards that remain inactive before final validation;
+  one offline exact-approval reservation/read-back; targeted Python and
+  browser regressions. Verify no unapproved hosted-service network traffic.
+* Acceptance: the documented SDK extension points work without private
+  patches; success is gated by application validation; card callbacks use
+  trusted existing backend actions; no automatic continuation/replay occurs.
+  Record actual resolved versions, measured behavior, license/network
+  findings and remaining UX work. Stop bounded test servers afterward.
+* Excluded: full-interface replacement before this gate passes; production
+  hosting, Intelligence, built-in model agents, frontend approval tools,
+  A2UI/MCP Apps, Azure authentication/inference/export/spend, published agent
+  changes, Python SDK upgrades, historical-run migration/reset/rebind,
+  delegation, infrastructure/IAM/account changes, commits and pushes.
+* Cost/risk: local package/build/test work only; no model/Azure cost.
+  Dependencies and browser lifecycle may expose incompatibility. If blocked,
+  preserve the original runtime, report exact evidence and request a revised
+  scope instead of adding cloud services or weakening guards.
+
+## S-039 Revision 1 Default CopilotKit UI Replacement
+
+* Status: superseded before execution by revision 2 after explicit user
+  correction on 2026-11-04 at 11:26 +01:00. Offline-only/default-case
+  presentation is not an acceptable final delivery.
+* Objective: activate the verified CopilotKit direction as the single local
+  user-facing interface, retiring the bespoke static client rather than
+  retaining two permanent UIs.
+* Inputs: S-038 [executed evidence](../research/evidence.md#s-038---executed-local-copilotkit-compatibility-evidence),
+  D-019, Q-038's UX requirements and unchanged native runtime safeguards.
+* Proposed scope after approval: default frontend/static-asset routing and
+  build prerequisites in the existing Python launcher; remove the previous
+  static HTML/JS/CSS client; include relevant frontend source/lockfile/served
+  build identity in candidate provenance without hashing caches/modules as
+  application source; finish durable contextual card/decision presentation
+  and clear connection/disabled states. Update related tests/documentation.
+* UX: chat first, current evidence-backed human cards, separate explicit
+  Continue, readable decision receipts/history, secondary diagnostics and
+  no automatic inference on startup/reload/switch/decision-only actions.
+  Preserve backend exact proposal and eligibility checks. Do not silently
+  add a model approval tool or change the managed agent contract.
+* Local targets: application source, dependency lock already selected,
+  fresh temporary synthetic cases and bounded loopback fixture services.
+  No Azure tenant/subscription operation is in scope.
+* Included tests/acceptance: build/type-check and targeted Python/JS/wire/
+  browser tests; default launch/missing-build behavior; frontend drift blocks
+  rather than silently rebinding old cases; one complete offline case;
+  persistent contextual actions/receipts across reload; Stop/error behavior;
+  no duplicate context, cross-case leakage, automatic model calls or
+  unapproved external traffic. Keyboard/focus/mobile accessibility checks
+  and screenshots support a subsequent user UX review, not assumed approval.
+* Excluded: real Azure authentication/inference/export/spend, agent prompt/
+  schema/version changes, hosted CopilotKit services, production hosting,
+  Python upgrades, historical-run migration/reset/rebind, IAM/infrastructure,
+  automatic decision-and-continue behavior, delegation, commits and pushes.
+* Cost/recovery: local build/test work only; preserve existing business/native
+  runtime behavior and historical artifacts. Switch only after default-path
+  tests pass; no permanent legacy fallback. A blocked new requirement needs
+  a revised scope rather than hidden cloud access or weakened controls.
+
+## S-039 Revision 2 Real Foundry Chat as the Single Interface
+
+* Status: completed through Q-041 and
+  [A-026](../implementation/log.md#a-026---s-039-real-foundry-chat-replacement);
+  authority consumed. User UX acceptance remains a separate judgment.
+* Confirmed user requirements: one real CopilotKit chat, no old UI coupling,
+  no simulated application responses and no prerequisite case-creation UI.
+  Opening the application presents an enabled question composer; the first
+  explicit user submission creates internal state and the actual managed
+  Foundry conversation and streams the real answer.
+* Scope: replace default static routing/launcher with the existing built
+  CopilotKit frontend; remove the previous `supply_chain/web` client and its
+  serving/fingerprint references; remove preview-specific production UX.
+  Wire first-submit initialization without a model call on page mount,
+  losing the first question, duplicate requests or invented assistant text.
+  Persist actual history/decisions with source/lockfile/build provenance.
+  Keep synthetic business data, trusted human actions and native safeguards.
+* Runtime behavior: use the existing real managed-agent factory only in the
+  application. Missing configuration/build fails with actionable errors,
+  not a working-looking simulated or inference-disabled chat.
+  Simulated upstream responses remain in automated tests only.
+  No new native model/tool loop, frontend approval tool or agent publication.
+* Local verification: build/type-check; targeted Python/JS/wire/browser tests
+  of first-question submission, persistence, cards, Stop/errors, isolation,
+  strict CSP and absence of automatic inference. Passing mocks alone does
+  not satisfy final acceptance.
+* Proposed live verification: existing project
+  `https://ai-aif-demo-01.services.ai.azure.com/api/projects/ai-aif-demo-prg-01`,
+  existing configured identity/tenant, deployment `gpt-6.1-sol`, managed
+  `supply-chain-resilience-advisor` exact version `3`. Verify binding and
+  prerequisites using existing access; no resource/IAM creation.
+* Live acceptance: submit one real investigation/comparison question through
+  the default UI, with at most five native model requests and ten tools.
+  Reconcile real usage, actual managed conversation identity, incremental
+  text and validated completion. Stop at the human choice; do not invent
+  a preference, approve a proposal or execute a reservation in this check.
+* Proposed monitoring: 30,000 aggregate tokens and EUR 2 conservative model
+  estimate, subject to Q-041. Usage is observed after responses; these are
+  application stop thresholds, not a guaranteed Azure billing cap.
+  No automatic inference retries or telemetry export in this verification.
+* Excluded: new infrastructure/services, APIM, hosted CopilotKit, deployment,
+  IAM/account changes, published prompts/schemas/versions, historical-run
+  migration/reset/rebind, reservation approval inferred from this task,
+  Azure conversation deletion, delegation, commits and pushes.
+* Recovery: preserve old run artifacts read-only; do not rebind drifted
+  sessions. Record any started/uncertain real conversation without replay.
+  Stop bounded verification services afterward; retain a single documented
+  real application launch path, not a permanent old/simulated fallback.
+
+## S-035 Revision 1 Local Testing UI Design
+
+* Status: completed as local/public design on 2026-11-04; Q-035 selected
+  `full_human_controlled`. No application implementation is authorized.
+* Objective: define one learning-first interface increment for the existing
+  managed advisor and Agent Framework runtime, not a new agent application.
+* Scope: existing UI research, relevant public documentation, local runtime
+  compatibility inspection and canonical design/question/plan tracking.
+  Q-035 settles read-only chat versus the human-controlled complete demo.
+* Recommendation: local browser UI with chat, visible tool activity,
+  evidence, run/trace IDs and explicit human selection/exact-proposal
+  approval. Reuse existing guards and persistence; do not move reasoning
+  or authorization into frontend workflow code.
+* Integration choice: compare the framework development UI and AG-UI
+  integration against the actual installed runtime before selecting.
+  Do not assume a protocol supplies token streaming or approval semantics.
+* Acceptance: record the chosen UI scope, compatible integration approach,
+  exclusions and one bounded implementation contract for user approval.
+* Excluded: application edits, dependency installation, server startup,
+  authenticated Azure access, inference/export/spend, deployment/IAM,
+  historical-run transitions, commits/pushes and delegation.
+* Cost/recovery: no model or Azure cost for design; preserve current runtime
+  and historical artifacts. Implementation and live tests need separate consent.
+
+## S-036 Revision 1 Local Human-Controlled Testing UI
+
+* Status: superseded before approval by revision 2. The user explicitly
+  requires AG-UI and real streaming on 2026-11-04 at 09:38 +01:00.
+* Objective: a small local browser interface for the actual managed advisor,
+  preserving agent-led reasoning, trusted human decisions and validated evidence.
+* Proposed approach: FastAPI backend and static HTML/CSS/JavaScript served
+  from the same loopback origin. No React build pipeline or AG-UI adapter
+  in this first increment. This is a lab simplicity recommendation, not
+  a claim that Microsoft mandates a bespoke UI.
+* Reason: native DevUI targets generic development/debugging; the application
+  additionally owns exact-proposal decisions, evidence validation and durable
+  uncertainty stops. The documented AG-UI path streams agent execution,
+  while current safety middleware explicitly rejects streaming. Do not bypass
+  those controls or bolt a second runtime onto them to obtain a chat screen.
+* Scope: add a local UI entry point and static assets under
+  `src/supply-chain-resilience`; extract the existing guarded managed chat
+  service from CLI ownership where necessary, reuse `agent.py`, conversation,
+  session, locks, domain/store and observability. Update only directly related
+  requirements, tests, README and canonical tracking.
+* Features: new synthetic case, chat, tool-status timeline, current/historical
+  evidence, option selection, exact-proposal details and approve/reject controls,
+  usage/limits and run/conversation/trace IDs. Show progress separately from
+  the final answer; no unvalidated final answer or claimed token streaming.
+* Human boundary: choice and exact-proposal approve/reject are explicit backend
+  actions, never inferred from chat, browser-supplied state or model text.
+  After a human action, a visible separate continue action runs the agent;
+  button clicks alone do not automatically incur inference.
+* Local boundary: loopback bind, same-origin/Host/Origin checks and explicit
+  local action authorization against cross-site requests; no permissive CORS.
+  Credentials and target configuration stay server-side. The client cannot
+  select arbitrary filesystem paths, endpoints, roles or remote tools.
+* Runtime behavior: serialize mutations per case, preserve existing locks,
+  exact-version/drift/usage/uncertainty checks and zero automatic retries.
+  Own one telemetry provider at server startup and flush on shutdown, not
+  per browser message. Do not reuse the CLI's per-process lifecycle unchanged.
+  Tracing remains off unless explicitly configured for synthetic data.
+* Dependencies: compatible FastAPI/ASGI server pins in an appropriate
+  optional UI manifest; install into the application environment only after
+  updating the manifest. Do not upgrade the proven framework stack.
+* Validation included: offline native-framework/service-boundary tests,
+  backend input/origin/decision/concurrency/uncertainty tests, browser checks
+  against test-only synthetic service responses, regression tests, documentary
+  checks and a local smoke server stopped after validation.
+  Simulated browser tests must not be presented as live Foundry inference.
+* Acceptance: usable full-case UI with unchanged safeguards and explicit
+  backend errors; no secrets in browser responses or tracking; no duplicate
+  runtime loop, fake live success or hidden automatic model requests.
+* Excluded: authenticated Azure access, real inference/trace export/spending,
+  deployment/new infra/IAM/account changes, new agent versions, production
+  identity/multi-user hosting, multi-agent orchestration, historical-run
+  migration/reset/rebind, commits/pushes and delegation.
+* Cost/recovery: local code/dependencies only. No paid validation authorized.
+  Preserve old artifacts, use fresh test cases and stop uncertain turns.
+  A real UI-to-Foundry walkthrough requires a separate bounded authorization.
+
+## S-036 Revision 2 AG-UI Testing Interface and Native Streaming
+
+* Status: completed on 2026-11-04; Q-037 local authority consumed.
+  Acceptance: [A-023](../implementation/log.md#a-023---s-036-ag-ui-and-native-streaming).
+  No live inference/export authorization was granted or exercised.
+* Requirement: user's explicit AG-UI and streaming choice supersedes the
+  revision 1 bespoke non-streaming recommendation. Q-035's complete
+  human-controlled case remains the functional scope.
+* Objective: a local browser AG-UI client connected to the existing managed
+  Foundry advisor through Microsoft Agent Framework's AG-UI integration,
+  with actual incremental model output and tool events over SSE.
+  Do not simulate streaming by splitting an already completed answer.
+* Scope: compatible optional AG-UI/backend/frontend dependencies, local UI
+  and integration service, existing runtime/conversation/session/observability
+  adaptations, CLI compatibility, focused tests and related documentation.
+  Use the official integration where compatible, not an independent model loop.
+  Evaluate exact installed APIs and package bounds before installation.
+  Stop for a revised contract if the proven framework pins must change.
+* Streaming safeguards: account per actual model request, reconcile terminal
+  usage/status, assemble complete tool call arguments and validate the whole
+  batch before any tool effects. Preserve call-ID validation, sequential
+  dispatch, fatal latches, human gates and no model retries/settlement bypass.
+* UI semantics: show incremental text as provisional, not validated evidence.
+  Validate the completed structured answer before marking the turn successful
+  or presenting current/historical evidence as authoritative. The current
+  JSON message/evidence output requires an explicit incremental rendering
+  strategy; never display JSON fragments as a purported validated answer.
+  Do not change published instructions/schema/version under this contract.
+* Human boundary: preserve explicit backend option selection and exact-ID
+  approve/reject; AG-UI messages, frontend tools, state and forwarded properties
+  cannot grant capabilities. Continue inference only through a visible action.
+* Failure/lifecycle: cancellation, browser disconnect, incomplete stream or
+  missing terminal usage cannot clear uncertainty or trigger replay. Preserve
+  durable effects and reload checks. Own shared telemetry at server startup/
+  shutdown, keep per-agent content isolation and avoid duplicate trace providers.
+* Local boundary: loopback-only, trusted server configuration, same-origin
+  and action protection, no permissive CORS, browser credentials or arbitrary
+  filesystem/endpoint/role/tool selection. No production/multi-user hosting.
+* Validation included: native streaming framework tests with simulated service
+  boundary; assert incremental delivery before terminal completion, split tool
+  arguments, invalid/forbidden batches, final evidence, usage, cancellation,
+  disconnect, approval gates, trace isolation and session reload.
+  Browser/AG-UI protocol tests and existing regressions must pass.
+  Local test servers are stopped after validation.
+* Acceptance: actual AG-UI event exchange and real incremental processing,
+  preserved controls and explicit failures. Offline fixtures are labeled
+  simulations, not proof of live Foundry streaming.
+* Excluded: authenticated Azure access, real inference/export/spend, new
+  agent versions, infrastructure/IAM/account changes, deployment, historical
+  run migration/reset/rebind, commits/pushes and delegation.
+* Cost/recovery: local code/dependencies only; no paid validation. Preserve
+  old artifacts and stop uncertain cases. A real streaming Foundry walkthrough
+  needs separate bounded authorization after offline acceptance.
 
 ## S-034 Revision 1 Shared Observability with Per-Agent Policy
 

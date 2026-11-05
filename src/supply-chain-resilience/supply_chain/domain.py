@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import date, timedelta
 from enum import Enum
 
 
@@ -38,6 +39,56 @@ class DemoActor:
 
 
 @dataclass(frozen=True)
+class PlanningContext:
+    day_one: str
+    currency: str
+    labels: dict[str, str]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.day_one, str):
+            raise ToolError("invalid_context", "The scenario day-one date must be an ISO calendar date.")
+        try:
+            parsed = date.fromisoformat(self.day_one)
+        except ValueError as error:
+            raise ToolError("invalid_context", "The scenario day-one date must be an ISO calendar date.") from error
+        if parsed.isoformat() != self.day_one:
+            raise ToolError("invalid_context", "Use YYYY-MM-DD for the scenario day-one date.")
+        if (not isinstance(self.currency, str) or len(self.currency) != 3
+                or not self.currency.isascii() or not self.currency.isalpha()
+                or not self.currency.isupper()):
+            raise ToolError("invalid_context", "Supply an explicit three-letter uppercase currency code.")
+        if (not isinstance(self.labels, dict) or not self.labels
+                or any(not isinstance(key, str) or not key.strip()
+                       or not isinstance(value, str) or not value.strip()
+                       for key, value in self.labels.items())):
+            raise ToolError("invalid_context", "Entity labels must map nonempty IDs to nonempty names.")
+
+    @classmethod
+    def from_data(cls, value: object) -> PlanningContext:
+        if not isinstance(value, dict) or set(value) != {"day_one", "currency", "labels"}:
+            raise ToolError("invalid_context", "Supply day_one, currency and labels explicitly.")
+        return cls(**value)
+
+    def date_for(self, day: int) -> str:
+        if type(day) is not int or day < 1:
+            raise ToolError("invalid_context", "Scenario day slots must be positive integers.")
+        try:
+            return (date.fromisoformat(self.day_one) + timedelta(days=day - 1)).isoformat()
+        except OverflowError as error:
+            raise ToolError("invalid_context", "The scenario day is outside the supported calendar.") from error
+
+    def data(self) -> dict[str, object]:
+        return {**asdict(self), "day_unit": "calendar_day"}
+
+    def transfer_data(self, arrival_day: int, completion_day: int) -> dict[str, object]:
+        return {
+            "context": self.data(),
+            "arrival_date": self.date_for(arrival_day),
+            "completion_date": self.date_for(completion_day),
+        }
+
+
+@dataclass(frozen=True)
 class Snapshot:
     version: int = 1
     local_stock: int = 20
@@ -45,6 +96,7 @@ class Snapshot:
     source_reserved: int = 30
     cost_cap: int | None = 100
     policy_version: str = "P-1:1"
+    context: PlanningContext | None = None
 
     def __post_init__(self) -> None:
         values = (self.version, self.local_stock, self.source_stock, self.source_reserved)
@@ -56,6 +108,8 @@ class Snapshot:
             raise ToolError("invalid_snapshot", "The cost ceiling must be a nonnegative integer.")
         if not isinstance(self.policy_version, str) or not self.policy_version.strip():
             raise ToolError("invalid_snapshot", "A policy version is required.")
+        if self.context is not None and not isinstance(self.context, PlanningContext):
+            raise ToolError("invalid_snapshot", "Planning context must be explicitly validated.")
 
     @property
     def available(self) -> int:
@@ -64,6 +118,7 @@ class Snapshot:
     def planning_data(self) -> dict[str, object]:
         return {
             "status": "ok",
+            **({"context": self.context.data()} if self.context is not None else {}),
             "snapshot_version": self.version,
             "product": "HUB-1",
             "component": "BOARD-1",
@@ -74,10 +129,15 @@ class Snapshot:
                 "reserved": self.source_reserved, "available": self.available,
             },
             "orders": [
-                {"id": "C-1", "quantity": 40, "due_day": 3},
-                {"id": "C-2", "quantity": 20, "due_day": 4},
+                {"id": name, "quantity": quantity, "due_day": day,
+                 **({"due_date": self.context.date_for(day)} if self.context is not None else {})}
+                for name, quantity, day in (("C-1", 40, 3), ("C-2", 20, 4))
             ],
-            "supplier_receipt": {"quantity": 40, "original_day": 1, "delayed_day": 6},
+            "supplier_receipt": {
+                "quantity": 40, "original_day": 1, "delayed_day": 6,
+                **({"original_date": self.context.date_for(1), "delayed_date": self.context.date_for(6)}
+                   if self.context is not None else {}),
+            },
             "assembly_days": 1,
             "policy_version": self.policy_version,
         }
@@ -85,6 +145,7 @@ class Snapshot:
     def policy_data(self) -> dict[str, object]:
         return {
             "status": "insufficient_data" if self.cost_cap is None else "ok",
+            **({"context": self.context.data()} if self.context is not None else {}),
             "policy_version": self.policy_version,
             "cost_cap": self.cost_cap,
             "rules": [
@@ -96,6 +157,7 @@ class Snapshot:
             ],
             "assumptions": [
                 "All data and relative day slots are synthetic.",
+                "Day slots use consecutive calendar days, not a business-day calendar.",
                 "Other components and assembly capacity are sufficient.",
                 "No physical shipping, supplier purchasing or factory scheduling.",
             ],
@@ -133,6 +195,8 @@ def assess_transfers(snapshot: Snapshot) -> dict[str, object]:
     result: dict[str, object] = {
         "snapshot_version": snapshot.version, "policy_version": snapshot.policy_version,
         "demand": DEMAND, "shortage": shortage, "source_available": snapshot.available,
+        "component": "BOARD-1",
+        **({"context": snapshot.context.data()} if snapshot.context is not None else {}),
     }
     if shortage == 0:
         return {**result, "status": "no_impact", "options": []}
@@ -147,6 +211,9 @@ def assess_transfers(snapshot: Snapshot) -> dict[str, object]:
         reasons = transfer_violations(snapshot, quote)
         candidates.append({
             "option": name, **quote,
+            **({"arrival_date": snapshot.context.date_for(quote["arrival_day"]),
+                "completion_date": snapshot.context.date_for(quote["completion_day"])}
+               if snapshot.context is not None else {}),
             "delivery_margin_days": {
                 "C-1": 3 - quote["completion_day"], "C-2": 4 - quote["completion_day"],
             },

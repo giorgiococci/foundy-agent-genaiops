@@ -46,6 +46,30 @@ FUNCTION_TOOL_SPECS = [
     }),
 ]
 
+HUMAN_TOOL_SPECS = [
+    _tool("request_transfer_choice", "Ask the human to choose a feasible transfer; wait for their answer.", {
+        "question": {"type": "string", "minLength": 1, "maxLength": 2000},
+    }),
+    _tool("request_transfer_approval", "Ask for a human decision on one exact proposal; this does not approve it.", {
+        "question": {"type": "string", "minLength": 1, "maxLength": 2000},
+        "proposal_id": {"type": "string"},
+    }),
+]
+HUMAN_TOOL_NAMES = frozenset(spec["name"] for spec in HUMAN_TOOL_SPECS)
+
+
+def human_arguments(name: str, arguments_json: str) -> dict[str, str]:
+    expected = {"question"} if name == "request_transfer_choice" else {"question", "proposal_id"}
+    try:
+        values = json.loads(arguments_json)
+    except json.JSONDecodeError as error:
+        raise ToolError("invalid_arguments", "Human-tool arguments must be JSON.") from error
+    if (name not in HUMAN_TOOL_NAMES or not isinstance(values, dict) or set(values) != expected
+            or any(not isinstance(value, str) or not value.strip() for value in values.values())
+            or len(values["question"]) > 2000):
+        raise ToolError("invalid_arguments", "Invalid human request arguments.")
+    return values
+
 
 class ToolSession:
     def __init__(self, store: DemoStore, actor: DemoActor) -> None:

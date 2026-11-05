@@ -9,10 +9,11 @@ from dataclasses import dataclass
 from decimal import Decimal
 from time import perf_counter
 from agent_framework import (
-    ChatContext, ChatMiddleware, ChatResponse, Content, FunctionInvocationContext,
+    ChatContext, ChatMiddleware, ChatResponse, ChatResponseUpdate, Content, FunctionInvocationContext,
     FunctionMiddleware, MiddlewareFailure,
 )
 from openai.types.responses import Response
+from openai.types.responses import ResponseCompletedEvent, ResponseFailedEvent, ResponseIncompleteEvent
 
 from .domain import ToolError
 
@@ -86,6 +87,7 @@ class RunSafety(ChatMiddleware):
         limits: RunLimits | None = None,
         usage: RunUsage | None = None, seen_call_ids: set[str] | None = None,
         on_event: Callable[[dict[str, object]], None] | None = None,
+        human_tool_names: frozenset[str] = frozenset(),
     ) -> None:
         self.pricing = pricing
         self.validate_call = validate_call
@@ -93,6 +95,7 @@ class RunSafety(ChatMiddleware):
         self.usage = usage if usage is not None else RunUsage()
         self.seen_call_ids = seen_call_ids if seen_call_ids is not None else set()
         self.on_event = on_event
+        self.human_tool_names = human_tool_names
         self.pending_calls: dict[str, str] = {}
         self.failure: ToolError | None = None
 
@@ -104,8 +107,6 @@ class RunSafety(ChatMiddleware):
         # Also blocks the framework's best-effort settlement request after a fatal tool error.
         if self.failure is not None:
             raise self.failure
-        if context.stream:
-            raise ToolError("unsupported_stream", "This demo currently validates complete non-streaming responses.")
         if self.usage.usage_unreconciled:
             raise ToolError("uncertain_request", "An uncertain request cannot be retried automatically.")
         if self.usage.model_requests >= self.limits.model_requests:
@@ -118,11 +119,49 @@ class RunSafety(ChatMiddleware):
         self.usage.model_requests += 1
         self.event("model.started", request_number=self.usage.model_requests)
         started = perf_counter()
+        if context.stream:
+            terminal: Response | None = None
+
+            def observe(update: ChatResponseUpdate) -> None:
+                nonlocal terminal
+                event = update.raw_representation
+                if isinstance(event, (ResponseCompletedEvent, ResponseFailedEvent, ResponseIncompleteEvent)):
+                    if terminal is not None:
+                        raise ToolError("invalid_response", "Multiple terminal responses in one model stream.")
+                    terminal = event.response
+
+            def reconcile(result: ChatResponse) -> None:
+                if terminal is None:
+                    raise ToolError("missing_usage", "No terminal model response; streamed usage remains uncertain.")
+                self._reconcile(terminal, started)
+                expected = {
+                    call.call_id: (call.name, json.loads(call.arguments))
+                    for call in terminal.output if call.type == "function_call"
+                }
+                actual: dict[str, tuple[str | None, object]] = {}
+                for message in result.messages:
+                    for content in message.contents:
+                        if content.type == "function_call":
+                            if not content.call_id or content.call_id in actual:
+                                raise ToolError("invalid_call_id", "Repeated or empty streamed function ID.")
+                            arguments = content.arguments
+                            actual[content.call_id] = (
+                                content.name, json.loads(arguments) if isinstance(arguments, str) else arguments,
+                            )
+                if actual != expected:
+                    raise ToolError("invalid_response", "Streamed tools do not match the terminal authoritative response.")
+
+            context.stream_update_gates_before.append(observe)
+            context.stream_result_gates_before.append(reconcile)
+            await call_next()
+            return
         await call_next()
         result = context.result
         if not isinstance(result, ChatResponse) or not isinstance(result.raw_representation, Response):
             raise ToolError("invalid_response", "Expected an auditable Foundry Responses result; usage remains uncertain.")
-        response = result.raw_representation
+        self._reconcile(result.raw_representation, started)
+
+    def _reconcile(self, response: Response, started: float) -> None:
         usage = response.usage
         if usage is None:
             raise ToolError("missing_usage", "No usage returned; request cost is unknown. Stop without retrying.")
@@ -148,6 +187,8 @@ class RunSafety(ChatMiddleware):
         if response.status != "completed" or response.error is not None:
             raise ToolError("response_failed", f"Model response did not complete successfully: {response.status}.")
         calls = [item for item in response.output if item.type == "function_call"]
+        if len(calls) != 1 and any(call.name in self.human_tool_names for call in calls):
+            raise ToolError("invalid_human_batch", "Request one human decision without executable siblings.")
         if self.usage.tool_calls + len(calls) > self.limits.tool_calls:
             raise ToolError("tool_limit", "The function batch exceeds the remaining tool-call allowance.")
         pending: dict[str, str] = {}

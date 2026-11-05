@@ -1,17 +1,618 @@
 ---
 title: "State of supply-chain-resilience"
-description: "S-034 shared per-agent observability completed with all seven live spans verified in linked Insights."
-ms.date: "2026-11-04"
+description: "Two existing demo users verified and assigned to the exact SharePoint reader groups; licensing and interactive access remain unverified prerequisites."
+ms.date: "2026-11-05"
 project_id: "supply-chain-resilience"
 kind: "foundry-solution"
 phase: "implementation"
-step_id: "S-034"
+step_id: "S-048"
 step_revision: 1
 step_status: "completed"
 autonomy: "single-step"
 ---
 
 ## Objective and Resume Point
+
+On 2026-11-05 the user reports a login MFA prompt despite believing MFA
+disabled for the demo users. Public-source guidance distinguishes per-user
+MFA state, Conditional Access, security defaults and method registration.
+No actual tenant policy or sign-in event has been inspected; no MFA/policy
+change is authorized or performed. Recommend retaining MFA for the demo
+and identifying the enforcing policy through sign-in logs before any change.
+
+S-048 revision 1 completes as A-033 under Q-051/Q-052; authority consumed.
+UserDemo01 is the sole member of SCR Planning Readers (10); UserDemo02
+is the sole member of SCR Procurement Readers (11). Both exact Entra users
+are enabled Members with zero active directory roles observed, and neither
+is a site administrator or member of another site-local group.
+
+General retains Read for both reader groups; Restricted Procurement retains
+Read only for Procurement. Both unique folder ACLs and owner/member/visitor
+groups are verified unchanged. No directory/credential/license/role/consent/
+policy change, runtime integration, inference or Git publication occurred.
+S-047's unused encrypted credentials remain untouched.
+
+Targeted Graph read-back reports zero assigned licenses for both users.
+Group membership does not establish licensed SharePoint use. Next possible
+step: agree license prerequisites and a separate two-user direct allow/deny
+test. No license assignment/purchase, reader sign-in or Foundry OBO test is
+approved or completed.
+
+### Historical S-048 Start and Session Restoration
+
+On 2026-11-05 the user reports manually creating UserDemo01 and UserDemo02.
+This is a user-reported outcome, not directory verification or authorization
+to assign these replacement identities. S-048 revision 1/Q-051 proposes
+targeted identity checks and two site-local reader memberships only.
+Q-051 confirms exact aliases in the existing demo domain and authorizes
+targeted checks and assignments: UserDemo01 to Planning (10), UserDemo02
+to Procurement (11). A-033 starts with S-048 revision 1 scope/exclusions.
+No directory creation, password/license/role change or Foundry work.
+
+Exact Graph reads confirm both enabled Member users with no active directory
+roles. Q-052 confirms owner sign-in and resumption of the unchanged Q-051
+scope. Same-owner/site checks pass; groups 10/11 are empty, demo users are
+not site principals, and existing folder ACLs exactly match the baseline.
+No principal/membership write has yet occurred; A-033 resumes.
+
+S-047/A-032 remains historically blocked. Its unused encrypted credentials
+are unrelated to these manually created users and must not be reused,
+overwritten or deleted under S-048.
+
+### Historical S-047 Blocker
+
+S-047/A-032 is blocked. The first Graph user-create POST returned HTTP 403
+Authorization_RequestDenied; the second was not attempted. Post-failure
+GETs confirm both proposed aliases are absent. Reader groups 10 and 11
+remain empty; no SharePoint membership was written.
+
+The current operator's transitive directory-role query returns Global Reader
+only. This read-only role is distinct from being owner of the SharePoint
+demo site. No User Administrator/Global Administrator role was observed;
+PIM eligibility and app delegated-write permission were not established.
+No role/consent/security-policy change was attempted.
+
+Local partial state: two unused temporary credentials are DPAPI-encrypted
+under LOCALAPPDATA/FoundryMultiAgentLab/credentials/
+supply-chain-resilience-s047 with current-Windows-user-only file access.
+Passwords, tokens and encrypted credential contents are not in tracking.
+
+Next prerequisite: the user checks whether User Administrator is available
+through their normal role/PIM process or obtains authorized admin help.
+Do not perform an elevation, switch operator or retry creation automatically.
+Reconfirm the exact execution scope after permissions are resolved.
+
+### Historical S-047 Start
+
+Q-050 explicitly approves S-047 revision 1: the proposed aliases, enabled
+accounts with DPAPI-protected temporary passwords/first-sign-in change, and
+the exact reader-group memberships without licenses. A-032 starts.
+No directory operation has yet occurred. Preflight and secure local
+credential storage must succeed before each create request.
+
+At 18:22 +01:00 the user requests creation of two Entra ID test users and
+assignment to the existing SharePoint reader groups. S-047 revision 1/
+Q-050 records exact synthetic aliases, secure local temporary-password
+handling and the exclusive reader matrix. This is new authority, not
+inherited from S-046.
+
+Default proposal: two enabled non-admin users, first-sign-in password change,
+encrypted credentials under the current Windows user's LOCALAPPDATA,
+planner to group 10 only and procurement to group 11 only. No licenses,
+admin roles, security-policy changes or Foundry integration are included.
+Unlicensed-user SharePoint access remains an explicit prerequisite.
+
+### Historical S-046 Closure
+
+S-046 completes as A-031 under Q-049; authority is consumed.
+The [SharePoint knowledge site](https://mngenvmcap946525.sharepoint.com/sites/supply-chain-resilience-lab)
+is ready with four synthetic Word guides in Documents.
+
+* General has the disruption/transfer guides, Read for SCR Planning Readers
+  and SCR Procurement Readers.
+* Restricted Procurement has the supplier/commercial guides, Read only for
+  SCR Procurement Readers.
+* Both folders have unique ACLs with only the approved principals; all four
+  files inherit their parent folder's grants. Site owners retain Full Control.
+* Both reader groups are empty, with membership editing/self-join disabled.
+* Remote Word body SHA256 checks exactly match approved local contents.
+  Full packages changed during SharePoint processing; this is not a claim
+  that local/remote ZIP bytes are identical.
+
+No Entra groups/users, consent, elevation, other-site ACLs, application/
+Foundry changes, paid inference, real business data or remote Git actions.
+CLI Graph read-back was forbidden; same-owner authenticated browser GETs
+completed verification without privilege or account changes.
+
+Next proposed activity: identify existing non-admin test users through secure
+local configuration, authorize group membership, and verify direct SharePoint
+allow/deny behavior. This is not yet started or approved. Foundry OBO remains
+a separate unimplemented integration; an owner sees both folders by design.
+
+### Historical S-046 Start
+
+Q-049 explicitly authorizes S-046 revision 1 creation/group/folder/ACL/upload
+actions on the exact proposed site. A-031 starts. Reader groups must remain
+empty; document changes are not requested. No other tenant/site operations,
+privilege elevation, deletion, user assignment or Foundry work is authorized.
+Recheck the demo caller and proposed site before the first create request.
+
+S-045 completes as A-030 under Q-047/Q-048. Four English synthetic guides
+are built as DOCX and PDF, with sources retained beside them in session
+files/sharepoint-knowledge. Each has a cover plus one content page, source
+ID SCR-K001 through SCR-K004, one criteria table and no diagrams.
+All eight PDF pages were visually reviewed; strict build and payload checks
+pass. No application, dependency or Foundry version changed.
+
+Browser sign-in now works and the account matches the user's supplied demo
+identity. Root-site IsSiteAdmin=false does not determine tenant admin roles.
+The proposed new site URL returns SiteStatus=0, Not Found. No creation,
+group/ACL mutation, upload, login reset or admin consent occurred.
+
+S-046 revision 1/Q-049 targets the exact new site
+<https://mngenvmcap946525.sharepoint.com/sites/supply-chain-resilience-lab>,
+two site-local reader groups and permission-separated folders, plus upload
+of the four DOCX files. Provisioning consent is now explicit. Reader
+memberships and actual two-user/OBO tests are not established.
+
+### Historical S-045 Request and Authentication Pause
+
+At 17:41 +01:00 the user requests synthetic documents, creation of a
+SharePoint site and upload into two folders with different access.
+This changes the immediate activity to SharePoint; the SQL feasibility
+proposal is deferred, not implemented or rejected.
+
+Q-047 authorizes S-045 revision 1 drafts and targeted read-only preflight in
+the identified demo tenant. User asks that the groups be created too;
+site-local reader groups are proposed, without directory-group changes.
+The personal account supplied by the user is not copied into tracking.
+
+Verified through CLI tenant check and Graph sites/root:
+<https://mngenvmcap946525.sharepoint.com>.
+Direct SharePoint REST read fails with Unauthorized/invalid_request.
+The verified site is opened in the integrated browser and requests sign-in.
+No logout, account switch, consent, site/group creation or upload occurred.
+
+S-045 is blocked pending Q-048: document outline approval and interactive
+SharePoint sign-in. Proposed deliverables are four English synthetic Word
+documents, version 0.1. No document build has started. Exact site name,
+group memberships and operational ACL contract are still unresolved.
+
+WorkIQ capability discovery exposes folder creation/upload preparation and
+drive-item permissions but did not return site creation or permission
+inheritance-management operations. Public SharePoint REST documentation
+describes non-group-associated sites, but this session's write/admin
+capability remains unverified. Do not equate root discovery with admin rights.
+
+### Earlier SQL and Delegated-Knowledge Proposal
+
+At 17:30 +01:00 the user requests small knowledge with user-specific
+document/row access and OBO inspired by S09. In Q-046 the user reports
+the presented SharePoint/two-user prerequisites available, but asks whether
+database RLS is manageable before falling back to SharePoint.
+
+The [source-backed comparison](research/analysis.md#user-scoped-knowledge-obo-and-database-rls)
+recommends a bounded SQL/OBO/RLS design: one read-only capability and a few
+protected knowledge rows, two real users, no extra document/vector/MCP stack.
+This is a candidate, not a backend/deployment approval. S-044 revision 3 is
+proposed; D-022 remains proposed. SQL resource/admin availability is unknown.
+No authenticated tenant inventory, code, IAM, provisioning, ingestion,
+publication or inference is authorized or performed.
+
+The current Azure CLI server credential and local action token do not
+represent each browser user's identity. Genuine login/OBO and user-owned
+history must be addressed before any multi-user authorization claim.
+
+### Earlier Learning Expansion Proposal
+
+At 17:24 +01:00 the user reports that v5 seems to work well and asks what
+knowledge/tools/scenarios would add learning value. The
+[learning-options review](research/analysis.md#learning-expansion-options-after-advisor-v5)
+recommends a small grounded document corpus, then a supplier-recovery
+alternative and measured evaluations, rather than more deterministic workflow.
+This is user-reported positive feedback, not a new independently measured run.
+
+S-044 revision 1 is proposed: design one knowledge/alternate-recovery slice
+with citations, one read-only tool and scenario/evaluation contracts. No
+implementation, tenant inspection, document ingestion, publication or
+paid inference is approved by the request for ideas.
+
+### Historical S-043 Closure
+
+S-043 revision 1 completes under Q-045/A-029; authority is consumed.
+Advisor v5 is published and exact-definition read-back verified, with the
+same model/eight tools and generic writing principles. Dates, names and
+currency come from validated scenario context and authoritative tool results,
+not scenario-specific prompt examples. Local `.env` selects v5.
+
+All 164 related Python tests, 16 frontend tests and three offline native
+SDK/SSE integrations pass; build/type-check passes. Offline browser verifies
+Markdown lists, calendar dates, EUR, descriptive labels, one-click native
+continuation and pending-approval reload without inference, including 390px.
+Zero real model calls occurred in S-043; actual v5 wording remains unmeasured.
+No new resources, dependencies, IAM, account changes, historical-case writes,
+commits or pushes. The owned offline fixture is stopped and cleaned up.
+
+Next: user restarts their server and selects New chat to review v5 wording.
+Do not infer acceptance or run additional model/publication operations.
+No migration system or historical conversation rewriting is needed.
+
+### Historical S-043 Start
+
+At 14:18 +01:00 the user requests data-driven readability improvements
+without hardcoding the synthetic fixture in the prompt. At 14:19 the user
+also permits saved-case changes if necessary and rejects unnecessary
+complexity. S-043 revision 1/Q-045 presents the local implementation and
+optional one-version publication contract. Q-045 selects
+`local_and_one_publication_no_inference`; A-029 is in progress.
+No model inference is authorized.
+
+On 2026-11-04 at 14:16 +01:00 the user reports that the flow works, but
+the dense agent explanation and abstract day numbers are hard to read.
+[S-042 local feedback review](research/analysis.md#s-042-user-feedback-on-explanation-readability)
+finds the quoted arithmetic consistent with initial facts and recommends
+scannable explanations and an explicit fixed synthetic calendar reference.
+This feedback does not authorize implementation, a new managed version or
+live execution. Final presentation acceptance remains open.
+
+### Historical S-041 Closure
+
+S-041 revision 1 completes under Q-044/A-028; operational authority is
+consumed. The sole real chat uses native CopilotKit human-tool requests,
+backend-verified durable receipts and automatic continuation. No extra
+Continue or generated English user message remains.
+
+Exact advisor v4 is published and verified; v3/historical conversations
+remain intact. One real Italian case passes question, choice and automatic
+proposal continuation. It stops at exact-proposal approval, with no approval
+or reservation. Four model requests, six tools, 7,760 tokens and EUR 0.1552
+estimated monitoring; no retry or telemetry export.
+
+Build/type-check, 114 Python tests, 14 frontend tests and three actual
+JS/Python wire tests pass. Approval/execution continuation is verified
+offline, not through an unauthorized live approval. Reload preserves the
+same native pending question without inference; fresh-process readiness
+passes. All verification servers are stopped and offline stores removed.
+Real local state/proofs remain under `artifacts/local/supply-chain-s041-live`
+and the named S-041 evidence JSON files.
+
+Next: proposed S-042 user UX review of v4. Do not infer UX acceptance,
+restart inference, approve the stored proposal or publish another version.
+The [launch guide](../../../src/supply-chain-resilience/README.md#copilotkit-chat)
+now sets `FOUNDRY_AGENT_VERSION=4`; use the actual approved project/tenant.
+
+### Historical S-041 Start
+
+Q-044 `approve_native_migration_publish_live_express` authorizes S-041
+revision 1 on 2026-11-04 at 12:20 +01:00. Implement and verify the native
+handoff locally, then at most one new advisor version and one real case
+within the Q-044 limits. EXPRESS preference is authorized, exact-proposal
+approval/reservation is not. Preserve historical versions/cases.
+
+### Historical Architecture Acceptance
+
+S-040 revision 1 is completed as source research under Q-042/A-027; its
+analysis authority is consumed. The recommended
+[concrete contract](research/analysis.md#s-040-conversational-decision-handoff-design)
+uses native model-requested frontend human tools, checked durable receipts
+and core continuation, not a generated user sentence.
+
+The installed versions support declaration-only function pauses and v2
+human hooks. Published Foundry v3 owns its tool schemas, so real activation
+requires new instructions/tools in a new version of the existing advisor.
+This is not a UI-only switch. Source support is not end-to-end proof.
+
+[Q-043](questions.md#q-043---native-human-handoff-architecture) is answered:
+the user selected `native_human_tools`, accepting D-020. This chooses
+architecture only, not implementation, publication or spend.
+[S-041](plan/plan.md#s-041-revision-1-native-human-handoff-migration-proposal)
+is proposed and has not started. Next present its bounded operational
+contract, including the managed-version target and live verification limits,
+before asking for execution consent.
+
+No application/package/environment edits, native SDK scenario, server/model
+execution, latency measurement, tenant access or publication occurred in
+S-040. The user's currently working runtime remains unchanged.
+
+### Historical S-040 Start
+
+At 12:02 +01:00 the user explicitly continues with S-040 revision 1.
+[Q-042](questions.md#q-042---conversational-decision-handoff-analysis)
+records analysis-only authority. Inspect local/current public sources and
+define the replacement contract; do not implement or make cloud calls.
+
+On 2026-11-04 at 11:58 +01:00 the user reports that the real application
+generally works but rejects its decision handoff: selection/approval each
+require an extra Continue and the application fabricates an English user
+reply, followed by a language switch. This is not accepted UX.
+The [source-backed review](research/analysis.md#user-review-of-the-s-039-decision-handoff)
+confirms those application choices; they are not framework requirements.
+
+The proposed next step is
+[S-040 revision 1](plan/plan.md#s-040-revision-1-conversational-decision-handoff-design):
+verify the supported structured/native human handoff and define the
+replacement contract. Target one user action per actual decision, automatic
+continuation after backend validation, no invented user messages and stable
+conversation language. Preserve exact human authority and uncertain-turn
+protections. No implementation or further live calls are authorized.
+
+### Historical S-039 Technical Completion
+
+S-039 revision 2 is completed under Q-041; its operational authority is
+consumed. The default application is the sole real CopilotKit chat. The old
+static client is removed; the first user question opens the actual managed
+Foundry conversation. There is no simulated application launch path.
+See [A-026](implementation/log.md#a-026---s-039-real-foundry-chat-replacement)
+and the [launch guide](../../../src/supply-chain-resilience/README.md#copilotkit-chat).
+
+The real first-question check passes: one browser run, two native model
+requests, three tools and 3,467 reconciled tokens. Estimated model cost is
+EUR 0.06934, not actual Azure billing. Native incremental text and matching
+validated terminal succeed. Reload makes no inference; history, real service
+conversation and contextual cards persist. The case is unblocked and stops
+at human selection, with no proposal, approval or reservation.
+
+Local acceptance also passes: frontend build/type-check, 12 SDK tests,
+three Python/JS wire tests, 77 focused Python tests and ten documentary
+checks. Browser checks cover first-question Send/Enter, durable cards,
+checkbox approval, failure/Stop, isolation, inert HTML and 390px layout.
+
+All bounded verification services are stopped; offline fixture data is
+removed. Actual live state remains under `artifacts/local/supply-chain-s039-live`
+without cloud conversation deletion. No further assistant-led inference,
+implementation or deployment is authorized. Next point is the user's
+review of the delivered real-chat UX, not assumed acceptance.
+
+### Effective Requirement and Authorization History
+
+Q-041 is answered `approve_real_ui_and_live_check`: execute S-039 revision 2
+and its one bounded real investigation question against the declared
+project/advisor v3/deployment. Limits remain five native model requests,
+ten tools, 30,000 aggregate tokens and EUR 2 estimated monitoring.
+No inferred choice/approval/reservation, telemetry export, new cloud
+resource, publication, historical-run mutation or Git publication.
+
+On 2026-11-04 at 11:26 +01:00 the user explicitly rejects partial/old-UI/
+simulated-only delivery. The desired application is one real CopilotKit
+chat, beginning with the user's question and creating the actual managed
+Foundry conversation on first submit. Synthetic business data remains;
+fictitious assistant replies/conversations are not the application path.
+Remove the old client rather than keep it coupled to the new UI.
+
+[S-039 revision 2](plan/plan.md#s-039-revision-2-real-foundry-chat-as-the-single-interface)
+replaces the unexecuted revision 1. [Q-041](questions.md#q-041---real-ui-replacement-and-bounded-foundry-verification)
+confirmed bounded live execution/cost consent against the existing
+project/advisor v3/deployment, not the already clear UI direction.
+At contract presentation no application edits, server startup, authentication
+or live calls had started. Subsequent Q-041 supplies the operational consent.
+S-038 remains historical technical evidence, not accepted final UX delivery.
+
+## Historical Launch Clarification and S-038 Closure
+
+On 2026-11-04 at 11:23 +01:00 the user asks how to launch the preview and
+whether the `web` directory is obsolete. Source inspection confirms the
+normal `/` routes still serve that directory; only the test fixture's
+`--copilotkit` option serves the built preview at `/copilot/`.
+Provide offline launch instructions using a fresh temporary directory.
+This clarification does not authorize S-039, server startup, deletion or
+live calls. The previously shared 8878 page is not evidence of a running
+service; all S-038 test servers were stopped.
+
+S-038 revision 1 is completed and its local authority is consumed.
+The pinned CopilotKit v2 styled React preview works with the actual Python
+AG-UI/native framework stream using simulated upstream responses.
+See [A-025](implementation/log.md#a-025---s-038-local-copilotkit-compatibility-slice)
+and [executed evidence](research/evidence.md#s-038---executed-local-copilotkit-compatibility-evidence).
+Build/type-check, 12 SDK tests, 3 actual-Python wire tests, 30 targeted
+Python tests, 10 documentary checks and browser verification pass.
+The clean complete browser case makes three explicit model-run requests
+and ends unblocked with W-B 80/70/10, W-A 20. No actual Foundry call occurs.
+
+The UI uses contextual backend-eligible cards, explicit human actions and
+separate Continue; it does not register a model-callable approval tool.
+Provisional text is not marked validated until the application event and
+matching successful terminal arrive. This checks structured evidence and
+runtime completion, not every natural-language assertion or a second model
+judge; a validated investigation turn is not a completed reservation.
+
+Actual final pins: react-core/core 1.82.0, AG-UI JS 1.0.2, React/ReactDOM
+19.2.0, Zod 3.25.76, TypeScript 5.9.3 and Vite 7.2.2. Python pins unchanged.
+No registry/TLS change, dependency scripts, hosted service or prerelease.
+Large bundle warnings remain; no production/security/full-accessibility
+certification is implied. Browser forced-interception testing is limited
+by the harness; ordinary reload/switch and isolation were verified.
+
+All three temporary services were stopped and their exact fixture data
+directories removed. No Azure authentication/inference/export/spend,
+agent publication/schema changes, historical-run mutation, delegation,
+commit or push occurred.
+
+Only [S-039 revision 1](plan/plan.md#s-039-revision-1-default-copilotkit-ui-replacement)
+is proposed next, awaiting approval: default launcher/assets, source/build
+provenance, durable cards/receipts and removal of the prior static UI.
+The current CopilotKit surface remains a documented fixture-only preview;
+it has not silently become the default or a live-enabled interface.
+
+## Historical S-038 Start
+
+On 2026-11-04 at 10:37 +01:00 the user explicitly approves S-038 revision 1
+and requests explanations of human actions and final validation. See
+[Q-040](questions.md#q-040---local-copilotkit-compatibility-slice-authorization).
+Execute only this local compatibility slice. Real Foundry/model/export
+operations, full replacement before acceptance and historical-run changes
+remain excluded. The candidate gate found stable 1.82.0 available with v2
+exports and AG-UI JS 1.0.2, whereas 1.84.1 returns 404 in the configured
+feed and public npm still fails TLS. Select and test 1.82.0 explicitly,
+without registry/certificate changes or claiming source compatibility.
+
+## Historical S-037 Completion
+
+S-037 revision 1 is completed as local/public analysis. Its authority is
+consumed; no implementation or live operation follows automatically.
+The [complete analysis](research/analysis.md#s-037-copilotkit-integration-analysis)
+defines a CopilotKit v2 styled React UI, direct dev-only case-bound AG-UI
+transport, contextual evidence-backed human cards, explicit Continue,
+clear connection states and optional diagnostics, preserving the existing
+Python/native Foundry runtime and all authority/uncertainty controls.
+[D-019](decisions.md#d-019---copilotkit-chat-first-presentation-proposal)
+is a proposal, not accepted implementation architecture.
+
+Actual findings include full-thread versus new-message mismatch, automatic
+high-level chat startup, frontend-tool HITL versus existing trusted actions,
+and generic completion versus the custom validated-answer contract.
+Versioned react-core/core 1.84.1 metadata depends on AG-UI JS 1.0.2; installed
+Python protocol is 0.1.22. Wire compatibility is untested, not assumed.
+OSS chat/AG-UI/storage integration needs no hosted CopilotKit service;
+Intelligence and production self-managed mode are separate product choices.
+The current model contract has no explicit human-request flag: proposed
+cards derive from validated current evidence/state, not fabricated interrupts.
+
+Public npm registry reads failed TLS with two clients. Readable versioned
+CDN manifests/declarations and repository sources supplied documentary
+evidence; they do not prove package installation/resolution.
+No TLS bypass or registry configuration change was made.
+All ten documentary/link checks and `git diff --check` pass.
+No new application tests, package installs/execution, browser prototype,
+servers, Azure authentication/inference/export/spend, hosted onboarding,
+old-run mutation, delegation, commit or push occurred.
+
+Only proposed next activity:
+[S-038 revision 1](plan/plan.md#s-038-revision-1-local-copilotkit-compatibility-slice),
+a bounded local actual-SDK compatibility slice with simulated upstream I/O.
+Wait for its explicit approval. It excludes full replacement before the
+compatibility gate, Python upgrades, published agent changes and live calls.
+
+## Historical S-037 Analysis Start
+
+On 2026-11-04 at 10:20 +01:00 the user explicitly requests a complete
+analysis with CopilotKit. Execute [S-037 revision 1](plan/plan.md#s-037-revision-1-copilotkit-integration-analysis):
+local/public evidence and tracking only. CopilotKit is the selected
+analysis candidate, not yet an implemented/validated frontend.
+No application edits, installs, server startup, paid/cloud operations,
+historical-run changes, delegation or Git publication are authorized.
+The earlier Q-039 open-selection statements below are historical.
+
+Q-039 remains open: the user confirms the two candidate repository URLs
+but requests stronger selection criteria, not a simplicity-only preference.
+No library has been selected or installed. Further official research
+corrects the initial trade-off: CopilotKit also documents a direct AG-UI
+development connection, so an extra application runtime is not mandatory
+for this local demo. The production variant has separate feature/entitlement
+considerations. The revised unaccepted recommendation is to evaluate
+CopilotKit first for the user's Microsoft Agent Framework/AG-UI learning
+goal, while acknowledging assistant-ui's documented chat-UX strengths.
+See the [comparison findings](research/evidence.md#conversational-ui-library-follow-up).
+Package/protocol compatibility and preservation of the actual guarded
+endpoint still require a separately agreed local integration check.
+
+On 2026-11-04 at 10:10 +01:00 the user agrees to proceed toward the
+chat-first redesign and asks for recommended AG-UI UI libraries.
+Fresh official documentation verifies both Microsoft-featured CopilotKit
+and assistant-ui's direct React AG-UI adapter.
+[Q-039](questions.md#q-039---conversational-ui-library) settles the stack
+before adding a frontend build/runtime. No application edits, packages,
+server startup or cloud operation have occurred in this follow-up.
+The earlier UI feedback remains requirements input; technical S-036
+acceptance does not imply user acceptance of its presentation.
+
+User feedback on 2026-11-04 at 10:08 +01:00 challenges the usability of
+the delivered UI, not the requirement to use AG-UI or the real Foundry agent.
+The user expects option selection inside the conversation when requested
+by the agent, not permanent unexplained STANDARD/EXPRESS controls. They
+report a disabled Send button, confusing live/offline labeling and an
+unsatisfactory visual design. See [Q-038](questions.md#q-038---ui-usability-and-real-agent-expectations).
+S-036's technical offline acceptance remains historical evidence, not user
+acceptance of the UX or proof that the supplied default startup can chat.
+Application changes and live operations are paused pending an agreed next step.
+
+Local source inspection confirms the default startup disables inference;
+typing cannot override that switch, missing case selection or blocked state.
+The shared browser snapshot instead shows the previous offline test fixture
+and an intentionally interrupted blocked case. That snapshot does not prove
+a running service or a current live connection. No browser reload, inference,
+case mutation or server startup was performed for this diagnosis.
+The layout is application-authored HTML/CSS, not a supplied AG-UI theme.
+The real cloud backend exists but was not used by default/offline testing.
+
+S-036 revision 2 is completed. Q-037's local operational authority is consumed.
+The official framework AG-UI adapter and SSE browser interface use actual
+native streaming on the existing managed advisor path, with provisional
+text, terminal batch/usage checks, outer evidence validation, trusted human
+actions, durable locks/uncertainty and shared telemetry policies.
+No new deterministic reasoning workflow or alternate model loop was added.
+See [D-018](decisions.md#d-018---local-ag-ui-interface-with-native-streaming)
+and [A-023](implementation/log.md#a-023---s-036-ag-ui-and-native-streaming).
+
+Final acceptance passes: 150 combined Python tests, including 28 streaming/
+UI tests, 34 SDK-free tests also verified independently, ten documentary/link
+checks, JavaScript syntax, CLI-entry help, `pip check` and whitespace.
+Final-source browser tests verify a complete STANDARD case, no inference on
+selection/approval, provisional text before completion, exact approval,
+one reservation/read-back, seven simulated requests/six tools, source
+80/70/10, destination 20 and validated history after reload.
+Mobile width 390 pixels has no horizontal overflow. Stop stream leaves the
+case blocked with uncertain usage and no automatic retry.
+An independent loopback HTTP check receives six text events, first at
+1.65 seconds and clean successful EOF at 3.18 seconds, with final validation.
+These are explicitly offline fixtures, not a live Foundry-streaming claim.
+
+All bounded test servers are stopped and their dedicated temporary cases
+removed. Historical S-026/S-032/S-034 artifacts remain untouched.
+No Azure authentication/access, real inference/export/spend, publication,
+infrastructure/IAM/account change, APIM, delegation, commit or push occurred.
+Pylance's editor interpreter still cannot resolve optional framework/UI
+packages; dependency-aware full editor type-checking is not claimed.
+The actual application environment executes the complete passing suite.
+
+One possible next step is a bounded live walkthrough through this interface,
+under a new explicit contract and authorization. Do not start it automatically.
+Default UI startup keeps live inference and tracing disabled.
+
+## Historical S-036 Execution and Design Notes
+
+The following in-progress/proposed statements retain history and are not
+current authorizations or current implementation status.
+
+Q-037 returned `approve_local_agui_streaming`. S-036 revision 2 is now
+authorized and in progress for local implementation/dependencies and
+offline/browser verification only. No authenticated Azure operation or
+paid inference/export is authorized. The prior pending-approval language
+below is historical and superseded by this explicit answer.
+
+On 2026-11-04 at 09:38 +01:00 the user explicitly requires AG-UI and
+streaming (Q-036). This supersedes the unapproved S-036 revision 1
+recommendation, not Q-035's complete human-controlled case.
+Current proposal is [S-036 revision 2](plan/plan.md#s-036-revision-2-ag-ui-testing-interface-and-native-streaming):
+official framework AG-UI integration, true incremental model output and
+tool events, with streaming-aware budget/batch/evidence/uncertainty controls.
+The current streaming rejection is code to adapt, not a reason to reject
+the requested capability. Display partial text as provisional and validate
+terminal structured evidence before declaring success.
+No application edit/install/server/cloud operation has started.
+Wait for approval of the revised local implementation scope; live inference,
+trace export/spend and published-version changes remain excluded.
+The following revision 1 design history is superseded where it conflicts.
+
+S-035 local/public design is completed. Q-035 explicitly returned
+`full_human_controlled`: chat, tool/evidence inspection, option selection
+and exact-proposal approve/reject. Fresh official DevUI/AG-UI documentation
+and actual local runtime boundaries were inspected; no package installed
+or server/cloud operation started.
+
+S-036 revision 1 proposes one local FastAPI/static-browser UI increment,
+reusing the current managed advisor and its safety/session/decision controls.
+This project-specific recommendation avoids a streaming-runtime change just
+to obtain a testing screen. No AG-UI adoption is silently inferred.
+The contract includes local dependencies, offline/backend/browser checks
+and shared service/telemetry lifecycle integration; excludes authenticated
+Azure access, real inference/export/spend, deployment and historical-run changes.
+It is proposed only: wait for explicit approval before application edits,
+installs or server startup. No prior live authority carries forward.
+See [S-036](plan/plan.md#s-036-revision-1-local-human-controlled-testing-ui),
+[S-035 findings](research/evidence.md#s-035---local-testing-ui-scope-and-integration-choice)
+and [Q-035](questions.md#q-035---first-testing-ui-scope).
+
+The following S-034 completion remains valid historical evidence.
 
 S-034 revision 1 is completed; Q-034's operational authority is consumed.
 One shared trace provider/exporter and task-local per-agent off/metadata/

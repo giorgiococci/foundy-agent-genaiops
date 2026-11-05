@@ -1,7 +1,19 @@
 {
   "id": "controller-board-delay",
-  "version": 1,
+  "version": 2,
   "business_model": "HUB-1-BOARD-1-two-orders-v1",
+  "context": {
+    "day_one": "2026-11-09",
+    "currency": "EUR",
+    "labels": {
+      "HUB-1": "Control hub",
+      "BOARD-1": "Controller board",
+      "W-A": "Assembly warehouse",
+      "W-B": "Reserve warehouse",
+      "C-1": "Control hub order 1",
+      "C-2": "Control hub order 2"
+    }
+  },
   "snapshot": {
     "version": 1,
     "local_stock": 20,

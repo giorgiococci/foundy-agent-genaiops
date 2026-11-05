@@ -9,7 +9,7 @@ from pathlib import Path
 from azure.ai.projects.models import FunctionTool, PromptAgentDefinition
 
 from ...domain import ToolError
-from .tools import FUNCTION_TOOL_SPECS
+from .tools import FUNCTION_TOOL_SPECS, HUMAN_TOOL_SPECS
 
 
 PROMPTS = Path(__file__).parent / "prompts"
@@ -32,7 +32,7 @@ def definition(deployment: str) -> PromptAgentDefinition:
         raise ToolError("missing_deployment", "An explicit model deployment is required.")
     return PromptAgentDefinition(
         model=deployment, instructions=instructions("advisor"),
-        tools=[FunctionTool(**spec) for spec in FUNCTION_TOOL_SPECS],
+        tools=[FunctionTool(**spec) for spec in [*FUNCTION_TOOL_SPECS, *HUMAN_TOOL_SPECS]],
     )
 
 
@@ -46,7 +46,7 @@ def provenance(deployment: str) -> dict[str, str]:
     return {
         "profile": "advisor", "publication": "local-candidate",
         "instructions_sha256": hashlib.sha256(instructions("advisor").encode("utf-8")).hexdigest(),
-        "tool_schema_sha256": fingerprint(FUNCTION_TOOL_SPECS),
+        "tool_schema_sha256": fingerprint([*FUNCTION_TOOL_SPECS, *HUMAN_TOOL_SPECS]),
         "definition_sha256": fingerprint(candidate),
         "deployment": deployment,
     }

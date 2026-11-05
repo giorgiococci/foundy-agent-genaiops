@@ -1,10 +1,651 @@
 ---
 title: "Implementation of supply-chain-resilience"
 description: "Authorized local business-tool implementation, module boundaries and verified test evidence."
-ms.date: "2026-11-04"
+ms.date: "2026-11-05"
 ---
 
 ## Activity Log
+
+## A-033 - S-048 Existing Demo Reader Assignment
+
+* Date: 2026-11-05
+* Status: completed under Q-051/Q-052; authority consumed.
+* Authority: Q-051 confirms exact synthetic UPN aliases in the existing
+  demo domain and authorizes S-048 revision 1 checks and memberships.
+* Matrix: UserDemo01 to SCR Planning Readers (10) only; UserDemo02 to
+  SCR Procurement Readers (11) only.
+* Exclusions: account/credential/license/role/consent/policy changes, folder
+  ACL changes, deletion, sign-in, runtime/Foundry work and Git publication.
+* S-047 credential material remains untouched and is not used for these users.
+* Preflight: exact approved Graph UPNs resolve to enabled Member accounts;
+  each non-paginated transitive directory-role read returns zero roles.
+* Browser: previous page no longer exists. Opening the exact approved site
+  redirects to the expected tenant sign-in. No SharePoint write occurred.
+* Limitation: initial assignedLicenseSkuIds projection returns a null element,
+  so it is not used as proof of license availability or count.
+* Resumed browser preflight verifies the same approved owner and web ID;
+  groups 10/11/4/5 are empty, group 3 contains only the existing owner.
+  Neither demo user is a site principal. Both folder ACLs are unique and
+  exactly match A-031's owner/Read matrix. No SharePoint write yet.
+* Actual writes after successful preflight: two ensureuser POSTs create
+  site-local principals 12 (UserDemo01) and 13 (UserDemo02); neither is
+  IsSiteAdmin. These are not new Entra users.
+* Exactly two group-user POSTs return HTTP 201: principal 12 to group 10,
+  principal 13 to group 11. No retries, extra grants or other mutations.
+* Verification: each user's site groups contain exactly its agreed reader
+  group, each reader group has exactly its intended member, and both
+  site-admin flags remain false. Owners retain only existing principal 6;
+  Members/Visitors remain empty.
+* Folder read-back exactly matches A-031: General unique ACL principal IDs
+  3/6 Full Control and 10/11 Read; Restricted Procurement unique ACL IDs
+  3/6 Full Control and 11 Read. No folder permission mutation occurred.
+* Final exact-user Graph read-back confirms enabled Member state and zero
+  assigned licenses for each user. The earlier null projection was not
+  interpreted as a license; a direct collection-count check resolves it.
+* Source refresh: LE09 SharePoint REST permission documentation retrieved
+  2026-11-05, updated 2026-10-28; REST remains supported despite retirement
+  of SharePoint Add-ins. No retired add-in authentication was adopted.
+* Limitations: active-role checks do not prove PIM eligibility; no reader
+  sign-in, license assignment, document retrieval or Foundry OBO test.
+  All S-047 encrypted credentials remain untouched and unused.
+
+## A-032 - S-047 Entra Demo Users and Reader Membership
+
+* Date: 2026-11-04
+* Authority: Q-050 approve_proposed_aliases, enabled_dpapi_force_change,
+  create_users_assign_groups_no_licenses; S-047 revision 1.
+* Status: blocked; authority paused pending permission resolution and renewed
+  execution confirmation.
+* Target: existing demo tenant and approved SharePoint site; proposed
+  aliases scr-planner-demo and scr-procurement-demo.
+* Scope: at most two new enabled standard users, distinct encrypted local
+  temporary credentials, first-sign-in change, planner in site group 10
+  only and procurement in site group 11 only; targeted verification.
+* Excluded: licenses/purchases, admin/Foundry roles, consent, elevation,
+  MFA/security-policy changes, existing-account resets, deletion, user
+  sign-in, runtime integration, inference and Git publication.
+* Verified preflight: current CLI operator and tenant match the approved
+  target; intended domain is in organization.verifiedDomains; both exact
+  proposed user paths return 404. Same approved SharePoint owner session
+  confirms the two expected reader groups are empty.
+* Secure preparation: two distinct cryptographically generated temporary
+  passwords, each exported as DPAPI-protected PSCredential CLIXML outside
+  the repo. Directory inheritance disabled; only current Windows SID has
+  filesystem access. Import/decryption was checked without printing values.
+  No plaintext credential file, password process argument, environment
+  variable, transcript or token output was produced.
+* Actual request: exactly one Graph POST /users for scr-planner-demo,
+  enabled Member with forceChangePasswordNextSignIn=true. Response is
+  HTTP 403, error code Authorization_RequestDenied. No create retry;
+  scr-procurement-demo create was not attempted.
+* Post-failure verification: both exact user paths still return 404.
+  Groups 10/11 each have zero members. No users, licenses, roles or
+  SharePoint memberships were created/assigned.
+* Role diagnosis: GET /me/transitiveMemberOf/microsoft.graph.directoryRole
+  succeeds without pagination and returns Global Reader only. No active
+  write-capable user administrator role was observed; eligibility via PIM
+  was not queried, activated or inferred.
+* Corrected preflight-only issues: organization.verifiedDomains contains
+  verifiedDomain objects, which have no isVerified property. Checked the
+  official schema and corrected the membership test before any POST.
+  Initial browser CDP connection timed out; a read reconnected normally,
+  and the owner/group preflight then succeeded.
+* Preserved partial local files: scr-planner-demo.credential.clixml and
+  scr-procurement-demo.credential.clixml under LOCALAPPDATA/
+  FoundryMultiAgentLab/credentials/supply-chain-resilience-s047.
+  These passwords currently authenticate no created account. Do not register
+  or upload encrypted credential files, print passwords, or overwrite them
+  during an unapproved retry.
+* Next: user resolves the least-privileged directory role prerequisite
+  through the normal admin/PIM process. A role grant/activation or different
+  operator is outside this authority. Renew create/membership confirmation
+  after the pause. Sources: [LE10](../../../../docs/research/sources.md#le10---entra-test-user-provisioning).
+
+## A-031 - S-046 SharePoint Knowledge Site Provisioning
+
+* Date: 2026-11-04
+* Authority: Q-049 authorize_site_groups_upload_acl; S-046 revision 1.
+* Status: completed; Q-049 authority consumed.
+* Target:
+  <https://mngenvmcap946525.sharepoint.com/sites/supply-chain-resilience-lab>.
+* Scope: at most one non-group-associated site, two empty site-local reader
+  groups, two folder ACLs, four approved DOCX uploads and read-back.
+* User explicitly defers reader assignments and requests no document edits.
+  No Entra objects, consent, elevation, other-site ACLs, deletion, application
+  changes, model inference, publication or Git operations authorized.
+* Actual creation: one SPSiteManager create, HTTP 200, SiteStatus=2.
+  Non-group-associated team site, English locale; current verified demo
+  caller is owner. No duplicate creation or Microsoft 365 group/Team.
+* Resource IDs: site collection 4537546e-3503-4516-ae2f-ac7a2b080681;
+  web 8855d547-8567-411a-8d37-696f7443b1ed; default Documents library
+  3ce69324-7957-4d71-9cba-79483257c95e. These are configuration identifiers,
+  not credentials or test-user identities.
+* Created empty site-local groups: SCR Planning Readers, ID 10;
+  SCR Procurement Readers, ID 11. Both prohibit member-edited membership,
+  join requests and automatic acceptance.
+* Actual ACLs: General uniquely grants Read to groups 10/11. Restricted
+  Procurement uniquely grants Read to group 11 only. Associated owners group
+  and authenticated site owner retain Full Control. Exact principal counts
+  and role IDs were checked, not inferred from a successful POST.
+* Uploads: two approved DOCX files in each folder via normal browser file
+  input. Final read-back proves all four inherit their respective folder
+  permissions and no unexpected folder grants were added. PDFs/sources
+  are local only. No external/anonymous/tenant-wide grant was created.
+* Content read-back: each authenticated browser GET of the remote DOCX
+  package was checked. word/document.xml SHA256 exactly equals the local
+  approved body, covering all text and tables. Package sizes/hashes changed
+  after SharePoint processing, so binary package identity is not claimed.
+* Recorded remote evidence:
+
+```json
+[
+  {
+    "source_id": "SCR-K001",
+    "name": "Disruption Response Guide.docx",
+    "folder": "General",
+    "remote_bytes": 54658,
+    "remote_package_sha256": "c0f51dc53a5f84afc46b57168eb2b905ecba185d069cbd4f4eb241ed3b295826",
+    "word_body_sha256": "f3cbbd01ef9d0824dfc1c84ac05624b2ff1012a5c8b44dc8512c9ad32f2dafba"
+  },
+  {
+    "source_id": "SCR-K002",
+    "name": "Transfer Evaluation Guide.docx",
+    "folder": "General",
+    "remote_bytes": 54613,
+    "remote_package_sha256": "d0ab201fab44ccd9501f0d10a770d39f276d4c6bf1d611a409e6062349d4fc5b",
+    "word_body_sha256": "83aba1df3fc2f8a16bb9b5ceffba894e9e8347354e8db8c500f49436f75d7d49"
+  },
+  {
+    "source_id": "SCR-K003",
+    "name": "Supplier Recovery Conditions.docx",
+    "folder": "Restricted Procurement",
+    "remote_bytes": 54725,
+    "remote_package_sha256": "1a8da4e31321d73fd9ffd2a980fc0a5d1318531ebb65ab872464bfaa43f7ede1",
+    "word_body_sha256": "6842f9e1e7865181e59770a508f5720d38afc36624535637c2a688ab33b02419"
+  },
+  {
+    "source_id": "SCR-K004",
+    "name": "Commercial Escalation Guide.docx",
+    "folder": "Restricted Procurement",
+    "remote_bytes": 54932,
+    "remote_package_sha256": "a5cc1dbf9deecbefb316217d267ea14045fc4ecdb92cde9180a8017e10d5fc36",
+    "word_body_sha256": "f9bcd5fee6b730a059cfd5cb7162e226411b146abe2cd13b382a8f95cccecfd3"
+  }
+]
+```
+
+* Resolved verification issues: compact modern UI used an unlabeled upload
+  button; actual snapshot reference selected it. CLI Graph binary read-back
+  returned Forbidden; no new consent or different identity was used.
+  Browser-native download-event capture timed out. Same-origin browser GET
+  succeeded with the existing owner session; bounded ZIP decompression and
+  Web Crypto verified the approved Word-body hashes without exporting tokens.
+* Cleanup: removed only the empty named local readback scratch directory.
+  Existing local source/DOCX/PDF deliverables and created site are retained.
+* Limitations: no group users assigned, no actual non-admin allow/deny test,
+  no indexing-readiness/citation measurement and no Foundry OBO integration.
+  Owner access to both folders is expected, not evidence of failed trimming.
+* Sources: [LE08-LE09](../../../../docs/research/sources.md#le08---sharepoint-site-provisioning).
+
+## A-030 - S-045 Synthetic SharePoint Corpus and Preflight
+
+* Date: 2026-11-04
+* Authority: Q-047 drafts_and_targeted_readonly_preflight; Q-048
+  approve_english_outline and browser sign-in confirmation.
+* Status: completed; S-045 authority consumed.
+* Deliverables: four Word documents and four PDFs, with matching Markdown
+  build sources, under session files/sharepoint-knowledge. General contains
+  Disruption Response Guide and Transfer Evaluation Guide. Restricted
+  Procurement contains Supplier Recovery Conditions and Commercial
+  Escalation Guide. These are local organizational labels, not local ACLs.
+* All content is synthetic, English, version 0.1, dated 04 November 2026,
+  labeled Synthetic demo draft. No actual commercial/customer data.
+  Current tools remain authoritative for live facts and business actions.
+* Verification: all four strict Word builds pass; PDFs exported through
+  Word; all eight final pages visually reviewed; exactly two pages and one
+  criteria table per document. DOCX lengths total 213,016 bytes.
+  Source IDs/status labels present; tenant/account strings absent from
+  visible content; restricted example references absent from General files.
+  This content-separation check is not a permissions or retrieval test.
+* Resolved: first exports had mostly empty third pages. Shortened prose
+  without changing the approved outline; final page budgets pass.
+* Preflight: CLI tenant matches requested demo tenant; Graph root discovery
+  succeeds. SharePoint REST CLI authentication fails. After user signs in,
+  browser GET confirms the expected account and reads root rights.
+  IsSiteAdmin=false only describes this root site, not tenant eligibility.
+* Proposed site status GET initially returned XML; explicit OData-Version
+  header produced JSON with SiteStatus=0, Not Found. No create was attempted.
+* No SharePoint/Entra write, upload, new consent, package installation,
+  account change, runtime change, publication, inference or Git publication.
+* Next: S-046/Q-049 exact site/group/folder/upload contract; no inherited
+  operational authority. Real reader membership and OBO tests remain pending.
+
+## A-029 - S-043 Readable Data-Driven Explanations
+
+* Date: 2026-11-04 at 14:19 +01:00
+* Authority: Q-045 `local_and_one_publication_no_inference`.
+* Status: completed; Q-045 authority consumed.
+* Scope: S-043 revision 1; generic explanation prompt, authoritative
+  calendar/currency/labels, native human-card rendering, offline regression
+  checks, one existing-advisor version publication/read-back, local `.env`.
+* No model inference, approval/reservation, infrastructure/IAM, account
+  changes, user-server termination, delegation or Git publication.
+* Implemented: scenario v2 has an explicit fixed calendar reference,
+  currency and arbitrary ID-to-label map; validated planning context is
+  persisted per snapshot and copied into exact proposals. All relevant
+  business tools expose context, and order/receipt/option/proposal dates
+  are computed using the declared consecutive-calendar-day convention.
+  Approval/digest/current-facts guards cover context as well as amounts.
+* Prompt: generic writing guidance only, no fixture IDs, dates, currency or
+  canned business answer. Missing context is acknowledged, not invented.
+  Human cards reuse the native Markdown renderer, supplied dates/currency/
+  labels and plain-language margins. Removed fixed "boards", "fictional
+  units, not euros" and day-only rendering where authoritative context exists.
+* Checks: 164 Python tests, including 11 new context/alternate-data/frozen
+  approval tests; 16 frontend tests, including alternate USD/leap-day labels;
+  three actual offline CopilotKit core/Python SSE integrations; build and
+  TypeScript checks pass. No dependency changes were needed.
+* Browser fixture: Markdown emphasis and two real list items render in the
+  human question. Choice cards show correct November dates, EUR amounts and
+  descriptive names; EXPRESS click automatically resumes to the exact
+  proposal with the same context. Pending-approval reload adds zero model
+  requests and 390px has no horizontal overflow. No real Foundry model run.
+* Resolved validation issues: an overlapping build and asset-fingerprinting
+  test run caused a Windows EPERM/missing-build failure. Rebuilt separately,
+  then reran against stable assets. Two assertions still expected the old
+  fixture sentence; updated them to the new shared Markdown fixture text.
+  Final suites pass. Browser's Markdown emphasis is a Streamdown span, not
+  a strong tag; verified its actual DOM and list items.
+* Pylance: changed runtime files have no errors; store retains a pre-existing
+  contextmanager Iterator-return deprecation hint. Syntax checks pass.
+* Publication preflight: existing CLI tenant/subscription match Q-045,
+  v4's complete definition hash matches S-041, model and eight tool schemas
+  are unchanged. Current official AgentsOperations create_version reference
+  and AI application best practices were consulted.
+* Published exactly one version: `5`; complete read-back equals local
+  definition, SHA-256
+  `6cd734d3e53a0765ae7d5b437eec0381d1f2debe353189c8b313deb90a2bc752`.
+  Minimal evidence: `artifacts/local/s043-publication.json`.
+  Model requests: zero. Existing v4/earlier versions are unchanged.
+* Activation: updated local ignored `.env`, shared `.env.example` and
+  README to v5. Restart the user-owned server and choose New chat; no
+  historical session rebinding or migration system was introduced.
+* Cleanup: stopped only the owned `s043-offline` fixture and removed its
+  inspected exact `artifacts/local/s043-offline-ui` directory. Existing real
+  cases, publication proof and user-owned servers remain untouched.
+* Limitation: actual v5 model phrasing has not been evaluated; publication
+  read-back and deterministic/offline compatibility do not guarantee prose
+  quality. User review remains the next step, not additional paid work.
+* Final gates: all 10 customization/Markdown/link checks and `git diff
+  --check` pass. The default launcher loads local `.env` v5 and constructs
+  the real app successfully with the server runner mocked; no conversation
+  or inference is created. Existing LF-to-CRLF notices remain informational.
+
+## A-028 - S-041 Native Human Handoff Migration
+
+* Date: 2026-11-04 at 12:20 +01:00
+* Authority: Q-044 `approve_native_migration_publish_live_express`.
+* Status: completed; Q-044 operational authority consumed.
+* Scope/limits: S-041 revision 1 execution contract; one managed version,
+  one fresh real conversation, 10 requests/20 tools/40,000 tokens/EUR 2
+  estimated monitoring. EXPRESS preference only; no proposal approval.
+* Preserve existing dirty worktree, published v3 and historical conversations.
+* Local gates: 114 focused Python tests and 14 frontend tests pass.
+  Build/type-check passes; the three actual JS/Python wire tests pass again
+  against the final backend. Core automatically handles two genuine human
+  results; the wire roles are user/tool/tool, never invented user text.
+* Browser: fresh test page verifies Send/Enter, native choice, one-click
+  continuation, exact checkbox approval, one reservation/read-back and
+  reload of pending approval with unchanged model usage. Waited for the
+  validated terminal, not merely provisional success text.
+* Guard coverage includes whole-batch checks, durable native identity,
+  stale/cross-case/forged/duplicate result refusal, incomplete human-receipt
+  persistence, uncertainty and no automatic reload inference.
+* Cloud prerequisite: existing CLI tenant/subscription matches Q-044;
+  SDK read confirms advisor v3 uses the existing `gpt-6.1-sol` and six tools.
+  AI application best practices consulted; no tenant/account/IAM change.
+* Implementation: two request-only declaration tools, updated managed
+  prompt/schema, typed durable human request/receipt state, native tool-result
+  input, same server-owned AgentSession, single-use phase validation,
+  checked pause versus final outcome and core-driven frontend handlers.
+  CLI decisions use exact native IDs; `resume` sends a stored tool result.
+  The launcher requires an exact version instead of assuming historical v3.
+* Compatibility details: the adapter drops orphan results, so rebuild its
+  input from the actual stored assistant call plus checked receipt; never
+  fabricate a call. Core inserts the human result beside its call and can
+  leave later assistant narration, so project the latest genuine user/human
+  result rather than blindly the last message. Preserve the transport
+  failure latch even when the SDK/core catches callback errors.
+* Publication: exactly one new version, `4`, returned and read-back verified
+  against the complete candidate definition; SHA-256
+  `81043bf9ea20b5e3d69909ce90ce160c95936c175d3f591d136b85bc5ee1aa69`.
+  Existing v3 remains unchanged. No new resource, deployment or IAM change.
+* Real browser case: `0cbdedf0-d8b8-4d1f-9da3-b6665ad81b9b`, managed
+  conversation `conv_07d7a6ec7b59c5ff00HtPrP4ZVS4zLGhCAnOIIh6fRxLlm2x3v`.
+  One actual Italian user question, one authorized EXPRESS response as a
+  native tool result, then an Italian exact-proposal approval request.
+  Durable history roles: user/assistant/tool/assistant, no invented text.
+* Live usage: 4 model requests, 6 tools (including the two human requests),
+  7,301 input + 459 output = 7,760 reconciled tokens, EUR 0.1552 conservative
+  estimate, not invoiced cost. Both HTTP legs finish with a checked native
+  pause. No further inference, approval, rejection or reservation.
+* Actual pending proposal: `dd003838-cca7-4311-a382-ee88b2b85bf8`;
+  native call `call_7qd3dUtnGjSZzvVb9wcE0O5m`. Source stock remains
+  80 on hand / 30 reserved / 50 available; destination remains 20.
+  One observed action POST took 485.5 ms, not an inference latency benchmark.
+* Reload: same real service conversation and pending call, no extra model
+  request, approval still unchecked/disabled, zero Continue buttons, no
+  horizontal overflow at 390px. A fresh Python process reloads the durable
+  state and passes readiness without a model call.
+* Validation: build/type-check; 114 Python tests; 14 frontend tests; three
+  final actual core/Python SSE tests. Pylance syntax checks for the native
+  conversation and HTTP boundary pass with an explicit workspace root.
+  Full live approval/reservation is deliberately not claimed.
+* Cleanup: all bounded fixture/live servers stopped; exact S-041 offline
+  fixture directory removed. Real local state and minimal publication/live
+  evidence retained under `artifacts/local`; no cloud deletion, commit or push.
+  Remaining limitations: direct local-development provider, large bundle
+  warning, no new telemetry export or production/multi-user certification.
+* Final documentary gates: all 10 customization/Markdown/link checks pass;
+  `git diff --check` passes, with only existing LF-to-CRLF conversion notices.
+
+## A-027 - S-040 Conversational Decision Handoff Analysis
+
+* Date: 2026-11-04
+* Authority: Q-042, S-040 revision 1, local/public analysis only.
+* Status: completed; Q-042 analysis authority consumed.
+* Objective: verify native structured human handoff and define the concrete
+  replacement for separate Continue and fabricated user text.
+* Excluded: application/runtime/environment edits, model/server execution,
+  authenticated access, publication, deployment and Git changes.
+* Findings: native declaration-only functions, v2 human `respond` and core
+  follow-up support exist in the installed versions. Managed Foundry v3
+  cannot acquire new tool schemas from the frontend. Native approval is
+  supported, but its default AG-UI authority store is process-local.
+* Recommendation: two model-requested human tools, checked durable receipts,
+  native function-output continuation and explicit waiting/final states.
+  Replace current text-only/replay/lifecycle assumptions, not merely the
+  Continue button. Preserve backend human authority and language.
+* Deliverables: concrete contract, alternatives, source register/evidence,
+  proposed D-020, architecture question Q-043 and conditional S-041 scope.
+* Subsequent answer: Q-043 `native_human_tools` accepts D-020's architecture.
+  S-041 remains proposed and unstarted; no operational consent was requested
+  or received through that architecture question.
+* Documentary checks: all 10 customization/Markdown/link tests passed;
+  `git diff --check` passed. Existing LF-to-CRLF notices are warnings, not
+  test failures. No application tests were rerun for documentary-only edits.
+* Boundary: documentary/source findings only. No native scenario or latency
+  measurement, no code/package/environment edit, no server/auth/model call,
+  publication, deployment or Git operation. Runtime activation still requires
+  separately approved new managed definition and actual verification.
+
+## A-026 - S-039 Real Foundry Chat Replacement
+
+* Date: 2026-11-04
+* Authority: S-039 revision 2 and Q-041 `approve_real_ui_and_live_check`
+* Status: completed; Q-041 authority consumed
+* Scope: one real default CopilotKit UI, first-question initialization,
+  retirement of old static client, provenance/persistence and bounded
+  real read-only browser verification. No publication or new services.
+* Live limits: five native model requests, ten tools, 30,000 aggregate
+  tokens and EUR 2 post-response estimated monitoring; no automatic retry,
+  selection, approval, reservation or telemetry export.
+* Local implementation: root serves the sole built CopilotKit application;
+  old static files/routes removed. First explicit question initializes local
+  business state and starts the managed conversation once. Reload restores
+  history without inference; historical human cards/receipts remain visible.
+* Startup rejects missing real configuration or frontend build. The launcher
+  has no simulated/disabled application mode. Test injection remains only in
+  the dedicated offline fixture.
+* Frontend source, manifest, dependency lock and binary-safe served-build
+  hashes are persisted for UI sessions. Drift blocks mutation without
+  rebinding historical records. Verification limits are persisted and tested.
+* Checks before cloud execution: frontend build/type-check and 12 SDK tests;
+  77 focused Python tests; three actual JS/Python AG-UI wire tests; ten
+  documentary/link tests. Pylance syntax checks pass for launcher/session/UI;
+  all nine resolved `create_app` call sites are signature-compatible.
+* Browser: first Send/Enter works, exactly one run on first question, human
+  selection/approval alone do not infer, checkbox gates exact approval,
+  two historical cards survive reload, no reload runs, no page errors or
+  external resource requests, no horizontal overflow at 390px. Clean
+  three-turn STANDARD fixture ends unblocked with source 80/70/10.
+* An initial browser check reloaded after provisional final text rather than
+  validated completion. The post-write turn correctly remained uncertain,
+  with one preserved reservation and no replay. A separate fresh case,
+  waiting for validation before reload, completes successfully.
+* Corrected one documentary anchor after replacing the preview heading;
+  all documentary checks then pass. Vite large-chunk warnings remain.
+* Refreshed official [Agent Framework AG-UI guidance](https://learn.microsoft.com/en-us/agent-framework/integrations/by-component/ui/ag-ui/)
+  on 2026-11-04 and Azure MCP AI application best practices. No SDK/API,
+  managed agent definition, model or deployment changes were introduced.
+* Real verification: the default application starts in `managed-foundry`
+  mode, with an empty chat list and enabled first-question composer.
+  Exactly one browser run submits the explicit investigation question,
+  verifies the exact published advisor v3 definition and opens the actual
+  Foundry conversation through the existing native factory.
+* Retained local case:
+  `artifacts/local/supply-chain-s039-live/20d9028a-25b1-41c4-af71-30bf9b975f6e`.
+  Actual service conversation:
+  `conv_0626c304938af3bb00fOHiBmyFQeoxuYCf0a8U8DAzvmIQycpK`.
+  Browser run: `09e044ab-aa1e-4ba2-8777-9ff528cbcea0`.
+  No historical run was resumed or rebound.
+* Actual model usage: two model requests, three tools, 2,419 input and
+  1,048 output tokens; 3,467 aggregate, reconciled. Conservative estimated
+  model cost EUR 0.06934, not an invoice. Persisted limits are 5/10/30,000/
+  EUR 2, and telemetry is off.
+* Real SSE: 69 text-content events; first text approximately 12.86 seconds
+  after the request begins, successful terminal at 26.91 seconds.
+  `validated_answer` precedes `RUN_FINISHED`. The initial browser wait's
+  ten-second timeout did not cancel or replay the turn; the same run
+  completes successfully.
+* Actual final state: `running=false`, no block, a persisted user question
+  and validated assistant answer, comparison cards waiting for human
+  selection. Selection/proposal remain null; approval/rejection false.
+  Source remains on-hand 80/reserved 30/available 50, destination on-hand
+  20. No proposal, reservation or physical operation was made.
+* Live reload restores the real conversation/history/cards with zero new
+  browser runs and unchanged reconciled usage. No page errors, external
+  browser requests or horizontal overflow at 390px.
+* Additional offline browser regressions verify invalid final output,
+  Stop, uncertainty after reload, zero replay, new-chat isolation and inert
+  user HTML. Both failure paths show no eligible action card.
+* Bounded servers stopped; exact dedicated offline fixture directories
+  removed. The actual live case and cloud conversation are retained.
+  No publication, IAM/resource/account changes, telemetry export,
+  delegation, commit or push occurred.
+* Completion is the tested real application delivery, not inferred final
+  user UX approval, production certification or completion of the project.
+
+## A-025 - S-038 Local CopilotKit Compatibility Slice
+
+* Date: 2026-11-04
+* Authority: S-038 revision 1 and Q-040 at 10:37 +01:00
+* Status: completed; local authority consumed, no cloud/full-replacement authority
+* Initial package gate: configured feed returns 404 for 1.84.1 and exposes
+  stable 1.82.0 with v2 exports, MIT and AG-UI client/core 1.0.2.
+  Public npm query fails TLS. No registry/certificate change.
+  Select 1.82.0 for actual compatibility tests, not the prerelease latest tag.
+* Recovery: leave the current active UI/runtime unchanged until this bounded
+  slice passes; retain historical cases without migration/rebinding.
+
+Added the pinned React/TypeScript/Vite
+[frontend](../../../../src/supply-chain-resilience/frontend) and lockfile,
+using CopilotKit's v2 styled view/message/composer components. A public
+HttpAgent extension projects only the new trailing user message; the SDK
+handles SSE and message reconstruction. Clone preserves the binding and
+token; client tools/state/context/forwarded authority remain forbidden.
+The run validator explicitly latches failures because SDK subscriber
+exceptions need not reject its promise.
+
+The [backend](../../../../src/supply-chain-resilience/supply_chain/ui.py)
+projects human-card eligibility from the latest validated current evidence
+and snapshot/decision state, then repeats the check at action time. A local
+repro showed premature selection previously returned 200; it now returns
+409 until a validated comparison exists. Existing CLI decisions and native
+tool reasoning are unchanged. No model approval tool or new agent stage.
+
+The fixture optionally serves `/copilot/`, invalid final answers and actual
+inference-disabled configuration. The normal launcher/interface is not yet
+replaced. New preview code is not yet part of production candidate frontend
+fingerprints; default routing/provenance and durable card receipts belong
+to proposed S-039, not a live S-038 claim.
+
+Verification:
+
+* Exact published dependencies install and deduplicate through the configured
+  feed. All install scripts/audit/funding disabled. Lockfile package URLs
+  have no embedded credentials or query parameters; license metadata retained.
+* Type-check and Vite production build pass; large-chunk warnings remain.
+  Main emitted JS chunk is about 2,270 kB / 663 kB gzip, not a whole-app
+  transfer measurement. No production optimization or security audit claim.
+* Twelve JS SDK tests pass, three actual Python SSE integration tests pass,
+  and thirty targeted Python UI/native-streaming tests pass.
+* Browser complete STANDARD case uses exactly three explicit run requests,
+  including reload/reselection, and ends unblocked with six history entries,
+  W-B 80 on hand / 70 reserved / 10 available, W-A 20.
+* Cards appear after validation, not provisional tool output. Selection and
+  approval do not infer; approval requires exact confirmation. Keyboard Send,
+  disabled startup, invalid answer, Stop/uncertainty, case isolation, inert
+  user HTML and no horizontal overflow at 390 pixels were exercised.
+* Final clean browser paths report no console/page errors or external
+  requests. Keep strict CSP; disabling Vite asset inlining fixed a blocked
+  embedded font without adding a data-font/inline-script allowance.
+* Browser harness lacks request-context cookie support; a delayed interception
+  experiment stalled and was removed. Normal read/reload/switch flows were
+  rerun. No claim of exhaustive slow-network race coverage.
+* Ten documentary/link checks and whitespace pass. All three temporary
+  loopback servers were stopped and only their exact S-038 fixture data
+  directories removed. Dependencies/build outputs remain for reproducibility.
+
+No Azure authentication/model/export/spend, hosted onboarding, published
+agent changes, historical-run mutation, delegation, commits or pushes.
+Only [S-039 revision 1](../plan/plan.md#s-039-revision-1-default-copilotkit-ui-replacement)
+is proposed next, awaiting separate explicit approval.
+
+## A-024 - S-037 Complete CopilotKit Analysis
+
+* Date: 2026-11-04
+* Authority: explicit user request for complete CopilotKit analysis; Q-039
+* Status: completed as analysis; authority consumed, no implementation approval
+* Type: analysis/tracking only, not application implementation
+* Deliverable: [S-037 analysis](../research/analysis.md#s-037-copilotkit-integration-analysis)
+
+Inspected actual guarded UI/conversation/persistence boundaries, published
+package manifests/declarations, licensing and official Microsoft/CopilotKit/
+AG-UI documentation. Compared documented startup/HITL/history semantics with
+the current server's single-message, no-client-authority and final-validation
+contract. Recorded exact installed Python/Node metadata without network
+model operations. Public npm reads failed TLS through PowerShell and curl;
+versioned CDN metadata and repository manifests remained readable.
+No environment configuration was changed to conceal that limitation.
+
+Produced a target chat-first UX, local deployment/build design, version/
+product boundary matrix, human-card and success semantics, privacy/
+telemetry considerations, change surfaces and measurable acceptance gates.
+Proposed D-019 and one bounded S-038 local compatibility slice; neither
+proposal is implementation approval. The existing managed agent and
+published response contract are unchanged.
+
+No application edits, packages installed/executed, servers started, browser
+actions, authenticated tenant access, real inference/export/spend, hosted
+service onboarding, historical-run changes, delegation or Git publication.
+
+All ten documentary/link checks and patch whitespace pass. Existing runtime
+tests were not rerun because this activity changed only documentation and
+performed metadata inspection. No SDK-wire, package-resolution or live
+compatibility result is invented.
+Only [S-038 revision 1](../plan/plan.md#s-038-revision-1-local-copilotkit-compatibility-slice)
+is proposed next, awaiting explicit operational approval.
+
+## A-023 - S-036 AG-UI and Native Streaming
+
+* Date: 2026-11-04
+* Authority: S-036 revision 2 and Q-037 (`approve_local_agui_streaming`)
+* Status: completed; local authority consumed, no live authorization
+* Branch: existing `feat/agent-framework`; no commits or pushes
+* Decision: [D-018](../decisions.md#d-018---local-ag-ui-interface-with-native-streaming)
+
+Added optional AG-UI 1.7.1, FastAPI 0.141.0 and Uvicorn 0.38.0, retaining
+the proven framework/Foundry/OpenAI/Projects pins. Installation and package
+compatibility checks passed. Native `FoundryAgent` owns streaming and all
+model/tool continuation. Terminal response and whole-batch reconciliation
+precede tool effects; argument fragments are assembled natively. Fatal tool
+failures still latch before framework settlement can issue another request.
+
+Shared managed-version/native-conversation binding now serves both CLI and
+UI. The official AG-UI adapter runs through a small guarded transport binding
+that retains the server-owned framework session and final evidence validation.
+The renderer decodes only incremental top-level message text, including
+split escapes, and handles intermediate native commentary separately.
+Validated-answer and successful terminal events are withheld on failure.
+
+The same-origin static browser UI adds fresh synthetic cases, real event
+consumption, provisional text, tool activity, evidence, snapshot, IDs/limits
+and separate trusted selection/approve/reject/Continue controls.
+Loopback Host/Origin/action-token checks reject cross-site operations.
+Client histories, tools, state, resume and forwarded properties cannot
+grant execution authority. Reused AG-UI run IDs are refused. Per-case locks
+and checkpointing retain uncertain turns and any committed reservations.
+Static assets/entry points and optional UI SDK versions participate in
+provenance checks; no historical run was reset or rebound.
+
+One provider/exporter belongs to the server lifecycle; tracing remains off
+by default. A native AG-UI-span test exposed the adapter's local thread-ID
+override of managed conversation telemetry. The shared allowlisted exporter
+now retains the trusted service conversation identity. Existing tracing
+policies and native spans remain in use; no global sensitive capture.
+
+Initial UI tests caught an incorrect expectation that all `CUSTOM` events
+indicate success: the adapter legitimately emits tool-related custom events.
+The test now specifically rejects `validated_answer` on failure.
+Browser testing exposed a case-switch/create race; controls are now busy
+until the new case loads, and the empty selector option is disabled.
+Additional test-fixture naming/discovery and expected-error-code failures
+were corrected without relaxing application safeguards.
+
+Browser verification uses a test-only loopback server and visibly labeled
+offline service responses, not a fake production agent mode. The full
+STANDARD case produced one reservation with source 80/70/10, destination 20,
+seven simulated model requests, six tools and restored validated history.
+Text reached the browser before completion while approval remained disabled.
+Stop stream retained a blocked case, uncertain usage and unchanged stock.
+Mobile width 390 pixels had no horizontal overflow.
+
+No Azure authentication/access, paid inference/export, agent publication,
+infrastructure/IAM/account change, APIM, old-run mutation or delegation occurred.
+Live streaming/trace ingestion is not claimed.
+
+Final acceptance:
+
+* All 150 combined Python tests pass: 116 framework/advisor/observability/
+  native-streaming/UI checks plus 34 SDK-free business/tool checks.
+  The 34 SDK-free checks also passed independently without the SDK environment.
+* The 28 streaming/UI tests include native split arguments, all-batch
+  refusal before effects, terminal/call-ID mismatch, missing usage, failed/
+  incomplete terminal responses, fatal tool latches, invalid final evidence,
+  exact human approval/rejection, replay refusal, dependency drift, native
+  trace correlation and disconnects before and after a committed reservation.
+  Resource-close failure cannot emit success or clear an uncertain turn.
+* Ten documentary/link tests, JavaScript syntax, entry-point help,
+  `pip check` and `git diff --check` pass.
+* Final-source browser recheck passes the complete STANDARD path and reload:
+  no inference on selection (two requests) or approval (four requests);
+  completion uses seven simulated requests/six tools, one reservation and
+  durable source 80/70/10, destination 20. No application error is displayed.
+  Provisional text arrives before terminal validation; Stop disables retry
+  and retains uncertain usage. Width 390 pixels has no horizontal overflow.
+* Independent real-loopback HTTP SSE consumption confirms six text events,
+  first text at 1.65 seconds and clean successful EOF at 3.18 seconds,
+  with validated-answer and final `RUN_FINISHED`. This tests actual local
+  transport with explicitly simulated upstream service I/O.
+* All temporary servers are stopped; only their dedicated
+  `artifacts/local/s036-browser-tests` directory was removed.
+* Pylance reports unresolved optional framework/UI imports under the editor's
+  different interpreter. Do not claim a full dependency-aware static type
+  check; actual imports and execution pass in the pinned application environment.
+
+The next possible increment is one separately authorized bounded live
+streaming UI walkthrough. It was not started.
 
 ## A-022 - S-034 Shared Per-Agent Observability
 

@@ -13,7 +13,7 @@ from ...domain import ToolError
 from ...runtime import ToolSafety
 from ...observability import traced_tool
 from .conversation import AdvisorConversation
-from .tools import FUNCTION_TOOL_SPECS
+from .tools import FUNCTION_TOOL_SPECS, HUMAN_TOOL_SPECS
 
 
 def create_agent(
@@ -27,6 +27,10 @@ def create_agent(
         )
         for spec in FUNCTION_TOOL_SPECS
     ]
+    tools.extend(FunctionTool(
+        name=spec["name"], description=spec["description"],
+        input_model=spec["parameters"], func=None,
+    ) for spec in HUMAN_TOOL_SPECS)
     safety = conversation.safety
     agent = FoundryAgent(
         project_client=project, agent_name="supply-chain-resilience-advisor",

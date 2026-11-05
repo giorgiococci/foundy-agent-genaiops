@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
+from hashlib import sha256
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from collections.abc import Generator
 from uuid import uuid4
@@ -16,7 +17,7 @@ from agent_framework import AgentSession
 from agent_framework.foundry import FoundryAgent
 
 from .agents.resilience_advisor.definition import fingerprint, provenance
-from .agents.resilience_advisor.conversation import AdvisorConversation, HumanDecisions
+from .agents.resilience_advisor.conversation import AdvisorConversation, HumanDecisions, HumanRequest
 from .agents.resilience_advisor.tools import ToolSession
 from .data import SCENARIO, load_snapshot
 from .domain import DemoActor, DemoRole, ToolError
@@ -34,8 +35,19 @@ SDK_PACKAGES = (
 
 
 def source_fingerprint() -> str:
-    paths = sorted((ROOT / "supply_chain").rglob("*.py")) + [ROOT / "advisor_demo.py"]
+    paths = sorted((ROOT / "supply_chain").rglob("*.py")) + [ROOT / "advisor_demo.py", ROOT / "ui_demo.py"]
     return fingerprint({str(path.relative_to(ROOT)): path.read_text(encoding="utf-8") for path in paths})
+
+
+def frontend_fingerprint() -> str:
+    frontend = ROOT / "frontend"
+    if not (frontend / "dist" / "index.html").is_file() or not (frontend / "dist" / ".vite" / "manifest.json").is_file():
+        raise ToolError("missing_frontend_build", "Build the UI first: cd frontend; npm run build.")
+    paths = [frontend / name for name in (
+        "package.json", "package-lock.json", "tsconfig.json", "vite.config.ts", "index.html",
+    )]
+    paths += sorted(path for directory in ("src", "dist") for path in (frontend / directory).rglob("*") if path.is_file())
+    return fingerprint({str(path.relative_to(frontend)): sha256(path.read_bytes()).hexdigest() for path in paths})
 
 
 def asset_fingerprint(path: Path) -> str:
@@ -50,6 +62,8 @@ class SessionRecord:
     scenario_sha256: str
     evaluation_sha256: str
     sdk_versions: dict[str, str]
+    ui_sdk_versions: dict[str, str] = field(default_factory=dict)
+    ui_frontend_sha256: str | None = None
     model_request_limit: int = 10
     tool_call_limit: int = 20
     total_token_limit: int = 100_000
@@ -118,6 +132,10 @@ class CandidateSession:
             raise ToolError("incompatible_session", "A new Agent Framework session is required. Historical artifacts remain read-only; no migration is performed.")
         try:
             data["usage"] = RunUsage(**data["usage"])
+            decisions = data["decisions"]
+            if decisions.get("pending") is not None:
+                decisions["pending"] = HumanRequest(**decisions["pending"])
+            decisions["human_history"] = [HumanRequest(**item) for item in decisions.get("human_history", [])]
             data["decisions"] = HumanDecisions(**data["decisions"])
             return cls(directory, SessionRecord(**data))
         except (KeyError, TypeError) as error:
@@ -143,13 +161,27 @@ class CandidateSession:
     def ensure_ready(self) -> None:
         if self.record.running or self.record.usage.usage_unreconciled:
             raise ToolError("uncertain_turn", "Inspect durable state; an interrupted turn cannot retry automatically.")
-        current_sdks = {name: version(name) for name in SDK_PACKAGES}
+        pending = self.record.decisions.pending
+        if pending is not None and pending.receipt is None and (
+            (pending.name == "request_transfer_choice" and self.record.decisions.selected_option is not None)
+            or (pending.name == "request_transfer_approval" and
+                (self.record.decisions.approved or self.record.decisions.rejected))
+        ):
+            raise ToolError("uncertain_human_response", "Decision state lacks its durable receipt; inspect without replay.")
+        try:
+            current_sdks = {name: version(name) for name in SDK_PACKAGES}
+            current_ui_sdks = {name: version(name) for name in self.record.ui_sdk_versions}
+        except PackageNotFoundError as error:
+            raise ToolError("candidate_drift", "Recorded SDK dependencies are unavailable; inspect the original environment.") from error
         if (self.record.provenance != provenance(self.record.deployment)
                 or self.record.source_sha256 != source_fingerprint()
                 or self.record.scenario_sha256 != asset_fingerprint(SCENARIO)
                 or self.record.evaluation_sha256 != asset_fingerprint(EVALUATIONS)
-                or self.record.sdk_versions != current_sdks):
+                or self.record.sdk_versions != current_sdks
+                or self.record.ui_sdk_versions != current_ui_sdks):
             raise ToolError("candidate_drift", "Code, instructions, tools, data, evaluations or SDKs changed; do not resume silently.")
+        if self.record.ui_frontend_sha256 is not None and self.record.ui_frontend_sha256 != frontend_fingerprint():
+            raise ToolError("candidate_drift", "Frontend source, dependency lock or served build changed; do not resume silently.")
 
     def _event(self, fields: dict[str, object]) -> None:
         self.save()
@@ -162,16 +194,24 @@ class CandidateSession:
         with (self.directory / "events.jsonl").open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(trace) + "\n")
 
-    async def reply(self, agent: FoundryAgent, message: str) -> dict[str, object]:
+    async def reply(self, agent: FoundryAgent, message: str | None) -> dict[str, object]:
         self.ensure_ready()
-        if not message.strip():
+        if message is not None and not message.strip():
             raise ToolError("empty_message", "A nonempty planner message is required.")
         if (self.framework_session is None or not isinstance(self.framework_session.service_session_id, str)
                 or not self.framework_session.service_session_id.strip()):
             raise ToolError("missing_conversation", "Bind an explicitly verified managed-agent conversation first.")
+        if message is not None and self.record.decisions.pending is not None and not self.record.decisions.pending.consumed:
+            raise ToolError("human_input_pending", "Answer the native human request before another user turn.")
+        if message is None and (self.record.decisions.pending is None
+                                or self.record.decisions.pending.receipt is None
+                                or self.record.decisions.pending.consumed):
+            raise ToolError("invalid_continuation", "No unconsumed human response is available.")
         self.record.running = True
         self.save()
-        result = await self.advisor.reply(agent, self.framework_session, message)
+        result = await self.advisor.reply(
+            agent, self.framework_session, message if message is not None else self.advisor.continuation(),
+        )
         self.record.running = False
         self.save()
         return result

@@ -113,12 +113,13 @@ class RuntimeTests(unittest.TestCase):
             self.offline.run(self.loop)
         self.assertEqual(caught.exception.code, code)
 
-    def test_sdk_definition_exposes_exactly_six_strict_advisor_tools(self) -> None:
+    def test_sdk_definition_exposes_six_business_and_two_human_strict_tools(self) -> None:
         agent = definition("deployment-test")
         self.assertEqual(agent.kind, "prompt")
         self.assertEqual(agent.model, "deployment-test")
         self.assertEqual({tool.name for tool in agent.tools}, READ_TOOL_NAMES | {
             "create_transfer_proposal", "execute_approved_transfer", "read_transfer_result",
+            "request_transfer_choice", "request_transfer_approval",
         })
         for tool in agent.tools:
             self.assertTrue(tool.strict)

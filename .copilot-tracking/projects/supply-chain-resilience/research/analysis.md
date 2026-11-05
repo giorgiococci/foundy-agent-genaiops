@@ -1,8 +1,666 @@
 ---
 title: "Analysis of supply-chain-resilience"
-description: "Initial business framing and documented realism of supply-chain exception scenarios."
-ms.date: "2026-11-03"
+description: "CopilotKit integration analysis and retained business framing for the Foundry learning demo."
+ms.date: "2026-11-04"
 ---
+
+## User-Scoped Knowledge, OBO and Database RLS
+
+* Date: 2026-11-04 at 17:30 +01:00.
+* Scope: requested local/public architectural analysis, not a vulnerability
+  audit or permission to change authentication/cloud resources.
+* User interest: storage for small knowledge plus access limited to the
+  signed-in user's documents/rows. Q-046 reports SharePoint/two-user
+  prerequisites available but asks whether database RLS is too complex.
+  This does not confirm SQL availability or admin consent capability.
+
+### Identity and authorization distinctions
+
+* Rechecked S09: narrow capabilities, trusted identity context, resource
+  binding and deny-path auditing are relevant. The blog's ToolContext/
+  ToolGrant classes are custom examples. Its Blob path check with a supplied
+  credential does not itself demonstrate a downstream OBO token exchange.
+* OBO obtains a token for the downstream audience on behalf of the user.
+  It is not forwarding one bearer token everywhere, nor does it automatically
+  enforce document ACLs or database rows. Agent/service identity can remain
+  at technical boundaries while data access uses delegated user authority.
+* Current code: cloud_agent in ui.py uses server-side AzureCliCredential.
+  Loopback Origin/action-token checks are not browser Entra login; session.py
+  uses fixture business actors. Two browser users do not yet have distinct
+  authenticated identities or protected conversation ownership.
+* Full design must cover real sign-in, validated token audience/issuer/tenant,
+  delegated scopes/consent, principal authorization, per-user runs/history/
+  caches, and deny behavior. No token belongs in prompts, tool arguments,
+  AG-UI state, receipts or telemetry.
+
+### Storage alternatives
+
+* SharePoint: a small same-tenant library preserves source permissions.
+  The Foundry SharePoint tool explicitly documents delegated/OBO access,
+  citations and two-user permission checks; it is preview and has license/
+  pay-as-you-go, tenant and tool/channel constraints. Exact local integration
+  is unverified.
+* Blob/ADLS plus Search: separate canonical files, indexed chunks and
+  permission metadata. Security-string filtering is application enforcement,
+  not end-user database authentication; native ACL/RBAC/sensitivity-label
+  paths have preview/source/API constraints. A shared copied index must not
+  be assumed to inherit source ACLs.
+* Database: appropriate for protected operational rows or a few short
+  knowledge records. Real SQL RLS uses a security policy/predicate in the
+  database. Use user-delegated SQL tokens if proving true end-user OBO;
+  shared service identity plus trusted SESSION_CONTEXT is a different design.
+
+### Bounded recommendation after Q-046
+
+* Database RLS is a manageable candidate, not equivalent to adding a WHERE
+  clause to the current SQLite demo. Most added work is genuine end-user
+  authentication/token/consent handling, which SharePoint also requires
+  in this multi-user browser application.
+* Proposed slice: two actual Entra users, one narrow read-only knowledge
+  function, one small SQL table plus access mapping/security policy. A
+  record may contain a synthetic knowledge document with source/version,
+  allowing document-level access through row visibility without introducing
+  vector retrieval or a separate document platform.
+* Model chooses the business query; verified request identity determines
+  access. SQL applies RLS before any hidden text reaches the model. Expose
+  only required fields and bounded results; do not expose arbitrary SQL,
+  connection parameters, identity or permission filters to the model.
+* Verify actual SQL caller identity and same-query/different-user results.
+  Include forbidden-ID reads, empty authorized results versus authorization
+  errors, expiry/no fallback, concurrent users, history/citation/cache
+  isolation and absence of another broadly privileged tool bypass.
+* Sources: [LE04-LE07](../../../../docs/research/sources.md#le04---delegated-tool-identity-and-obo).
+  The DAB OBO sample is architectural evidence, not a selected extra service
+  or a proven Python driver integration. No database or Entra tenant query
+  was performed.
+* Next candidate: S-044 revision 3 feasibility/design only. No backend has
+  been approved for deployment, and no new application/cloud work is started.
+
+## Learning Expansion Options After Advisor v5
+
+* Date: 2026-11-04 at 17:24 +01:00.
+* User feedback (English translation): the solution seems to work well;
+  consider knowledge, more tools/scenarios and further Foundry learning.
+  This is a request for recommendations, not implementation authorization.
+* Current distinction: STANDARD and EXPRESS are two modes of the same
+  recovery strategy. Existing fixtures already cover no impact, infeasibility
+  and missing policy, but the live interface remains centered on transfers.
+* Highest learning value: combine authoritative operational tools with a
+  small synthetic document corpus, source-backed answers, and honest handling
+  of missing, outdated or conflicting knowledge. Documents inform decisions;
+  they do not grant human approval or replace stock/price feasibility checks.
+* Backend alternatives: managed file search, an existing Azure AI Search
+  index, or a bounded local document-reading function. The last is simpler
+  but must not be presented as native Foundry retrieval or semantic RAG.
+  Select only after exact SDK/runtime/citation compatibility and prerequisites
+  are studied. Public source candidates:
+  [LE01-LE03](../../../../docs/research/sources.md#learning-extension-research).
+* Second strategy candidate: when source stock cannot cover the shortage,
+  a read-only supplier-recovery tool supplies synthetic expedited/new-supplier
+  quotes and delivery facts. The model decides whether to inspect it based
+  on the question and evidence, not a new hardcoded orchestration branch.
+  Start with advisory recommendations; no new purchasing write is implied.
+* Further learning: a small measured evaluation suite for tool selection,
+  grounding, citations, refusal, latency and cost; then consider a bounded
+  specialist with distinct supplier/quality context. MCP is an integration
+  option when reuse warrants it, not required for every new function.
+* Important scope: multiple components/orders/cases need actual data/model
+  changes; adding a fixture JSON alone does not remove current domain IDs,
+  arithmetic assumptions or STANDARD/EXPRESS human-control enums.
+  A second strategy must account for evidence and UI/permission contracts.
+* Recommendation: one next design increment (S-044), not simultaneous
+  implementation of knowledge, an optimizer, multiple agents and MCP.
+  Preserve the user's learning-first/simple synthetic-business approach.
+* This activity changed tracking only. No application edits, authenticated
+  tenant access, resource provisioning, ingestion, publication or inference.
+
+## S-042 User Feedback on Explanation Readability
+
+* Date: 2026-11-04 at 14:16 +01:00.
+* User feedback (English translation): the flow works; the advisor's dense
+  explanation is hard to read, and synthetic day numbers lack meaning.
+  This is flow-level feedback, not final acceptance of all presentation.
+* Local review: the quoted quantities, option costs and schedule margins
+  match the initial business model. The shortage is 40 across the two
+  commitments, not necessarily a specific allocation of shortage per order.
+  Costs have no declared currency; do not silently label them EUR.
+* Presentation issue: one human-tool question carries situation, inventory,
+  order quantities, deadlines, feasibility, costs, margins and the decision.
+  The current prompt asks for a concise question but does not require
+  a scannable summary or a defined calendar reference.
+* Recommendation, not implemented: separate problem, two alternatives and
+  one decision question. Explain zero margin as completion on the deadline,
+  not as an inferred probability of failure. Keep detailed evidence available
+  without repeating every field in the question.
+* A later bounded improvement could introduce a fixed synthetic scenario
+  date and explicit day-slot mapping in authoritative tool facts, plus
+  descriptive names retaining stable IDs. Do not have the model invent dates,
+  infer business-day calendars or use wall-clock today for persisted cases.
+* No application/prompt/data change, cloud access, publication, inference
+  or historical conversation mutation is authorized by this review.
+
+## S-040 Conversational Decision Handoff Design
+
+* Date: 2026-11-04
+* Authority: Q-042, S-040 revision 1; local/public research only.
+* Outcome: recommend real frontend human-tool requests/results, with
+  application-verified durable receipts and automatic core continuation.
+  This is a concrete proposed contract, not implemented compatibility.
+* Sources: [CK10-CK13](../../../../docs/research/sources.md#conversational-human-handoff-research).
+
+### Alternatives and recommendation
+
+1. Automatically send the old Continue message, perhaps translated/hidden:
+   reject. This preserves false user-message semantics and only masks the UX.
+2. Structured application decision events, followed by application-owned
+   continuation: viable simpler alternative. It needs a proper typed input
+   contract and truthful model context, but does not demonstrate the model
+   requesting and receiving native frontend human-tool results.
+3. Agent-requested CopilotKit human tools: recommend for this learning demo.
+   The model requests the decision; the hook waits; a real human response is
+   validated by the backend and becomes the matching native function output.
+   No separate Continue or pretend user text. Cost: update the managed
+   definition and replace the old adapter/transport/lifecycle assumptions.
+
+Native Framework `always_require` approval is also available. It is suitable
+for Boolean permission but not STANDARD/EXPRESS preference collection.
+Combining that mechanism with a different preference mechanism is possible,
+not prohibited. For this small demo, use the same two human-tool pattern for
+both decisions and retain backend exact-proposal authorization. Do not add a
+second confirmation dialog merely to exercise another API.
+
+### Proposed agent contract
+
+Keep the six current business tools. Add two declaration-only human tools:
+
+* `request_transfer_choice` asks STANDARD or EXPRESS in the user's language.
+  It requires a current authoritative comparison, no existing proposal and
+  feasible options only.
+* `request_transfer_approval` asks about one exact proposal ID in the user's
+  language. It requires the current proposal/facts and no prior decision.
+
+Neither tool approves anything by being called. They have no server
+implementation that manufactures a human answer. The frontend supplies the
+interaction; only the backend's checked human event changes permission.
+The model never gains an `approve_transfer` capability.
+
+Tool arguments contain the question and, for approval, proposal identity.
+Render quantities, costs and feasible options from server-owned facts, not
+unverified model argument copies. The backend binds each actual model call
+to its case, service conversation, native call ID, immutable arguments and
+snapshot/policy versions before enabling a response.
+
+The prompt must require the human tool when a decision is needed, preserve
+the user's language and distinguish waiting from final JSON answers.
+No new workflow engine or deterministic investigation sequence is required:
+the model still decides what to investigate and when it needs a human.
+
+### One interaction and one continuation
+
+1. The native agent produces a real human-tool call; the backend validates
+   its entire batch and reconciles usage before accepting a waiting state.
+2. Persist the pending request and actual native/session identity. Close
+   resources and the current HTTP stream normally. Waiting for a person is
+   not an uncertain model call and must not keep an Azure inference open.
+3. The v2 human hook renders the pending question. One click submits the
+   actual option or exact proposal decision through the local action boundary.
+4. Under the case lock, verify the pending call, facts and local actor boundary,
+   record the event once and return a durable receipt. Do not continue if
+   that write fails. The receipt is evidence of this event, not client authority.
+5. Call `respond` with that receipt. CopilotKit core produces the tool-result
+   continuation automatically. The server verifies correlation and uses its
+   stored receipt to construct the matching native function result.
+6. Agent Framework resumes the same managed conversation. The advisor
+   creates a proposal after choice, or may execute/read back only the exact
+   approved proposal after approval. Rejection never permits execution.
+
+The real user-message list contains only text actually submitted by the
+person. A human response is a typed tool result/card receipt, never an English
+or translated invented sentence. Preserve the last genuine user language;
+the existing prompt already requests it. No language-detection model is needed.
+
+### Required changes to the current integration
+
+* Publish a new version of the existing advisor with the two human schemas
+  and prompt changes. Managed v3 cannot discover these tools from React.
+  Do not overwrite v3, guess the new version number or rebind old sessions.
+* Compose `useHumanInTheLoop` through the pinned v2 core run path. Bare
+  `agent.runAgent` currently bypasses the frontend-handler/follow-up owner.
+  Continue to avoid high-level chat automatic initial runs and suggestions.
+* Replace the ordinary-user-text-only run contract with two narrow inputs:
+  a genuine new user message, or one correlated human-tool receipt/result.
+  Do not accept client history, arbitrary tool schemas, approvals or state.
+  Human tools use exact server-owned allowlisted declarations; unknown tools
+  remain fatal. Frontend and server business-tool names must not collide.
+* Update the binding to forward native tool declarations/results and the
+  actual server-owned session instead of dropping those inputs. The current
+  text-only conversation helper cannot represent this handoff.
+* Separate a checked waiting terminal from a validated final answer:
+  proposed application events `validated_pause` and existing
+  `validated_answer`. Waiting means current request/usage persisted, not a
+  completed reservation. Continue using the SDK for SSE; no new parser.
+* Persist native human-call history and receipts so reload reconstructs the
+  same pending card and cannot create approval. Do not use client history or
+  a new in-memory adapter as the authority for restored pending work.
+* Distinguish logical SDK run identity from accepted native-call phases.
+  Core can reuse a run ID across a human follow-up; replace the blanket
+  run-ID-only rejection with atomic phase/receipt consumption tied to the
+  pending native call. Never disable replay checks to accommodate core.
+* Account for human requests once in call budgets. Preserve complete-batch
+  validation before effects, fatal sibling failure and exact read-back.
+* Route CLI/operator decisions through the same authoritative pending-event
+  logic where relevant; do not create an alternate weak approval path.
+
+### Lifecycle and failure rules
+
+Pending human input is an explicit safe state, separate from active inference,
+final validation, completed outcome and uncertainty. A reload may restore the
+question without invoking a model. A duplicate click returns the same event
+receipt, not a second decision/continuation. Claiming a continuation must be
+atomic; an already-consumed or mismatched native call cannot be replayed.
+
+If a response is saved but the subsequent model call becomes uncertain, show
+the saved decision and an explicit blocked/reconciliation state. Do not ask
+the person to approve again or silently resend the result. Losing a frontend
+promise must not lose the durable human request or imply an approval.
+
+Stop during inference preserves the existing uncertainty rules. Leaving a
+waiting question unanswered makes no reservation. Cancellation/rejection is
+a real event, not an automatically injected dummy tool result.
+
+Provide immediate, accurate phases such as recording the choice and then
+waiting for the advisor's response. The current action route does no model
+inference; exact selection latency remains unmeasured. Repeated readiness/
+frontend-fingerprint checks are visible in source, but are only profiling
+candidates. Optimize only after measuring and without weakening drift checks.
+
+### Verification gates and scope
+
+Before any publication, prove the pinned native declaration-only pause and
+tool-result continuation with actual framework/JS SDK code and test-only
+upstream responses. Check same service conversation/call ID, core follow-up
+identity, zero generated user text, one continuation per human event, failure
+and reload/restart handling, guards, budgets, source/build provenance and CSP.
+These fixtures are internal tests, not an alternative user application.
+
+Then a separately authorized new managed version and real browser walkthrough
+must prove the integration. No new resource, model provider, hosted runtime,
+APIM or extra agent is proposed. Direct migration replaces the old UI contract;
+there is no permanent legacy/simulated application fallback.
+
+S-040 has inspected sources only: no SDK invocation, server, build, model,
+publication or tenant access. Native compatibility and latency have not been
+measured in this step. Q-043 asks for the architectural decision; operational
+implementation/publication requires a separate bounded contract.
+
+## User Review of the S-039 Decision Handoff
+
+* Date: 2026-11-04 at 11:58 +01:00
+* User feedback, faithful English translation: the application generally
+  works, but selecting EXPRESS, waiting, separately continuing, seeing an
+  invented English user message, approving and separately continuing again
+  is cumbersome and unacceptable. Preserving the previous interaction
+  contract is not an adequate product design.
+* Verified local facts: `Conversation.act` records `/actions` and stops.
+  `DecisionCard` then exposes a separate Continue. Its callback sends the
+  hard-coded English sentence `Continue using the recorded human decision.`
+  through the ordinary user-message path, which adds it to the transcript.
+  This is actual application-generated text attributed to the user, not
+  a requirement of CopilotKit or AG-UI.
+* The backend action handler records/validates the decision without invoking
+  the model. The observed selection wait cannot be called model reasoning
+  on this path. Its exact latency has not been measured; do not attribute
+  the seconds to a specific validation/hash/database operation without proof.
+* The hard-coded English continuation is an unwanted language input and a
+  plausible contributor to the language switch, not a proven sole cause.
+* Desired interaction: one explicit selection submits the real choice and
+  resumes the advisor; one explicit exact-proposal approval submits that
+  decision and resumes the permitted execution/read-back. No extra Continue
+  and no application-invented user sentence. Preserve conversational language.
+* Safety does not require the redundant UI action: the backend must still
+  validate/store the exact human event before permitting the agent to
+  continue. Selection never implies proposal approval. Reload, retries or
+  the model itself must not manufacture a human event.
+* Design implication: revisit the frontend/backend interaction contract,
+  including the endpoint that currently requires one new user text and
+  rejects resume/tool results. Do not silently hide the old English message,
+  translate it, or auto-click Continue as a substitute for proper semantics.
+* Proposed next step: S-040 verifies the supported native Agent Framework/
+  AG-UI/CopilotKit handoff for the installed versions and produces one
+  concrete replacement contract. Native HITL/resume suitability is not yet
+  established by this local review; do not claim a transparent adapter
+  migration or managed-agent compatibility without checking it.
+* Boundary: source review and tracking only. No application changes,
+  authenticated access, model calls, publication or deployment in this turn.
+  S-039's live evidence remains valid but does not prove user UX acceptance.
+
+## S-037 CopilotKit Integration Analysis
+
+Subsequent implementation evidence:
+[S-038/A-025](../implementation/log.md#a-025---s-038-local-copilotkit-compatibility-slice)
+tests the available stable 1.82.0 candidate locally. The boundary below
+describes S-037 at completion; it does not erase the later separately
+authorized compatibility slice or establish live Foundry verification.
+
+### Outcome and evidence boundary
+
+CopilotKit is a suitable candidate for the requested chat-first demo.
+Recommend a local React/TypeScript frontend using its v2 styled components
+and AG-UI client, retaining FastAPI, the guarded Agent Framework path and
+the managed Foundry advisor. Do not introduce a second agent runtime,
+CopilotKit-hosted model or application workflow engine.
+
+This is a completed documentary/local-source analysis, not a working
+CopilotKit integration. No frontend packages were installed, no application
+code changed, no servers started and no Azure/model/export operation ran.
+The [source register](../../../../docs/research/sources.md#copilotkit-complete-integration-analysis)
+records freshly inspected public sources, exact published package metadata
+and limitations. [Q-039](../questions.md#q-039---conversational-ui-library)
+selects CopilotKit for analysis; implementation remains unapproved.
+
+The recommendation is based on Microsoft's explicit integration reference,
+the AG-UI-maintainer ecosystem and the fit to agent/tool/human interaction,
+not a claim that assistant-ui cannot provide these capabilities.
+No Microsoft support or production certification is inferred.
+Sources: [CK01](../../../../docs/research/sources.md#ck01),
+[CK07](../../../../docs/research/sources.md#ck07).
+
+### Existing backend and concrete integration gaps
+
+| Surface | Verified current behavior | CopilotKit implication |
+| ------- | ------------------------- | --------------------- |
+| [ui.py](../../../../src/supply-chain-resilience/supply_chain/ui.py) | One user message per run; browser history, tools, state, resume and forwarded authority are rejected | Default full-thread SDK requests are not plug-and-play |
+| [ui_stream.py](../../../../src/supply-chain-resilience/supply_chain/ui_stream.py) | Official framework adapter, provisional message text and native tool events | Retain it; replace browser parsing with the SDK rather than another model loop |
+| [conversation.py](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor/conversation.py) | Trusted selection/approval outside the model; final evidence equality/read-back checks | Render contextual actions against existing backend methods |
+| [advisor.txt](../../../../src/supply-chain-resilience/supply_chain/agents/resilience_advisor/prompts/advisor.txt) | Ask for missing preference, explain exact proposal and wait for application approval | No new frontend approval tool is necessary |
+| [session.py](../../../../src/supply-chain-resilience/supply_chain/session.py) | Native session, drift checks, running/usage uncertainty and file locks | Frontend threads must bind to actual server-created case IDs |
+| Existing stream terminal | `CUSTOM validated_answer`, then `RUN_FINISHED`, after resource closure and persistence | Generic SDK completion is insufficient to mark the application answer validated |
+| Existing startup | No inference unless explicitly enabled; no Azure call for bootstrap | Replace ambiguous status labels, not the authorization boundary |
+| Existing browser history | Planner text and validated result; no complete persisted SDK event transcript | Hydrate display history without pretending to replay/reconnect a live model run |
+
+### Recommended local architecture
+
+```text
+Browser: CopilotKit v2 styled chat/view + contextual application cards
+  -> case-bound AG-UI HttpAgent transport
+  -> same-origin FastAPI /api/cases/{case_id}/run
+  -> existing official framework AG-UI adapter and guarded conversation
+  -> native FoundryAgent stream / server-owned AgentSession
+  -> existing exact managed Foundry advisor version
+
+Contextual cards -> existing trusted /actions route
+Diagnostics -> read-only case snapshot/history/events
+```
+
+Use React and TypeScript with a Vite build under a dedicated frontend
+directory. Serve its built assets from the existing Python origin.
+Node is a frontend development/build dependency, not necessarily another
+running application server. Do not add Next.js server rendering, a GraphQL
+gateway or a Copilot Runtime just to host static chat components.
+Keep the user-facing launch path to one documented command after building.
+
+The documented direct local agent option is `agents__unsafe_dev_only`.
+It is a deliberately dev-only integration, not a security certification or
+a production pattern. The local backend must keep its Host/Origin checks,
+action token, no permissive CORS and server-owned capability checks.
+Production would require a separate choice between the recommended
+TypeScript runtime path and a properly licensed self-managed route.
+Sources: [CK02](../../../../docs/research/sources.md#ck02),
+[CK03](../../../../docs/research/sources.md#ck03).
+
+Do not treat the Python Agent Framework backend as CopilotKit's separate
+Python Copilot Runtime. The latter has different Intelligence requirements.
+Do not enable Intelligence, built-in model agents, memory, analytics,
+automatic learning, A2UI, sandboxed UI, MCP Apps or frontend tools for this
+increment. Those are optional product capabilities, not demo prerequisites.
+
+### Versions, packaging and license findings
+
+| Item | Observed evidence | Proposed treatment |
+| ---- | ----------------- | ------------------ |
+| `@copilotkit/react-core` | Versioned package 1.84.1, MIT, `/v2` and `/v2/styles.css` exports | Candidate baseline; not yet installed or approved as a final pin |
+| CopilotKit v2 | API import surface inside package version 1.84.1 | Do not confuse API v2 with npm major version 2 or mix v1 imports |
+| AG-UI JS | react-core/core 1.84.1 depend on client/core 1.0.2 | Align direct dependency with 1.0.2 initially; avoid a second latest 1.0.3 instance |
+| React | Published peers support 18 or 19 | Choose one compatible exact React/ReactDOM pair in the implementation lockfile |
+| Zod | react-core peer `>=3.25`; AG-UI client uses `^3.25.76` | Prefer an aligned Zod 3 resolution for the first compatibility check |
+| Node | CopilotKit core declares `>=20`; local Node is 26.13.0, npm 11.20.0 | Numeric bound satisfied, not proof of the complete toolchain support matrix |
+| Python integration | Installed framework AG-UI 1.7.1, protocol 0.1.22, core 1.24.0 | Preserve proven pins; do not upgrade Python to match JS package numbers |
+| Wire protocol | JS package advertises AG-UI protocol 1.0 | Test actual Python-emitted events; SDK version differences alone prove neither compatibility nor incompatibility |
+| License | Published react-core license and project OSS guide say MIT | Retain required notices; separately evaluate any non-OSS feature before using it |
+| Registry access | Public npm metadata reads failed TLS through PowerShell and curl | Environment prerequisite for future installation, not a package incompatibility; no certificate bypass |
+
+Versioned public CDN manifests and declarations were readable after npm
+registry TLS failures. They establish the inspected artifacts, not successful
+resolution against this machine's configured package feed or a verified latest
+release. Do not persist credentials or change registry/certificate settings
+without separate agreement. Pin the selected artifacts and commit the
+lockfile only under a future authorized implementation.
+Sources: [CK04](../../../../docs/research/sources.md#ck04),
+[CK05](../../../../docs/research/sources.md#ck05).
+
+The OSS guide explicitly supports chat, AG-UI and application-owned storage
+without Intelligence. Saved cross-device "AG-UI Streams" is a separate
+product feature, not the ordinary SSE stream already implemented here.
+The existing local persistence can remain authoritative. No new CopilotKit
+account, model-provider key or subscription is justified.
+
+The package graph is not minimal: react-core includes other renderers and
+`@scarf/scarf`. Installation analytics, browser network defaults, optional
+feature activation and third-party notices must be checked. There is no
+measured bundle size, vulnerability audit or zero-egress proof yet.
+The acceptance target is no automatic traffic to CopilotKit-hosted or
+other unapproved services, beyond approved package acquisition.
+
+### Chat-first UX and human interaction
+
+Use one central conversation, a compact case selector/new-conversation
+control and an optional diagnostic drawer. Start from CopilotKit's styled
+view, composer and message components; customize slots rather than
+rebuilding a bespoke chat shell.
+
+| Moment | User-visible behavior | Authoritative source |
+| ------ | --------------------- | -------------------- |
+| First visit | Welcome, explanation of synthetic scope and a usable start action | Local application copy, explicitly not an agent-generated greeting |
+| Question | Send creates/binds a fresh case if needed, then streams the agent response | One explicit user submission, one run ID |
+| Investigation | Concise tool activity can expand inline; partial answer is labeled provisional | Actual AG-UI events, not a scripted stage animation |
+| Preference needed | Inline comparison card beside the validated explanation, showing cost, quantity, dates and both customer margins | Exact current comparison evidence |
+| Selection | Card records STANDARD or EXPRESS and shows a human-action receipt | Existing backend selection action; no inference from chat text |
+| Next turn | Explicit "Continue with advisor" within the conversation | Existing separate run action |
+| Proposal ready | Exact-proposal card with route, quantity, cost, timing and approval/rejection | Validated proposal plus fresh server decision state |
+| Approval/rejection | Decision receipt appears inline; pending buttons become disabled | Backend exact-ID approval/rejection, never a client tool result |
+| Completion | Verified reservation summary with expandable current/historical evidence | Validated final result and durable read-back |
+
+Do not translate fictional option costs into EUR merely because inference
+budgets use EUR. Business costs are synthetic cost units. Explain that
+STANDARD costs 90 and EXPRESS 95; EXPRESS buys one day of margin, without
+inventing a probability or a uniquely optimal option.
+
+Render-only `useRenderTool` can enrich backend tool activity without
+registering callable functions. An actionable card must wait until the
+application's final validation and successful terminal event, even when
+its underlying tool result has already streamed. Anchor decision cards
+after the corresponding assistant explanation, not permanently in a sidebar
+or before the user has context. Message slots can supply that placement.
+Sources: [CK06](../../../../docs/research/sources.md#ck06),
+[CK07](../../../../docs/research/sources.md#ck07).
+
+The current model contract contains exactly `message` and `evidence`;
+it has no machine-readable `request_human_choice` intent. Recommended
+baseline: project card eligibility server-side from the last validated
+current comparison/proposal evidence, actual decision state and snapshot.
+The existing prompt instructs the agent to ask and stop at those boundaries.
+This is contextual application UI, not a claim that the model emitted an
+AG-UI interrupt. Do not infer request intent by searching natural-language
+words. If an exact explicit agent-request signal is required in every case,
+designing and publishing a revised model response contract or request tool
+is a separate step, not a silent part of this frontend migration.
+
+Revalidate card eligibility and staleness at action time. Earlier cards
+remain readable but cannot approve a different/newer proposal. Validate
+server eligibility for selection too; browser visibility is not a permission.
+Display disabled states with reasons, including pending stream, prior
+decision, stale facts, drift and uncertainty.
+
+Retain separate decision recording and Continue by default. A future
+"Select and continue" or "Approve and execute" action changes cost/behavior
+and must be explicitly agreed; merely moving buttons into chat does not
+authorize automatic inference.
+
+### Native human-in-the-loop hooks are not a drop-in replacement
+
+CopilotKit's `useHumanInTheLoop` creates a frontend tool and resolves it
+through a UI response callback. Our managed definition exposes no approval
+tool, and the HTTP boundary explicitly rejects client tool declarations.
+Installing that hook would change the contract, not connect the existing
+approval mechanism automatically. `useInterrupt` similarly expects an
+interrupt/resume protocol the current application does not implement.
+
+Use render-only components and application action callbacks for the first
+integration. These actions remain out-of-band trusted human events and
+are recorded before the next native model turn. Do not add model-callable
+approval, relax the allowlist or fake a paused framework function.
+This distinction preserves the existing agent-led conversation without
+building a new deterministic reasoning flow.
+
+### Message transport, validation and lifecycle
+
+The SDK owns event decoding and message reconstruction. A small case-bound
+transport specialization may use the documented `HttpAgent.requestInit`
+extension to send only the new trailing plain-text user message, plus the
+actual case/run IDs and local action token. Reject unsupported outgoing
+client tools/state/resume rather than silently granting their semantics.
+The server's existing input/authority checks remain the security boundary.
+
+CopilotKit's provider `messageFilter` is documented in source for runtime-
+proxied agents, not direct agent instances. It is not sufficient to solve
+our direct request mismatch. Test the transport extension against the
+selected published types, including `clone()` preserving case URL, token,
+projection and cancellation. Do not invent private hooks or manually
+duplicate the framework's function/model loop.
+Sources: [CK03](../../../../docs/research/sources.md#ck03),
+[CK05](../../../../docs/research/sources.md#ck05),
+[CK08](../../../../docs/research/sources.md#ck08).
+
+The high-level `CopilotChat` documents an initial automatic run; its source
+also manages connection/suggestion behavior. Prefer `CopilotChatView` plus
+`useAgent` and explicit submit/stop handlers if the selected package cannot
+disable every automatic operation through supported settings.
+This still uses CopilotKit's UI; it does not mean returning to custom
+HTML/SSE parsing. Opening, mounting, reloading or switching cases must
+generate zero inference requests. No automatic suggestions, retry,
+regenerate, edited-message resubmission or tool follow-up should run.
+
+Maintain per-run validation state through `onCustomEvent` and terminal
+subscriptions. A tool renderer's `complete` status is not a validated answer.
+`onRunFinalized` fires on failures too and cannot authorize success.
+Require the matching server `validated_answer`, then `RUN_FINISHED`;
+transport errors or EOF before both mean no UI success. Replace provisional
+text with the authoritative validated message and refresh the durable
+read-only view. Any reconciliation is inspection, not inference replay.
+
+Bind a single active frontend agent to one server-created case. Abort and
+dispose subscriptions before replacing it; prevent cross-case event leakage.
+The browser case ID is not the native Foundry conversation ID: preserve
+the shared telemetry correlation and existing exact managed-version binding.
+
+Hydrate validated display history from the backend, not local storage as
+authority. Add stable turn/display-message identifiers and typed
+interaction/validation metadata to UI history/events as necessary.
+Keep metadata separate from model inputs and native AgentSession state.
+Do not store complete vendor transcripts or native credentials in tracking.
+Restoring display history does not resume a stopped/in-flight run.
+Historical cases affected by new fingerprints remain read-only/blocked;
+no migration/reset/rebind is implicit.
+
+### Connection status, observability and visual acceptance
+
+Separate transport configuration from a verified live model call:
+
+| State | Required explanation and action |
+| ----- | ------------------------------- |
+| Inference disabled | "Foundry calls are disabled for this server"; explain startup configuration before showing a usable composer |
+| Configured, not verified | "Configured for Foundry; no call has been made yet"; do not claim a successful connection |
+| Running | Visible streaming/Stop state; no concurrent decisions or sends |
+| Previously verified | Identify managed agent/version and last successful turn without implying every future request will succeed |
+| Offline test fixture | Persistent, unmistakable "simulated responses, not Foundry" label |
+| Blocked/uncertain | Explain that effects may already exist; allow inspection/new case, not retry/reset |
+
+Do not automatically authenticate just to make a connection badge green.
+Keep endpoint/tenant/credentials and live/export policy server-side.
+Live model calls and trace export remain separately authorized operations.
+The UI can explain missing configuration without granting itself permission.
+
+Place tool details, usage, IDs and raw evidence in a closed-by-default
+diagnostic drawer. Show concise human-readable summaries in the chat.
+Maintain keyboard navigation, focus after actions, readable contrast,
+screen-reader streaming/status announcements and mobile layouts.
+Test raw HTML/script payloads, Markdown links and external images; never
+enable unrestricted HTML. Preserve script CSP and same-origin action
+protection; identify style/nonces needed by actual components instead of
+blindly weakening policy. Browser console/CSP failures are acceptance failures.
+
+Use the existing common telemetry module, once per server, with per-agent
+policy. CopilotKit Inspector can optionally inspect local events during
+development; it is not a replacement for Foundry/Application Insights
+traces, and saved Inspector/Intelligence features are out of scope.
+
+### Change surfaces and retirement strategy
+
+| Surface | Expected future change |
+| ------- | ---------------------- |
+| New frontend directory | Package manifest/lock, TypeScript/Vite config, CopilotKit provider/view, case transport, contextual cards and focused UI tests |
+| Existing static web assets | Replace after parity; do not keep a second user-facing legacy interface or alternate runtime path |
+| [ui.py](../../../../src/supply-chain-resilience/supply_chain/ui.py) | Serve hashed build assets, clearer configuration/interaction projections and stable UI history metadata |
+| [ui_stream.py](../../../../src/supply-chain-resilience/supply_chain/ui_stream.py) | Preserve native binding; expose only required stable UI metadata without changing managed instructions |
+| [session.py](../../../../src/supply-chain-resilience/supply_chain/session.py) | Explicit frontend source/lock/build identity rather than reading arbitrary generated directories as text |
+| [ui_demo.py](../../../../src/supply-chain-resilience/ui_demo.py) | One clear local launch path and startup explanation; never silently enable live/export |
+| Tests and README | Actual SDK wire tests, composer/card lifecycle, no auto-runs, build/launch and failure instructions |
+| Managed agent/domain/store/runtime | Reuse unchanged unless a proven tightly coupled defect requires a separately reviewed scope adjustment |
+
+Fingerprint relevant frontend sources, lockfile and actually served build
+identity, excluding node_modules and volatile caches. The current top-level
+web-file hashing cannot simply be pointed at a generated assets directory.
+Retain open-source notices in distribution and make a missing build an
+explicit actionable error, not a fallback to the old interface.
+
+### Acceptance gates and residual risks
+
+| Gate | Required measurable evidence |
+| ---- | ---------------------------- |
+| Dependency reproducibility | Exact pins/lockfile, peer/type/build checks; no disabled TLS verification or hidden hosted requirement |
+| Protocol compatibility | Actual Python SSE consumed by selected JS client: split text/arguments, tool results, custom validated event, success/error terminals |
+| No unsolicited inference | Zero requests on mount/reload/case switch, decision-only actions and default-disabled startup |
+| Conversation continuity | Second/third turn succeeds without resending trusted history; no duplicate model context; reload preserves validated display |
+| Card timing | No choices on welcome/unrelated turns; interactive comparison/proposal cards only after matching successful validation |
+| Human safety | Wrong/stale IDs, browser state/tools/approval text and double clicks cannot grant or duplicate reservation |
+| Success semantics | No validated badge/card activation on malformed evidence, error, resource-close failure or incomplete stream |
+| Cancellation | Abort before terminal and after committed write retains durable uncertainty/effects, releases lock and never replays |
+| Full synthetic case | One reservation/read-back, source 80/70/10, destination 20; no physical shipment claim |
+| Case isolation | Switching/unmounting cannot send to another case or leak late events into it |
+| Privacy/network | No unapproved third-party runtime traffic or payload export; preserved per-agent trace filtering and managed conversation identity |
+| Usability | Desktop/mobile/browser keyboard checks, visible reason for disabled Send, no primary raw-JSON panels, no console/CSP failures |
+| Regression | Existing Python application/SDK-free tests and documentary checks continue to pass |
+
+None of these new CopilotKit integration gates has been executed in S-037.
+Prior S-036 tests cover the existing backend, not this new frontend stack.
+The most important unresolved gate is actual wire/SDK behavior with the
+pinned Python adapter; another is package access after registry TLS failure.
+Do not replace either with assumptions based on matching marketing terms.
+
+### Proposed next increment
+
+Recommend [S-038 revision 1](../plan/plan.md#s-038-revision-1-local-copilotkit-compatibility-slice):
+one local compatibility slice with the selected published CopilotKit
+components, actual guarded backend and explicitly simulated upstream I/O.
+Prove transport, no unsolicited inference, terminal-validation rendering
+and contextual decision behavior before replacing the entire interface.
+If it fails, stop with the exact gap; do not automatically upgrade the
+proven Python packages, add Intelligence or publish a new agent contract.
+
+This limits the next implementation commitment without postponing the
+design: the target UX, responsibilities, build path and full acceptance
+matrix above are already defined. Live Foundry walkthrough and any
+full-interface replacement require their own explicit scope and approval.
 
 ## S-023 Learning-Goal Correction
 

@@ -17,19 +17,19 @@ from azure.core.exceptions import AzureError
 from azure.identity.aio import AzureCliCredential
 from openai import OpenAIError
 
-from supply_chain.agents.resilience_advisor.agent import create_agent
 from supply_chain.agents.resilience_advisor.definition import definition, provenance
 from supply_chain.domain import ToolError
 from supply_chain.session import CandidateSession
+from supply_chain.service import managed_agent
 from supply_chain.observability import Mode, TelemetryPolicy, linked_insights_connection_string, start_azure_tracing
 
 
 async def chat(
-    candidate: CandidateSession, message: str, endpoint: str, tenant: str,
+    candidate: CandidateSession, message: str | None, endpoint: str, tenant: str,
     agent_version: str, *, telemetry: Mode = "off",
 ) -> dict[str, object]:
     candidate.ensure_ready()
-    if not message.strip():
+    if message is not None and not message.strip():
         raise ToolError("empty_message", "A nonempty planner message is required.")
     record = candidate.record
     candidate.advisor.telemetry_policy = TelemetryPolicy(telemetry)
@@ -37,39 +37,25 @@ async def chat(
         raise ToolError("agent_mismatch", "The session is bound to another published version or project.")
     async with AzureCliCredential(tenant_id=tenant, process_timeout=60) as credential:
         async with AIProjectClient(endpoint=endpoint, credential=credential, retry_total=0) as project:
-            published = await project.agents.get_version(
-                agent_name="supply-chain-resilience-advisor", agent_version=agent_version,
-            )
-            if (published.version != agent_version
-                    or published.definition.as_dict() != definition(record.deployment).as_dict()):
-                raise ToolError("candidate_unpublished", "The exact published version does not match this candidate; no inference is permitted.")
-            tracing = start_azure_tracing(
-                await linked_insights_connection_string(project)
-            ) if telemetry != "off" else None
-            try:
-                async with create_agent(project, agent_version, conversation=candidate.advisor) as agent:
-                    if candidate.framework_session is None:
-                        record.endpoint = endpoint
-                        record.agent_version = agent_version
-                        record.running = True
-                        candidate.save()
-                        candidate.framework_session = await agent.create_conversation(session_id=record.run_id)
-                        record.running = False
-                        candidate.save()
-                    result = await candidate.reply(agent, message)
-                    return result
-            finally:
-                if tracing is not None:
-                    tracing.close()
+            async with managed_agent(project, candidate, endpoint, agent_version) as agent:
+                tracing = start_azure_tracing(
+                    await linked_insights_connection_string(project)
+                ) if telemetry != "off" else None
+                try:
+                    return await candidate.reply(agent, message)
+                finally:
+                    if tracing is not None:
+                        tracing.close()
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["definition", "init", "inspect", "select", "approve", "reject", "chat"])
+    parser.add_argument("command", choices=["definition", "init", "inspect", "select", "approve", "reject", "chat", "resume"])
     parser.add_argument("--directory", type=Path)
     parser.add_argument("--deployment", default=os.environ.get("FOUNDRY_MODEL_DEPLOYMENT"))
     parser.add_argument("--option", choices=["STANDARD", "EXPRESS"])
     parser.add_argument("--proposal-id")
+    parser.add_argument("--tool-call-id")
     parser.add_argument("--confirm", action="store_true")
     parser.add_argument("--message")
     parser.add_argument("--endpoint", default=os.environ.get("FOUNDRY_PROJECT_ENDPOINT"))
@@ -106,24 +92,28 @@ def main(argv: list[str] | None = None) -> int:
                 candidate = CandidateSession.load(directory)
                 if args.command == "inspect":
                     result = candidate.inspect()
-                elif args.command == "chat":
-                    if not all((args.message, args.endpoint, args.tenant, args.agent_version)):
+                elif args.command in ("chat", "resume"):
+                    if not all((args.endpoint, args.tenant, args.agent_version)) or (args.command == "chat" and not args.message):
                         raise ToolError("missing_configuration", "Chat needs message, explicit endpoint/tenant and a published agent version.")
                     result = asyncio.run(chat(
-                        candidate, args.message, args.endpoint, args.tenant, args.agent_version,
+                        candidate, args.message if args.command == "chat" else None,
+                        args.endpoint, args.tenant, args.agent_version,
                         telemetry=args.telemetry,
                     ))
                 else:
                     candidate.ensure_ready()
                     conversation = candidate.advisor
+                    if not args.tool_call_id:
+                        raise ToolError("human_request_mismatch", "Supply the exact pending native --tool-call-id.")
                     if args.command == "select":
                         if args.option is None:
                             raise ToolError("selection_required", "Supply the planner's explicit option.")
-                        result = conversation.select(args.option)
+                        result = conversation.respond(args.tool_call_id, option=args.option)
                     else:
                         if not args.proposal_id or (args.command == "approve" and not args.confirm):
                             raise ToolError("confirmation_required", "Supply the exact proposal ID and --confirm for approval.")
-                        result = conversation.approve(args.proposal_id, confirm=args.command == "approve")
+                        result = conversation.respond(args.tool_call_id, proposal_id=args.proposal_id,
+                                                      confirm=args.command == "approve")
                     candidate.save()
         print(json.dumps(result, indent=2))
         return 0

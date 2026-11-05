@@ -1,0 +1,55 @@
+:root {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: #172f43;
+  background: #edf2f6;
+  font-synthesis: none;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1050px; margin: 24px auto; padding: 28px; background: white; border-radius: 20px; box-shadow: 0 12px 50px #173a5712; }
+header { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+h1 { margin: 7px 0; font-size: 30px; letter-spacing: -.8px; }
+h2 { font-size: 19px; margin: 12px 0; }
+h3 { font-size: 15px; }
+p { line-height: 1.6; margin: 8px 0; }
+.eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #38617c; }
+button, select { font: inherit; border-radius: 8px; padding: 10px 14px; }
+button { background: #075c92; color: white; border: 1px solid #075c92; cursor: pointer; font-weight: 600; }
+button:hover:enabled { background: #074670; }
+button:disabled { opacity: .48; cursor: not-allowed; }
+button.secondary { color: #075c92; background: white; }
+select { max-width: 220px; background: white; border: 1px solid #b5c7d4; color: inherit; }
+button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid #d88c16; outline-offset: 3px; }
+.case-controls { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.connection { background: #f0f7fb; border: 1px solid #cee1ee; color: #28536f; padding: 12px 16px; border-radius: 9px; font-size: 12px; margin: 22px 0 12px; line-height: 1.5; }
+.status { color: #486679; font-size: 12px; padding: 8px 2px; min-height: 32px; }
+.error { border-left: 4px solid #af3339; background: #fff2f1; color: #82272c; padding: 14px; overflow-wrap: anywhere; }
+.chat { min-height: 410px; height: 62vh; }
+.transcript { width: 100%; padding: 12px 6px; }
+.decision-card { border: 1px solid #b5d7e8; background: #f6fbfe; border-radius: 14px; padding: 22px; margin: 18px 0 26px; }
+.options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.options > div { background: white; border: 1px solid #d6e5ee; border-radius: 10px; padding: 16px; }
+.options p { font-size: 13px; }
+.decision-card code { display: block; font-size: 11px; overflow-wrap: anywhere; }
+.advisor-question { min-width: 0; overflow-wrap: anywhere; }
+.advisor-question table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+.advisor-question th, .advisor-question td { border: 1px solid #d6e5ee; padding: 8px; text-align: left; }
+.advisor-question ul, .advisor-question ol { padding-left: 24px; }
+.confirmation { display: flex; align-items: center; gap: 8px; margin: 18px 0; }
+.actions { display: flex; gap: 12px; }
+.receipt { color: #1d5e51; padding: 12px 0; font-size: 14px; }
+.continue { margin: 4px 0 12px; }
+.diagnostics { border-top: 1px solid #dde6ed; margin-top: 18px; padding: 16px 0; font-size: 12px; }
+.diagnostics summary { cursor: pointer; font-weight: 600; }
+pre { max-height: 420px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: #f5f8fa; padding: 14px; }
+.welcome { padding: 60px 20px; max-width: 650px; margin: auto; text-align: center; }
+.welcome > p { margin-bottom: 24px; }
+.welcome .quiet { margin-top: 20px; font-size: 12px; color: #627c8d; }
+footer { color: #627c8d; font-size: 10px; margin-top: 16px; }
+@media (max-width: 640px) {
+  main { margin: 0; padding: 16px; border-radius: 0; }
+  h1 { font-size: 25px; }
+  .options { grid-template-columns: 1fr; }
+  .decision-card { padding: 14px; }
+  .chat { height: 65vh; }
+}

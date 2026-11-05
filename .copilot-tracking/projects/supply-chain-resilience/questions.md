@@ -1,7 +1,7 @@
 ---
 title: "Questions and Answers for supply-chain-resilience"
 description: "Progressive answers and open business-scenario questions for supply-chain discovery."
-ms.date: "2026-11-04"
+ms.date: "2026-11-05"
 ---
 
 ## Translation Provenance
@@ -9,6 +9,566 @@ ms.date: "2026-11-04"
 English summaries of Italian user answers are labeled translations.
 They are not verbatim English quotations. A selected domain is not
 approval of the assistant's initial scenario or architecture.
+
+## Q-052 - Restore the SharePoint Owner Session
+
+* Date: 2026-11-05
+* Status: answered through `ask_user` on 2026-11-05.
+* Actual answer, faithful English translation: owner sign-in completed;
+  confirms resumption of the two assignments.
+* Interpretation: resume S-048 revision 1 under the unchanged Q-051 scope.
+  Same-owner browser preflight now succeeds; no write has yet occurred.
+* Outcome: A-033 completes the exact assignments and read-back.
+  Confirmation consumed; no reader sign-in or license change was included.
+* Reason: Q-051-authorized exact-user reads succeed; the previous browser
+  page no longer exists and opening the exact site redirects to sign-in.
+  No membership or principal write has occurred.
+* Recommendation: user signs in directly in the integrated browser using
+  the same approved site owner, without exposing credentials to chat/tools.
+* Alternatives: defer this step. Do not use a demo reader or a different
+  operator to bypass the expected owner/session check.
+* Requested confirmation: owner sign-in completed and resume S-048 revision
+  1's same exact checks/two memberships and exclusions from Q-051.
+  No new consent, role activation or broader authority is requested.
+
+## Q-051 - Assign the Manually Created Demo Readers
+
+* Date: 2026-11-05
+* Status: answered through `ask_user` on 2026-11-05.
+* Actual answers, faithful English translation: confirms UserDemo01 and
+  UserDemo02 as UPN aliases in MngEnvMCAP946525.onmicrosoft.com; selects
+  UserDemo01 to Planning and UserDemo02 to Procurement; authorizes targeted
+  checks and assignment to the two existing SharePoint groups.
+* Interpretation: approves S-048 revision 1 only; A-033 starts.
+* Execution outcome: A-033 completes. UserDemo01 is exclusively in site group
+  10 and UserDemo02 exclusively in group 11; both groups have one member.
+  Folder ACLs and owner/member/visitor groups remain unchanged.
+* Limitation: exact Graph reads report zero assigned licenses for both.
+  No licensing, interactive reader sign-in or Foundry delegation tested.
+  Authority consumed.
+* User update, faithful English translation: "I created two users myself,
+  UserDemo01 and UserDemo02." Creation is reported, not verified.
+* Reason: these replace the proposed S-047 aliases; paused authorization
+  does not approve a new identity mapping.
+* Contract: S-048 revision 1 in the implementation plan; related decision
+  D-022 remains unchanged.
+* Recommended mapping: UserDemo01 to SCR Planning Readers (10) only;
+  UserDemo02 to SCR Procurement Readers (11) only.
+* Identity confirmation: propose the exact two aliases in the existing
+  MngEnvMCAP946525.onmicrosoft.com demo domain. If these are display names
+  rather than UPN aliases, defer execution and use a secure local mapping
+  reference. Do not request passwords, tokens or personal-account details.
+* Alternatives: reverse the mapping, perform targeted read-only checks,
+  or defer assignment.
+* Requested authority: exact-user/operator reads, existing site/group/ACL
+  verification, ensure site-local principals and add the two memberships,
+  followed by read-back. No account creation/reset, license/role/consent,
+  security-policy or folder ACL change, deletion, sign-in or Foundry work.
+* Acceptance: exact existing enabled Member users, no observed administrator
+  role or site-admin status, expected reader memberships and unchanged ACLs.
+  Interactive allow/deny and delegated retrieval are separate future tests.
+* Risk/recovery: grants document Read to the selected users; no new paid
+  service or inference. Stop on ambiguity, elevated users, unexpected grants
+  or missing rights. Preserve partial results; no escalation or deletion.
+
+## Q-050 - Create Two Non-Admin Demo Readers
+
+* Date: 2026-11-04 at 18:22 +01:00
+* Status: answered through `ask_user`.
+* Actual answers: account_names=`approve_proposed_aliases`;
+  credential_mode=`enabled_dpapi_force_change`;
+  execution_scope=`create_users_assign_groups_no_licenses`.
+* Interpretation: authorize S-047 revision 1 with the two proposed aliases,
+  enabled standard accounts, distinct DPAPI-protected temporary passwords,
+  first-sign-in change and exact site-local group membership. No licenses,
+  role grants, existing-account resets or security-policy changes.
+* Execution: A-032 is blocked. First user-create POST returned HTTP 403
+  Authorization_RequestDenied; second create was not attempted. Both exact
+  accounts were re-read as absent; SharePoint groups remain empty.
+* Actual operator evidence: GET of current operator's transitive directory
+  roles succeeds and reports Global Reader only. No write-capable user
+  administrator role was observed. PIM eligibility was not inspected.
+* Local partial state: two unused temporary credentials are DPAPI-encrypted
+  in an owner-only LOCALAPPDATA directory. No password/token is recorded here.
+* Authority is paused, not a completed execution. After the user resolves
+  permissions through their normal administrative process, reconfirm the
+  exact create/assignment scope before any new directory write.
+* User request, faithful English translation: create two Entra ID users and
+  assign them to the two SharePoint reader groups.
+* Reason: these are new directory identities, excluded from S-046.
+  Exact synthetic account names, credential handling and execution scope
+  require a new contract. No directory write has started.
+* Contract: S-047 revision 1. Proposed local aliases scr-planner-demo and
+  scr-procurement-demo in the already identified demo tenant's verified
+  onmicrosoft.com domain; display names SCR Planner Demo and
+  SCR Procurement Demo. No personal identities are requested or recorded.
+* Matrix: planner belongs only to site-local SCR Planning Readers (10);
+  procurement belongs only to SCR Procurement Readers (11), whose existing
+  ACL already covers both folders. Neither becomes site member/owner/admin.
+* Credentials: recommend distinct cryptographically generated temporary
+  passwords, force change at first sign-in, encrypted with Windows DPAPI
+  for the current Windows user under LOCALAPPDATA/FoundryMultiAgentLab/
+  credentials. No password in chat, tracking, repo, process arguments,
+  logs, environment variables or plaintext credential files.
+* Alternative: disabled accounts until secure credential setup is agreed,
+  or a read-only preflight with no creation.
+* Licenses: none assigned or purchased in this contract. SharePoint sign-in
+  may require an eligible license; membership does not grant a license.
+  No MFA, Conditional Access or security-default change is included.
+* Authority boundary: at most two new standard users and the exact two
+  SharePoint memberships, secure local credential storage and verification.
+  No reuse/reset of conflicting accounts, role grants, consent, app
+  registration, license assignment, deletion or runtime/OBO work.
+* Acceptance: directory read-back and actual group membership matrix;
+  accounts not administrators, users not site administrators; no unexpected
+  owner/member grants; current folder ACLs unchanged. No interactive
+  two-user retrieval claim without a separate sign-in/license test.
+
+## Q-049 - Provision the SharePoint Knowledge Site
+
+* Date: 2026-11-04
+* Status: answered through `ask_user`.
+* Actual execution answer: `authorize_site_groups_upload_acl`.
+* Actual membership answer, English translation: "Empty groups for now;
+  users to be assigned later."
+* Actual document feedback, English translation: "No document changes."
+* Interpretation: authorize S-046 revision 1 on the exact site/matrix below,
+  including at most one site creation, two empty site-local groups, folder
+  ACL changes and four DOCX uploads/read-back. No reader assignment, consent,
+  elevation, other-site changes or Foundry integration is approved.
+* Execution: A-031 completes. Exactly one ready site, two empty site-local
+  reader groups, two unique folder ACLs and four Word uploads are verified.
+  Word body hashes match the approved local content; package hashes differ
+  after SharePoint processing. No user assignment or OBO test was performed.
+* Authorization consumed. Any membership or integration work needs a new
+  bounded contract.
+* Reason: S-045's document/preflight consent is consumed. Site creation,
+  group creation, upload and source-ACL changes require explicit execution
+  consent for exact resources. No remote write has occurred.
+* Contract: S-046 revision 1 in the implementation plan.
+* Target: verified demo tenant, new site
+  <https://mngenvmcap946525.sharepoint.com/sites/supply-chain-resilience-lab>,
+  title Supply Chain Resilience Lab. Proposed non-group-associated team
+  site, English locale; no Microsoft 365 group or Team.
+* Owner: the authenticated demo account already verified against the user's
+  supplied account. Personal account identifiers are not copied here.
+* Groups: new site-local SCR Planning Readers and SCR Procurement Readers.
+  General grants both groups Read; Restricted Procurement grants only
+  procurement Read. Site owners retain Full Control.
+* Payload: only the four approved local DOCX files; no PDF/source duplicate
+  uploads. Two folders in one document library, no broad sharing grants.
+* Membership: groups initially empty unless the user supplies a secure
+  local membership configuration reference. Do not invent users, add the
+  administrator to reader groups for a deny test, or request credentials.
+* Alternatives: execute this exact provisioning slice, keep local documents
+  only, or revise target/access setup.
+* Cost/risk: existing SharePoint quota, approximately 213 KB for four DOCX
+  payloads plus site overhead; no new Azure resource or paid model call.
+  Site creation/write privileges are still unproven despite successful GETs.
+* Recovery: stop on missing rights or an existing/unexpected target; preserve
+  and report partial results, no automatic deletion, privilege escalation,
+  admin consent or account switching.
+* Success boundary: verify site readiness, exact folder ACLs, group state
+  and uploaded bytes. Two-user trimming/OBO requires separately configured
+  non-admin test identities and is not proven by this setup.
+
+## Q-048 - Synthetic Document Outline and SharePoint Sign-In
+
+* Date: 2026-11-04
+* Status: answered through `ask_user`.
+* Actual answers: document_outline=`approve_english_outline`;
+  browser_signin=`signed_in`.
+* Outcome: A-030 completes four Word/PDF drafts and browser read-only
+  preflight. Expected demo account matches; current root-site IsSiteAdmin
+  is false, which is not a determination of tenant administrator eligibility.
+  Proposed site status is Not Found. No source authorization change occurred.
+* Consent boundary: S-045 complete; authority consumed. Q-049/S-046 is a
+  separate proposed provisioning activity.
+* Reason: Word document authoring requires outline approval; authenticated
+  SharePoint REST preflight needs a valid delegated session. Graph root
+  discovery succeeded, but direct SharePoint REST authentication failed.
+* Proposed corpus: four English Word documents, version 0.1, dated
+  04 November 2026, status Synthetic demo draft, house style.
+  General audience: planning and procurement. Restricted audience:
+  procurement. No real commercial or personal data.
+* Outline: disruption guide covers scope, triage and handover; transfer
+  guide covers comparison criteria, schedule buffer and uncertainty;
+  supplier guide covers synthetic terms, eligibility and reconfirmation;
+  commercial guide covers synthetic conditions, escalation and authority.
+  Each contains one short criteria table and no diagram. Repository/runtime
+  baseline is the current demo as of 2026-11-04; knowledge is not a live
+  stock/price source or authorization to transact.
+* Inputs: approve/amend the outline, and complete sign-in directly in the
+  opened SharePoint browser page if possible. No passwords/MFA in chat.
+* Boundary: sign-in and outline approval do not authorize a new site,
+  group creation, folder ACL changes or uploads. S-045 remains paused.
+
+## Q-047 - SharePoint Target and Folder Access Matrix
+
+* Date: 2026-11-04 at 17:41 +01:00
+* Status: answered through `ask_user`.
+* Actual target answer, English summary with personal account redacted:
+  user asks how to find the SharePoint URL and identifies the demo tenant
+  `db60e921-9c3c-4fd4-98d1-4445db7ab425`; administrator status is believed,
+  not verified. The desired new site's name was not explicitly confirmed.
+* Actual group answer, faithful English translation: "Can you create these
+  groups yourself?" No existing groups or reader memberships supplied.
+* Actual first-step answer: `drafts_and_targeted_readonly_preflight`.
+* Interpretation: authorize S-045 revision 1 local draft preparation and
+  targeted read-only preflight in the named tenant. Group creation is a
+  requested follow-up, not permission to change unspecified memberships or
+  create directory groups. Propose site-local groups to keep scope small.
+* Outcome so far: Graph root URL verified; SharePoint REST authentication
+  failed. Opened the verified site in the integrated browser; it requests
+  sign-in. Q-048 requests the document outline and interactive prerequisite.
+* Context: user explicitly requests synthetic SharePoint documents, a new
+  site and upload into two folders with different permissions. This changes
+  the immediate direction from the proposed SQL feasibility slice.
+* Reason: tenant/site target, existing reader groups and ownership are not
+  known. A broad sharing grant must not be inferred.
+* Recommendation: a dedicated restricted demo site named
+  Supply Chain Resilience Lab; General and Restricted Procurement folders.
+  Existing planner readers see General; existing procurement readers see
+  both; designated site owners retain administration. No tenant-wide,
+  anonymous or external sharing.
+* Proposed corpus: four short English synthetic documents, two general
+  recovery/planning guides and two restricted supplier/commercial guides.
+  Knowledge explains policy and options; it does not replace authoritative
+  operational facts or authorize business actions.
+* Requested input: SharePoint tenant URL and desired site name, existing
+  Entra/SharePoint group names or secure local configuration references,
+  and whether to authorize S-045's drafts/targeted read-only preflight.
+  Do not request credentials or personal account identifiers.
+* Alternatives: local drafts only, or drafts plus targeted read-only
+  SharePoint prerequisite inspection followed by a separate creation/ACL
+  contract once exact resources and supported tools are established.
+* Impact: S-045 revision 1; D-022 document-storage direction.
+* Boundary: no site/group creation, permission change, upload, deletion,
+  tenant-wide inventory, consent or Foundry integration in this question's
+  proposed first step.
+
+## Q-046 - Knowledge Location and Delegated-Access Prerequisites
+
+* Date: 2026-11-04 at 17:30 +01:00
+* Status: answered through `ask_user`.
+* Actual location answer, faithful English translation: "What if we did RLS
+  on a database instead? Too complex? Otherwise OK, let's try SharePoint."
+* Actual prerequisite answer: `available`. This is the user's report for
+  the presented same-tenant SharePoint/two-user/license prerequisites, not
+  independent verification or confirmation of an existing SQL database.
+* Interpretation: assess a bounded database/RLS-first alternative before
+  committing to SharePoint. No final backend or implementation is approved.
+* Context: user prefers a small knowledge corpus and revisits S09's
+  least-privilege pattern: signed-in users may access only selected documents
+  or rows, using delegated/OBO access rather than broad app-only authority.
+* Reason: document location, supported delegation path and availability of
+  two actual users determine whether permission trimming can be demonstrated.
+* Recommendation: assess SharePoint with native permissions first if its
+  same-tenant/license requirements are practical; otherwise assess
+  Blob/ADLS plus Search and explicit permission enforcement. Start with
+  documents before adding a separate structured-data/RLS integration.
+* Alternatives: SharePoint-first, Azure storage/search-first, or compare
+  both without selecting a backend yet.
+* Impact: S-044 revision 2 knowledge/identity design and proposed D-022;
+  the supplier-recovery tool remains a later candidate.
+* Authority boundary: answers establish preferences and prerequisite
+  knowledge only. No tenant inventory, login/consent registration, IAM,
+  upload/index creation, code change, publication or paid run is authorized.
+
+## Q-045 - Activate Readable Data-Driven Explanations
+
+* Date: 2026-11-04 at 14:19 +01:00
+* Status: answered through `ask_user`.
+* Actual answer: `local_and_one_publication_no_inference`.
+* Scenario convention (English translation of user-confirmed form value):
+  day 1 = 2026-11-09, consecutive calendar days, EUR, descriptive labels
+  retaining IDs.
+* Interpretation: authorize S-043 revision 1 local implementation/offline
+  verification and at most one new version on the target below; no inference.
+* Outcome: A-029 completes local/offline verification and one exact managed
+  publication, version 5, with successful definition read-back. Zero model
+  requests. Local `.env` selects v5; user should restart and open New chat.
+  Q-045 operational authority is consumed; prose-quality acceptance remains
+  the user's next real conversation, not an inferred evaluation result.
+* Context: user requests implementation with a prompt independent of the
+  synthetic fixture, and allows saved-case changes if needed without
+  unnecessary complexity. Publication authority must still be explicit.
+* Contract: S-043 revision 1 in the implementation plan.
+* Recommendation: local implementation/offline checks plus at most one
+  version of the same managed advisor; no inference. Fixed synthetic date
+  2026-11-09 for day 1, consecutive calendar days, explicit EUR, readable
+  names retaining IDs. All fixture-specific values stay in data.
+* Cloud target: existing tenant `db60e921-9c3c-4fd4-98d1-4445db7ab425`,
+  existing project `ai-aif-demo-prg-01` at
+  `https://ai-aif-demo-01.services.ai.azure.com/api/projects/ai-aif-demo-prg-01`,
+  advisor `supply-chain-resilience-advisor`, deployment `gpt-6.1-sol`.
+* Alternatives: local implementation only (not active against published v4),
+  or stop. No selection has been inferred.
+* Recovery and exclusions: see S-043. No paid model run, approval, execution,
+  infrastructure/IAM, account changes, deletion, delegation or Git publication.
+
+## Q-044 - Execute the Native Human Handoff Migration
+
+* Date: 2026-11-04 at 12:20 +01:00
+* Status: answered through `ask_user`.
+* Actual answer: `approve_native_migration_publish_live_express`.
+* Interpretation: authorize S-041 revision 1 including the bounded publication
+  and real EXPRESS preference test exactly below; no proposal approval.
+* Outcome: A-028 completes S-041 revision 1. One new version (4) and one real
+  conversation, four model requests/six tools/7,760 tokens/EUR 0.1552
+  conservative estimate. Stops at pending exact-proposal approval; no
+  approval/reservation. Q-044 operational authority is consumed.
+* Context: after accepting D-020, the user explicitly says "PROCEDI!".
+  Local migration is requested; publication and spend still need explicit
+  targets/limits, so this question supplies one bounded execution contract.
+* Recommendation: execute S-041 revision 1 end to end: production-path code,
+  actual pinned SDK/offline tests, one new version of the same managed advisor,
+  and one new real browser conversation through native choice continuation.
+* Cloud target: existing project `ai-aif-demo-prg-01` at
+  `https://ai-aif-demo-01.services.ai.azure.com/api/projects/ai-aif-demo-prg-01`,
+  existing tenant `db60e921-9c3c-4fd4-98d1-4445db7ab425`, existing advisor
+  `supply-chain-resilience-advisor`, existing `gpt-6.1-sol` deployment.
+  Verify the existing target, publish at most one new version after offline
+  gates, preserve version 3 and historical conversations.
+* Live limits: one fresh synthetic case/conversation; at most 10 native model
+  requests, 20 tool calls, 40,000 aggregate tokens and EUR 2 conservative
+  estimated monitoring. No automatic retry or telemetry export. Estimates
+  are not Azure billing controls.
+* Human scope: if requested and feasible, record EXPRESS as the explicitly
+  authorized test preference and continue once through its native tool result.
+  Stop at the exact-proposal approval request; no approval, rejection,
+  reservation/execution or mutation of prior cases is authorized.
+* Alternatives: local implementation/offline tests only, leaving publication
+  and real verification blocked; or stop.
+* Excluded: new resources/provider/model/agent, APIM, IAM/account changes,
+  deletion/rebinding, production data, delegation, commits/pushes.
+* Acceptance/recovery: see S-041 contract. Prove native pause/result and
+  language/user-message provenance first; report incompatibility, never mask
+  it with the old Continue or simulation. Preserve old versions and evidence;
+  no automatic model retry or ambiguous result replay.
+
+## Q-043 - Native Human Handoff Architecture
+
+* Date: 2026-11-04
+* Status: answered through `ask_user`.
+* Actual answer: `native_human_tools`.
+* Interpretation: accept D-020's native model-requested human tools and
+  automatic core continuation. This is architectural consent only, not
+  implementation, managed publication or paid inference authority.
+* Reason: decide the replacement interaction contract after S-040 verifies
+  the installed native/frontend-tool mechanisms and the managed schema limit.
+* Recommendation: native model-requested human tools for choice and exact
+  approval, backend-validated receipts and automatic core continuation.
+  No generated user text or additional Continue.
+* Alternatives: structured application events without frontend human tools;
+  defer the decision. Auto-sending the previous Continue message is not a
+  recommended alternative.
+* Impact: D-020 and the next implementation contract. Native tools require
+  new prompt/tool schemas in a new version of the existing advisor; preserve
+  v3 and historical conversations.
+* Boundary: this question chooses architecture only. It does not authorize
+  application implementation, agent publication, inference/cost, infrastructure,
+  IAM, historical-run mutation or Git publication.
+
+## Q-042 - Conversational Decision Handoff Analysis
+
+* Date: 2026-11-04 at 12:02 +01:00
+* Status: answered by the user's explicit continuation.
+* Actual answer, faithful English translation: "Perfect, let's proceed."
+* Context: S-040 revision 1 proposes inspection and design of the structured
+  decision handoff after the user rejects the redundant Continue and
+  fabricated English user messages.
+* Interpretation: authorize this one local/public analysis and tracking
+  activity. Verify installed/native support and define a concrete contract;
+  do not infer approval of implementation or new Azure calls.
+* Excluded: application/package/environment changes, server/model execution,
+  authenticated tenant access, publication, infrastructure/IAM, historical
+  run mutation, delegation, commits and pushes.
+* Outcome: S-040 completed in A-027; analysis authority consumed.
+
+## Q-041 - Real UI Replacement and Bounded Foundry Verification
+
+* Date: 2026-11-04 at 11:26 +01:00
+* Status: answered; user selects `approve_real_ui_and_live_check`
+* Answer date: 2026-11-04; scope executed in A-026 and authority consumed.
+* Actual answer: approve revision 2 implementation and the proposed bounded
+  real Foundry verification. No different limits were supplied.
+* Actual user correction, faithful English summary: reject half-solutions,
+  coupling to the old UI and simulated-only operation. Foundry must be called.
+  The conversation begins with a user question, not fictitious conversations.
+* Interpretation: synthetic business data is still intended, but application
+  responses and managed conversations must be real. No visible case creation
+  before asking. S-038 is technical compatibility evidence, not delivery
+  acceptance. Supersede unexecuted S-039 revision 1 with revision 2.
+* Operational confirmation: implement revision 2 and perform one read-only
+  real question against the existing declared project, advisor v3 and
+  deployment. Proposed limits: five model requests, ten tools, 30,000 tokens
+  and EUR 2 estimated monitoring, no telemetry export or automatic retry.
+* Question: confirm these bounded live calls/costs, or specify another limit.
+  The model-cost threshold is post-response monitoring, not a billing cap.
+* Excluded: provisioning/deployment/IAM, publication, hosted services,
+  historical-run mutation, implied business approval/reservation, deletion
+  of Azure conversations, delegation and Git publication.
+
+## Q-040 - Local CopilotKit Compatibility Slice Authorization
+
+* Date: 2026-11-04 at 10:37 +01:00
+* Status: answered by explicit user instruction
+* Context: S-038 revision 1 proposes one bounded local SDK/transport/card
+  compatibility slice with synthetic upstream responses and no cloud calls.
+* Actual answer, faithful English summary: proceed in the proposed direction;
+  clarify why frontend HITL is not automatically an approval binding and
+  why stream completion alone is not validated application success.
+* Interpretation: authorize S-038 revision 1, including local dependencies,
+  build and offline/browser verification. The two questions request an
+  explanation, not removal of backend authorization/evidence validation.
+* Explanation: a frontend tool returns a model-visible tool result, whereas
+  existing actions record an independently checked exact human decision.
+  Stream text can precede tool/evidence/read-back validation; final success
+  needs those deterministic checks, not a second model judge.
+* Package gate: final stable candidate selected from available feed metadata
+  is react-core 1.82.0 with AG-UI JS 1.0.2, not inaccessible 1.84.1.
+  No TLS bypass, registry change or prerelease substitution.
+* Excluded: full replacement before compatibility acceptance, published
+  agent changes, historical-run mutation, live Azure/export/spend,
+  hosted services, infrastructure/IAM, delegation, commits and pushes.
+* Consumption: S-038 completed locally with
+  [A-025](implementation/log.md#a-025---s-038-local-copilotkit-compatibility-slice).
+  Full default-interface replacement is proposed as S-039, not authorized
+  by this answer.
+
+## Q-039 - Conversational UI Library
+
+* Date: 2026-11-04 at 10:10 +01:00
+* Status: answered for analysis candidate on 2026-11-04 at 10:20 +01:00;
+  no operational implementation approval
+* Context: user explicitly agrees to proceed toward the chat-first redesign
+  and asks whether recommended UI libraries exist for the AG-UI backend.
+  This authorizes the direction, not an unannounced framework choice or
+  real Azure inference/export.
+* Verified alternatives: CopilotKit is explicitly featured by Microsoft
+  Learn for Agent Framework AG-UI. Its documented connection uses a React
+  frontend and CopilotKit runtime registering an AG-UI `HttpAgent`.
+  assistant-ui documents a direct React AG-UI adapter using `HttpAgent`,
+  without requiring that additional application runtime.
+* Initial recommendation, not accepted: assistant-ui for this small local chat-first lab because
+  its direct adapter can retain Python as the only application server.
+  CopilotKit remains the stronger Microsoft-documented reference option
+  when its broader agent-UI runtime/features are desired.
+* Affected decision: D-018's custom static client would be superseded only
+  for presentation, not AG-UI/native framework/human-authority safeguards.
+* Required compatibility work: do not assume plug-and-play. The current
+  endpoint accepts one fresh user message and rejects client authority;
+  library-managed history/state/tool schemas need explicit safe handling.
+  Validated-answer semantics and uncertain-turn blocks must be retained.
+* Question: choose the library before adding a React/Node build surface.
+  Options are assistant-ui, CopilotKit or further comparison.
+* Excluded: cloud calls, hosted UI services, keys, live agent runs/export,
+  published prompt/schema/version changes and automatic continuation after
+  human decisions.
+* Actual response, faithful English summary: user identifies the CopilotKit
+  and assistant-ui repositories and rejects simplicity alone as sufficient
+  justification for choosing assistant-ui, requesting stronger reasons.
+* Follow-up finding: CopilotKit documents direct local AG-UI agents through
+  `agents__unsafe_dev_only`, as well as runtime-backed integration.
+  Therefore an extra application runtime is not an unavoidable requirement
+  for this local lab. The separately documented production self-managed
+  route is marked as part of Intelligence; package/API/entitlement selection
+  must be verified before an implementation commitment.
+* Revised recommendation, still unaccepted: prefer evaluating CopilotKit
+  first for this user's Agent Framework/AG-UI learning objective because
+  Microsoft explicitly references it and its maintainers also maintain
+  AG-UI. Do not claim assistant-ui lacks streaming, inline approvals,
+  tool rendering or composable UI; its official documentation supports them.
+  No proven project-specific technical superiority has yet been established.
+* Next decision evidence needed: use the actual guarded endpoint to test
+  message/history handling, custom validated terminal events, cancellation,
+  durable backend human decisions, package/protocol compatibility and
+  local operation without an unapproved hosted service. Research alone
+  is not that compatibility proof or authorization to install packages.
+* Subsequent actual answer, faithful English translation: "Perfect, let's
+  proceed with a complete analysis with CopilotKit."
+* Interpretation: select CopilotKit for S-037 revision 1's complete local/
+  public analysis. Do not equate this with package installation, frontend
+  implementation, cloud calls or acceptance of unverified compatibility.
+* Consumption: S-037 analysis is completed with
+  [recorded findings](research/analysis.md#s-037-copilotkit-integration-analysis).
+  At S-037 closure the proposed local S-038 slice remained unapproved.
+  Subsequent Q-040 separately authorized that local slice.
+
+## Q-038 - UI Usability and Real Agent Expectations
+
+* Date: 2026-11-04 at 10:08 +01:00
+* Status: answered by explicit user feedback, not implementation approval
+* User feedback, faithful English summary: entering a question leaves Send
+  disabled; STANDARD/EXPRESS should appear in chat when requested by the
+  agent, with understandable decision context, rather than as permanent
+  page controls. The user asks what live-disabled means, expects the real
+  Foundry agent, dislikes the layout and asks whether it comes from AG-UI.
+* Verified explanation: default inference is disabled in server configuration;
+  Send is also gated by selected/ready case. The shared browser snapshot
+  shows a prior offline fixture with an interrupted blocked case, not a
+  verified current live service. The layout is custom HTML/CSS; AG-UI supplies
+  event transport, not this visual design.
+* Interpretation: retain AG-UI/native streaming and real managed-agent
+  direction. Reconsider UX around a chat-first experience, contextual
+  choices and approval cards, clear connection status and secondary
+  diagnostics. Do not equate passing technical tests with accepted UX.
+* Boundary: this feedback does not authorize Azure calls/spend, automatic
+  inference after human decisions, case reset or an implementation step.
+  Explain the distinction first and agree the next bounded increment.
+
+## Q-037 - Revised Local AG-UI Implementation Approval
+
+* Date: 2026-11-04
+* Status: answered
+* Reason: Q-036 changes the implementation scope to native streaming and
+  official AG-UI integration, requiring S-036 revision 2 instead of revision 1.
+* Recommendation: approve revision 2's local implementation/dependencies,
+  safety adaptations and offline/browser verification only.
+* Alternatives: approve that bounded implementation; defer it for more design.
+* Excluded: real Azure inference/export/spend, deployment/IAM, changed
+  published agent versions, historical-run transitions and Git publication.
+* Actual answer: native `ask_user` returned `approve_local_agui_streaming`.
+* Interpretation: authorize S-036 revision 2 local implementation,
+  dependencies and offline/browser verification only, with the exclusions
+  stated in the contract. No live cloud authorization.
+* Consumption: S-036 revision 2 completed on 2026-11-04 with local
+  offline/browser acceptance in [A-023](implementation/log.md#a-023---s-036-ag-ui-and-native-streaming).
+  This answer grants no further inference, export or deployment authority.
+
+## Q-036 - AG-UI and Streaming Requirement
+
+* Date: 2026-11-04 at 09:38 +01:00
+* Status: answered by explicit user correction, not an inferred default
+* Actual requirement, faithful English translation: "But I want to use
+  AG-UI. And I also want to use streaming functionality."
+* Interpretation: AG-UI and genuine incremental model streaming are required.
+  Supersede the unapproved S-036 revision 1 integration recommendation.
+  The full human-controlled case selected in Q-035 remains unchanged.
+* Impact: revise runtime safety for streaming instead of rejecting streaming
+  to preserve current code. Keep approval, evidence, budget and uncertainty
+  controls. AG-UI alone is not proof of safe native streaming.
+* Authorization: requirements clarified; S-036 revision 2 implementation
+  approval and any later real cloud validation remain separate.
+
+## Q-035 - First Testing UI Scope
+
+* Date: 2026-11-04
+* Status: answered
+* Context: user asks to move to the interface after successful S-034.
+  Local design is in scope; no implementation or live spending is inferred.
+* Alternatives: read-only chat and tool/evidence inspection; full synthetic
+  case with explicit human selection and exact-proposal approve/reject.
+* Recommendation: full human-controlled case in a local browser UI, reusing
+  the existing agent/runtime, guards, persistence and telemetry policy.
+  No hosting, user management, new agent or deterministic reasoning workflow.
+* Impact: determines UI controls, API boundaries and implementation tests.
+  Evaluate DevUI/AG-UI compatibility before selecting the integration.
+* Actual answer: native `ask_user` returned `full_human_controlled`.
+* Interpretation: design the full local human-controlled demo interface.
+  This settles functional scope, not implementation, dependencies, cloud
+  spending or selection of a UI integration package.
 
 ## Q-030 - Explicit Agent Factory and Conversation Responsibilities
 

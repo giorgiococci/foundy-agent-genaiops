@@ -1,8 +1,425 @@
 ---
 title: "Logical Architecture Research for supply-chain-resilience"
 description: "S-004 comparison, freshly verified official evidence, proposed boundaries, and unresolved design choices."
-ms.date: "2026-11-04"
+ms.date: "2026-11-05"
 ---
+
+## Demo Reader MFA Prompt Guidance
+
+* Date: 2026-11-05
+* User report, faithful English summary: login requests MFA although the
+  user believes it is disabled. This is not verified policy evidence.
+* Sources retrieved 2026-11-05:
+  [per-user MFA state](https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-userstates),
+  [security defaults](https://learn.microsoft.com/en-us/entra/fundamentals/security-defaults),
+  [MFA sign-in reporting](https://learn.microsoft.com/en-us/entra/identity/authentication/howto-mfa-reporting).
+* Evidence: Disabled in per-user MFA does not disable Conditional Access
+  or security-default requirements. Security defaults require all users
+  to register; registration and an MFA challenge are different events.
+  Sign-in authentication details and Conditional Access results help
+  identify the actual requirement.
+* Recommendation: keep MFA enabled for the two demo readers. Diagnose the
+  actual event before considering any separately approved policy change.
+* Boundary: public/local reads only; no tenant policy/log inspection,
+  security-default/Conditional Access change or MFA bypass performed.
+
+## S-047 - Blocked Directory User Creation
+
+* Date: 2026-11-04
+* Authority: Q-050/S-047 revision 1; A-032 is blocked.
+* Preflight succeeds for approved operator/tenant, verified domain, absent
+  proposed accounts and empty existing SharePoint reader groups.
+* Actual result: first Graph create returns HTTP 403
+  Authorization_RequestDenied. Second create is not attempted. Read-back
+  confirms both aliases still absent and groups 10/11 unchanged.
+* Current-operator role evidence: successful, non-paginated transitive
+  directory-role GET returns Global Reader only. This is not sufficient
+  evidence of User Administrator; SharePoint site-owner access does not
+  confer directory administration.
+* Source [LE10](../../../../docs/research/sources.md#le10---entra-test-user-provisioning)
+  documents User Administrator as the least-privileged role for user
+  creation, in addition to appropriate Graph client permissions.
+* Boundary: no privilege grant/activation, consent, account switch, license,
+  membership or user creation occurred. No PIM eligibility was established.
+  Unused credentials remain encrypted locally; contents are not evidence.
+
+## S-046 - Executed SharePoint Knowledge Setup
+
+* Date: 2026-11-04
+* Authority: Q-049/S-046 revision 1; completed A-031.
+* Actual evidence: exactly one ready site at the approved target; two empty
+  site-local reader groups; unique folder ACLs matching the approved matrix.
+  General reads groups 10/11; Restricted Procurement reads group 11 only.
+  Full Control remains with owners. Four Word files inherit these ACLs.
+* Content evidence: all four remote word/document.xml hashes exactly match
+  the approved local bodies. Whole ZIP bytes changed during SharePoint
+  processing and their separate remote hashes/lengths are retained in
+  [A-031](../implementation/log.md#a-031---s-046-sharepoint-knowledge-site-provisioning).
+* Verification channel: authenticated same-owner browser GET after Graph
+  CLI read-back returned Forbidden. No broadened scopes, tenant/account
+  changes, new consent or privileged credential fallback.
+* Boundary: source-side configuration only. No assigned non-admin readers,
+  actual two-user trimming test, Search/index readiness, citations, Foundry
+  connection, live inference or OBO integration is established.
+* Sources: [LE08-LE09](../../../../docs/research/sources.md#le08---sharepoint-site-provisioning).
+
+## S-045 - Targeted SharePoint Preflight
+
+* Date: 2026-11-04
+* Authority: Q-047 selects drafts_and_targeted_readonly_preflight for the
+  user-identified demo tenant. No SharePoint write or consent approved.
+* Verified: Azure CLI active tenant equals the authorized tenant.
+  Graph GET /v1.0/sites/root?$select=id,webUrl succeeds and returns
+  <https://mngenvmcap946525.sharepoint.com>. Do not derive a site URL solely
+  from an onmicrosoft.com account suffix.
+* Failure: a read-only request to that host's /_api/web for Url, Title and
+  EffectiveBasePermissions cannot obtain/use SharePoint authentication;
+  CLI reports Unauthorized/invalid_request and interactive authentication.
+  No logout/login, broad consent or privileged fallback was attempted.
+* Alternative: integrated browser opened the verified host, which redirects
+  to the specified tenant's Microsoft sign-in page. User interaction is
+  required. Admin status and site-creation/ACL capabilities are not proven.
+* Available tools: Azure CLI and PowerShell; no m365 executable or installed
+  PnP.PowerShell/SharePoint Online management module was found. None installed.
+* Public source: [LE08](../../../../docs/research/sources.md#le08---sharepoint-site-provisioning).
+  Describes modern communication and non-group-associated team site REST
+  creation; it does not prove access with the current credential.
+* User requested group creation. Prefer two site-local groups to avoid
+  unnecessary directory objects. Exact site, groups, reader membership,
+  source ACLs and operational consent remain open.
+* After Q-048 sign-in: browser same-origin GET succeeds and the expected demo
+  account matches. Root CurrentUser.IsSiteAdmin is false; this does not prove
+  or disprove tenant administrator eligibility. No privileged fallback.
+* Proposed site status: read-only SPSiteManager status returns SiteStatus=0,
+  SiteUrl empty, after explicitly requesting OData v4 JSON. No existing site
+  has been adopted and no site creation/write capability has been tested.
+* Local corpus verification is recorded in
+  [A-030](../implementation/log.md#a-030---s-045-synthetic-sharepoint-corpus-and-preflight);
+  it does not demonstrate source permissions, indexing or OBO behavior.
+
+## S-043 - Executed Data-Driven Readability
+
+* Date: 2026-11-04
+* Authority: Q-045/S-043 revision 1; D-021 records the data/prompt separation.
+* Local evidence: validated context, fixed calendar mapping, explicit currency
+  and labels survive SQLite/proposal/read-back. Alternate dates (including a
+  leap day), USD and different labels preserve quantities, costs and margins.
+  Missing context does not create calendar dates or a currency. Changed or
+  tampered context invalidates proposal/approval as appropriate.
+* Prompt inspection/test: generic writing principles, no synthetic IDs,
+  specific date, names or currency. Human-question Markdown reaches the
+  existing CopilotKit renderer. Offline browser confirms lists, supplied EUR
+  dates/labels, native continuation, reload and mobile layout.
+* Current API check:
+  [AgentsOperations.create_version](https://learn.microsoft.com/en-us/python/api/azure-ai-projects/azure.ai.projects.operations.agentsoperations?view=azure-python#azure-ai-projects-operations-agentsoperations-create-version).
+  Fetched 2026-11-04; page updated 2026-10-08. Matches installed Projects
+  2.7.0 operation signature; draft candidates are separately marked preview
+  in that reference. This activity publishes a normal release version.
+* Actual cloud evidence: exactly one version, v5, retrieved and compared to
+  the complete local definition; model and eight tool schemas unchanged.
+  Zero inference requests. No resource/IAM/account changes or old-case writes.
+* Validation: 164 related Python tests, 16 frontend tests, three actual
+  offline JS/Python SSE checks, build/type-check and offline browser checks.
+  Does not establish live model prose quality or final UX acceptance.
+* See [A-029](../implementation/log.md#a-029---s-043-readable-data-driven-explanations)
+  for hashes, resolved test issues and cleanup.
+
+## S-041 - Executed Native Human Handoff
+
+* Date: 2026-11-04
+* Authority: Q-044/S-041 revision 1; D-020 architecture accepted separately.
+* Exact published advisor v4 matches the candidate prompt and eight schemas.
+  No dynamic per-request managed schema extension is assumed.
+* Actual native Framework tests prove declaration-only pauses and matching
+  function-output continuation after session reload. Actual CopilotKit core
+  processes both frontend handlers and automatically follows their checked
+  results over Python SSE; approval/execution is fixture-only.
+* Real browser: one Italian question, native preference request, one EXPRESS
+  click, same conversation resumed with a real tool output, then Italian
+  exact-proposal approval request. No separate Continue or invented user text.
+* Usage: four requests, six tools including human requests, 7,760 reconciled
+  tokens and EUR 0.1552 conservative estimate. No new live approval,
+  reservation, retry or telemetry export. Reload makes no inference.
+* Durable state survives a fresh Python process; incomplete human receipt
+  persistence fails closed. Native IDs and actual receipts, not an AG-UI
+  process-local approval registry or browser history, remain authoritative.
+* Tests: 114 focused Python, 14 frontend and three actual JS/Python wire tests
+  pass; build/type-check passes. Browser covers one-click choice/approval,
+  pending-approval reload, exact confirmation and post-write validated
+  completion offline; real coverage stops before approval. Mobile 390px
+  has no horizontal overflow.
+* See [A-028](../implementation/log.md#a-028---s-041-native-human-handoff-migration)
+  for actual IDs, limits, cleanup and evidence boundaries.
+
+## S-040 - Human Handoff Documentary Evidence
+
+* Date: 2026-11-04
+* Authority: Q-042; source inspection and current public research only.
+* Sources: [CK10-CK13](../../../../docs/research/sources.md#conversational-human-handoff-research).
+* Installed core 1.24.0: `FunctionTool` supports `func=None`. Its native
+  function invocation layer recognizes declaration-only calls separately
+  from unknown calls and marks caller-input pauses without invoking a tool.
+* Installed AG-UI 1.7.1: tool converter constructs declaration-only tools;
+  approval/resume support exists. Its default approval authority store is
+  process-local and cannot itself prove persisted recovery.
+* Installed Foundry 1.16.0: managed references remove per-request tool
+  declarations and retain the published agent's tool definition.
+* Installed CopilotKit 1.82.0 v2: hook declarations and source maps show
+  `respond` resolving the frontend-tool promise. Core's run handler processes
+  handlers and schedules follow-ups, sometimes retaining the logical run ID.
+* Current binding discards native input/tool forwarding and requires a
+  text-only final response. Current transport rejects tool results/resume;
+  current validation requires a final answer before any successful terminal.
+  These are real changes to make, not a hook that can simply be dropped in.
+* Recommended contract: two model-requested frontend human tools and
+  server-verified durable responses, not fabricated user messages.
+  See [the design](analysis.md#s-040-conversational-decision-handoff-design).
+* Evidence boundary: no native SDK scenario was executed, no latency was
+  measured and no managed definition was published. Source-level capability
+  is not end-to-end compatibility or new cloud authorization.
+
+## S-038 - Executed Local CopilotKit Compatibility Evidence
+
+Launch clarification on 2026-11-04 at 11:23 +01:00: current source confirms
+the default UI still depends on `supply_chain/web`; the fixture adds
+`/copilot/` only with `--copilotkit` and an existing frontend build.
+The directory is pending replacement, not currently unused. Instructions
+are guidance for an offline preview, not authorization to start a service,
+remove files, activate the default replacement or call Foundry.
+
+* Date: 2026-11-04
+* Authority: Q-040 and S-038 revision 1; local/offline only
+* Installed: react-core/core 1.82.0, AG-UI JS client/core 1.0.2,
+  React/ReactDOM 19.2.0, Zod 3.25.76, TypeScript 5.9.3 and Vite 7.2.2.
+  Selected a verified available stable pin instead of inaccessible 1.84.1;
+  no prerelease, registry change or TLS bypass.
+* Package scripts, audit and funding requests disabled during installation;
+  actual peer resolution deduplicates AG-UI, React and Zod.
+  Python pins are unchanged.
+* Build/type-check: pass against installed published v2 exports. CopilotKit
+  message-view slot requires its static `Cursor` member; preserve the
+  published component shape instead of forcing a type cast.
+* SDK unit tests: 12 pass, including history projection, headers, clone,
+  rejected client authority, missing/mismatched terminal, malformed/duplicate
+  validation and finalization not granting success.
+* Actual Python wire tests: 3 pass. Complete STANDARD case across three
+  explicit turns, no model usage change for decision-only actions, exact
+  approval, one reservation/read-back, token/Origin/history rejection and
+  abort uncertainty. Upstream SDK responses are explicitly simulated.
+* Measured investigation stream: 6 text deltas, first at 1.929 seconds,
+  completion at 3.498 seconds. Proposal: 5 deltas, 1.649/3.201 seconds.
+  Reservation/read-back: 7 deltas, 3.175/4.739 seconds. These are local
+  fixture measurements with intentional upstream delays, not Foundry latency.
+* Targeted Python regression: 30 UI/native-streaming tests pass, including
+  rejection of early selection and tool results without validated history.
+* Browser: clean final STANDARD case produces exactly 3 run requests,
+  including reload/reselection, and ends unblocked at source 80/70/10,
+  destination 20. Keyboard submission, checkbox-gated approval, contextual
+  cards only after validation, decision-only actions, hidden Continue after
+  reservation, Stop, invalid final answer and inference-disabled state tested.
+* Isolation/rendering: case switching shows no previous transcript in an
+  empty case; user HTML remains literal without image creation/execution.
+  No external browser requests or console/page errors in final clean flows.
+  A 390-pixel viewport has no horizontal overflow. This is not a full
+  accessibility, adversarial assistant-content or exhaustive egress audit.
+* Corrected issues: dependency/API type mismatches; subscriber exceptions
+  not reliably rejecting promises; small fonts inlined as data URLs under
+  strict CSP; old composer remaining mounted during case loading; Continue
+  initially checking the wrong durable-result key. All addressed locally.
+* Harness limits: browser request-context cookie API is unsupported.
+  A forced delayed-route experiment stalled; it was removed and normal
+  HTTP/reload/case-switch flows were rerun. No claim of exhaustive
+  slow-network race verification.
+* Details: [A-025](../implementation/log.md#a-025---s-038-local-copilotkit-compatibility-slice),
+  [CK09](../../../../docs/research/sources.md#ck09) and the
+  [current chat instructions](../../../../src/supply-chain-resilience/README.md#copilotkit-chat)
+  (the S-038 preview was replaced by the S-039 real default application).
+* Limit: fixture-only preview, not the default/live interface. Full routing,
+  source/build fingerprints, durable card/decision presentation and final
+  UX/accessibility acceptance remain a separately approved replacement step.
+
+## S-037 - Complete CopilotKit Integration Analysis
+
+* Date: 2026-11-04
+* Authority: user's explicit complete-analysis request at 10:20 +01:00
+* Deliverable: [project-specific analysis](analysis.md#s-037-copilotkit-integration-analysis)
+* Sources: [CK01...CK08](../../../../docs/research/sources.md#copilotkit-complete-integration-analysis)
+* Finding: CopilotKit v2 is a suitable candidate, but the guarded endpoint
+  is not plug-and-play with default full-thread SDK requests, automatic
+  chat startup behavior or frontend HITL tools.
+* Verified local baseline: Node 26.13.0/npm 11.20.0; Python framework core
+  1.24.0, framework AG-UI 1.7.1, protocol 0.1.22 and FastAPI 0.141.0.
+  Inspected actual Python request/event model fields without agent execution.
+* Verified published candidate: react-core/core 1.84.1 depend on AG-UI JS
+  1.0.2; package exports expose v2 components/styles; license is MIT.
+  JS SDK declares protocol 1.0. Version numbers alone establish no wire
+  compatibility result.
+* Environment limitation: public npm registry metadata failed TLS with both
+  PowerShell and curl. Versioned public CDN manifests/declarations and the
+  matching official repository manifest were accessible. No package install,
+  TLS bypass or registry configuration change was attempted.
+* Target: direct local-development provider, case-bound HttpAgent extension,
+  reusable styled CopilotChatView/message/input components, render-only tool
+  UI and contextual cards backed by existing trusted action routes.
+* Important distinction: high-level chat documents an automatic initial
+  run; `onRunFinalized` fires after failures; `useHumanInTheLoop` registers
+  a frontend tool. None is automatically compatible with current safeguards.
+* Product/licensing: core chat/AG-UI/application persistence need no hosted
+  CopilotKit service. Intelligence, saved cross-device streams and production
+  self-managed mode are separate choices, not implied by the MIT packages.
+* Limit: no packages imported/executed, browser prototype, actual SDK wire
+  test or live Foundry/export operation. Analysis completion is documentary
+  acceptance only. Proposed S-038 must prove the integration before a full
+  frontend replacement or any separately authorized live test.
+
+## Conversational UI Library Follow-up
+
+Follow-up after the user's response to Q-039: the repository identities are
+[CopilotKit/CopilotKit](https://github.com/CopilotKit/CopilotKit) and
+[assistant-ui/assistant-ui](https://github.com/assistant-ui/assistant-ui).
+The user requests stronger reasons than reduced setup complexity; neither
+library is selected. Revise the initial simplicity-first recommendation.
+
+[CopilotKit self-managed agents](https://docs.copilotkit.ai/ag2/backend/self-managed-agents),
+freshly inspected on 2026-11-04, documents both runtime-backed connections
+and a direct local-development AG-UI agent registry. An additional Node
+application runtime is therefore not universally mandatory for the local
+lab. The direct development setting is explicitly named
+`agents__unsafe_dev_only` and must not be presented as production setup.
+The production `selfManagedAgents` path is marked as part of Intelligence;
+actual package/version/feature requirements need verification rather than
+assuming every integration path is free of hosted/commercial prerequisites.
+The [v2 reference](https://docs.copilotkit.ai/reference/v2) documents built-in
+chat, styling, headless hooks and tool-call rendering, with distinct v1/v2
+provider/import surfaces. Do not mix examples across those APIs.
+
+The CopilotKit repository identifies the maintainers as the team behind
+AG-UI. Combined with Microsoft's explicit Agent Framework integration
+reference, this supports evaluating CopilotKit first for a learning lab
+centered on that ecosystem. It is not a Microsoft support commitment,
+exclusive endorsement, certification or runtime-quality benchmark.
+
+assistant-ui's repository explicitly documents composable Thread/Message/
+Composer primitives, styled component starters, accessibility, streaming,
+generative tool UI and inline human approvals. These are real strengths for
+a product whose primary requirement is detailed chat UX control, not
+evidence of inferior Agent Framework compatibility.
+Its AG-UI runtime documents message reconstruction and resume behavior;
+experimental thread-list APIs and automatic pending-tool cancellation need
+careful selection against the application's no-retry/uncertain-state rules.
+Both libraries require actual integration validation. Neither moves
+authorization from the existing trusted backend into browser tool results.
+
+The initial comparison below is historical where the new findings refine it.
+
+* Date: 2026-11-04, following Q-038 and the user's request to proceed
+* Microsoft source: [Agent Framework AG-UI overview](https://learn.microsoft.com/en-us/agent-framework/integrations/by-component/ui/ag-ui/),
+  section "Build agent UIs with CopilotKit"
+* Finding: Microsoft explicitly features CopilotKit for streaming chat,
+  human interaction and generative UI. The documented connection registers
+  an AG-UI `HttpAgent` in the CopilotKit runtime. This is an integration
+  recommendation, not a requirement to use it or proof that our guarded
+  endpoint already accepts its managed histories/frontend tools.
+* CopilotKit source: [Microsoft integration](https://docs.copilotkit.ai/microsoft-agent-framework),
+  which currently redirects to a .NET-labeled integration page. It describes
+  Python/.NET agents behind an AG-UI HTTP bridge and a React frontend/runtime.
+  Its current quickstart includes cloud Intelligence onboarding; do not
+  infer that onboarding, a new hosted service or its prerequisites are
+  approved for this Python lab.
+* Direct alternative: [assistant-ui AG-UI overview](https://www.assistant-ui.com/docs/runtimes/ag-ui/overview)
+  and [quickstart](https://www.assistant-ui.com/docs/runtimes/ag-ui/quickstart).
+  They document React 18/19, `@assistant-ui/react-ag-ui`, `@ag-ui/client`,
+  `HttpAgent` and `useAgUiRuntime`, with streaming/tool/state reconstruction.
+  This path can connect the browser directly to the existing Python server.
+* Trade-off: CopilotKit has the explicit Microsoft integration reference
+  and wider agent-UI runtime; assistant-ui is a closer fit to a small
+  chat-first surface without adding an application proxy runtime.
+  Both introduce a Node frontend build and require custom contextual cards.
+* Boundaries: package versions, installed compatibility and guarded history/
+  terminal-validation behavior are not tested yet. No library removes
+  backend authorization. Preserve single-user local scope, no hosted
+  account/service requirement, no live inference and no frontend tool authority.
+
+## S-036 - Verified Local AG-UI and Native Streaming Integration
+
+* Date: 2026-11-04
+* Authority: Q-037 and S-036 revision 2, local implementation/tests only
+* Evidence: [A-023](../implementation/log.md#a-023---s-036-ag-ui-and-native-streaming)
+  and [exact API/dependency findings](../../../../docs/research/sources.md#ag-ui-native-streaming-implementation-follow-up)
+* Result: the official adapter works with the pinned framework generation
+  through a guarded server-owned case binding. Native streaming uses terminal
+  response/update gates, not a second model/function loop or completed-text
+  animation. The runtime's earlier streaming rejection is replaced with
+  actual terminal/batch/usage validation.
+* Caveat: public sample registration alone does not provide application
+  human authorization, persistence or final evidence validation. The binding
+  retains these outer controls. Provisional text remains visibly distinct.
+* Correlation finding: AG-UI overrides native telemetry conversation ID with
+  its local thread ID. An actual streamed-span test reproduced the mismatch.
+  The common exporter now preserves the authoritative managed conversation
+  ID from the trusted per-agent scope, without private framework APIs.
+* Limit: offline SDK HTTP responses and browser tests do not establish live
+  Foundry streaming, new Insights ingestion or model quality.
+
+The following S-035 design observations are historical. The non-streaming
+recommendation was superseded, not implemented.
+
+## S-035 - Local Testing UI Scope and Integration Choice
+
+Update on 2026-11-04 at 09:38 +01:00: Q-036 explicitly requires AG-UI and
+real streaming. The initial bespoke non-streaming recommendation below is
+superseded before implementation, not accepted architecture.
+The [official getting-started guide](https://learn.microsoft.com/en-us/agent-framework/integrations/by-component/ui/ag-ui/getting-started)
+was freshly consulted: Python provides a FastAPI AG-UI integration with SSE
+streaming. Installed `RunSafety` rejects streaming and validates complete
+`Response` objects; this is a concrete implementation adaptation required
+by the new requirement, not evidence that Foundry cannot stream.
+The current final contract is JSON message/evidence: provisional text
+rendering and terminal authoritative validation must be deliberately separated.
+Exact installed streaming/adapter compatibility remains to be verified
+under [S-036 revision 2](../plan/plan.md#s-036-revision-2-ag-ui-testing-interface-and-native-streaming).
+No native streaming integration or live compatibility is claimed yet.
+
+* Date: 2026-11-04
+* Authority: user's request to move to the interface; local/public design only
+* Functional choice: Q-035 returned `full_human_controlled`
+* Sources: [current UI follow-up](../../../../docs/research/sources.md#testing-ui-design-follow-up)
+* Outcome: recommend one thin local UI increment, proposed as
+  [S-036](../plan/plan.md#s-036-revision-1-local-human-controlled-testing-ui).
+  No application edits, installation, server or authenticated Azure operation.
+
+The user selected chat/tool inspection plus explicit option selection and
+exact-proposal approval/rejection, not just read-only chat. Preserve the
+learning objective: the agent decides reasoning/tool order; the UI presents
+facts and trusted human actions, not a new deterministic reasoning engine.
+
+Fresh Microsoft documentation describes DevUI as a standalone development
+sample, not production UI, with direct agent registration. AG-UI is an
+optional protocol for richer interactive clients, not a ready-made screen.
+The Python AG-UI integration maps streaming agent execution into SSE.
+None of `agent-framework-devui`, `agent-framework-ag-ui`, `fastapi` or
+`uvicorn` is installed in the application environment.
+
+The actual guarded path is `AdvisorConversation.reply` and
+`CandidateSession.reply`, not an unguarded `agent.run` registration.
+`RunSafety.process` rejects streaming. A sample attached directly to the
+agent would not automatically preserve outer evidence validation, durable
+case uncertainty, trusted decisions and drift checks. AG-UI compatibility
+with these boundaries has not been executed or certified.
+
+Recommend a thin local FastAPI/static-browser interface for the initial
+increment, rather than migrating runtime safety and token streaming solely
+to obtain a UI. Display existing tool-status events and publish final text
+only after validation. AG-UI remains a later option if standardized clients
+or token streaming justify a separate change, not a requirement assumed here.
+
+The managed chat operation currently belongs to the CLI and creates/shuts
+down telemetry once per invocation. A long-running server must extract the
+guarded service path without duplicating it and own telemetry once at startup.
+Backend actions retain exact proposal IDs, case locks and authoritative state;
+browser state/chat cannot authorize a reservation. The proposed increment
+includes offline/browser validation only; live model/telemetry testing
+requires separate explicit scope.
 
 ## S-034 - Shared Policy and Actual Trace Ingestion
 

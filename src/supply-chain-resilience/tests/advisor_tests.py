@@ -23,7 +23,7 @@ from supply_chain import DemoActor, DemoRole, DemoStore, ToolError, ToolSession
 from supply_chain.agents.resilience_advisor.agent import create_agent
 from supply_chain.agents.resilience_advisor.definition import definition, instructions, provenance
 from supply_chain.agents.resilience_advisor.conversation import AdvisorConversation
-from supply_chain.agents.resilience_advisor.tools import FUNCTION_TOOL_SPECS
+from supply_chain.agents.resilience_advisor.tools import FUNCTION_TOOL_SPECS, HUMAN_TOOL_SPECS
 from supply_chain.data import SCENARIO, load_snapshot
 from supply_chain.runtime import Pricing, RunLimits
 from supply_chain.session import CandidateSession, EVALUATIONS, ROOT, source_fingerprint
@@ -92,7 +92,7 @@ class AdvisorTests(unittest.TestCase):
     def test_candidate_has_explicit_instructions_and_no_approval_tool(self):
         agent = definition("test")
         self.assertEqual(agent.instructions, instructions("advisor"))
-        self.assertEqual(len(agent.tools), 6)
+        self.assertEqual(len(agent.tools), 8)
         self.assertNotIn("approve", {tool.name for tool in agent.tools})
         self.assertIn("not to follow a fixed script", agent.instructions)
         self.error("unknown_prompt", instructions, "../untrusted")
@@ -101,11 +101,11 @@ class AdvisorTests(unittest.TestCase):
     def test_layout_preserves_candidate_instruction_schema_and_definition_hashes(self):
         manifest = provenance("test")
         self.assertEqual(manifest["instructions_sha256"],
-                         "ad63be7d735efffbaba253244dcb25fa774146a83894dbe69c60dc98378e8625")
+                         "d9386567b619c9d2ab95893b581c44dc940ede00838c81f219ad1bc5dab54c96")
         self.assertEqual(manifest["tool_schema_sha256"],
-                         "aae56d8b18e0e7d3086c2ec5d807b4be2c58d4f9b6baa9779b2532dbed15392d")
+                         "fadd79fe27b2cbd4d292810ceca53699ff1a78e623e98f1cf6dadab3d0480eeb")
         self.assertEqual(manifest["definition_sha256"],
-                         "0411a1c91d28c12808fff121680fde2c5c75c4c769b21acb6cbccbc511de9e88")
+                         "fc13ba908d2c389d58ec5b8ba42be8c00e00d57e80c4a6acb9ef7454f557277e")
 
     def test_nested_agent_source_participates_in_provenance(self):
         before = source_fingerprint()
@@ -124,11 +124,13 @@ class AdvisorTests(unittest.TestCase):
 
     def test_framework_uses_exact_saved_schemas_and_sequential_local_invocation(self):
         agent = create_agent(self.offline.project, "3", conversation=self.loop)
+        specs = [*FUNCTION_TOOL_SPECS, *HUMAN_TOOL_SPECS]
         self.assertEqual({tool.name for tool in agent.default_options["tools"]},
-                         {spec["name"] for spec in FUNCTION_TOOL_SPECS})
+                         {spec["name"] for spec in specs})
         for tool in agent.default_options["tools"]:
-            spec = next(spec for spec in FUNCTION_TOOL_SPECS if spec["name"] == tool.name)
+            spec = next(spec for spec in specs if spec["name"] == tool.name)
             self.assertEqual(tool.to_dict()["input_model"], spec["parameters"])
+            self.assertEqual(tool.declaration_only, tool.name.startswith("request_transfer_"))
         self.assertFalse(agent.client.function_invocation_configuration["allow_concurrent_invocation"])
         self.assertEqual(self.offline.client.max_retries, 0)
 
@@ -622,7 +624,19 @@ class AdvisorTests(unittest.TestCase):
         with patch("advisor_demo.AzureCliCredential") as credential, contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(main(["definition", "--deployment", "test"]), 0)
             self.assertEqual(main(["init", "--directory", str(directory), "--deployment", "test"]), 0)
-            self.assertEqual(main(["select", "--directory", str(directory), "--option", "EXPRESS"]), 0)
+            with contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(main(["select", "--directory", str(directory), "--option", "EXPRESS"]), 1)
+            candidate = CandidateSession.load(directory)
+            self.client.responses.create.side_effect = [
+                self.tool("compare_transfer_options"),
+                self.tool("request_transfer_choice", {"question": "STANDARD o EXPRESS?"}),
+            ]
+            agent = create_agent(self.offline.project, "3", conversation=candidate.advisor)
+            candidate.framework_session = AgentSession(service_session_id="conv_offline")
+            result = asyncio.run(candidate.reply(agent, "Quali opzioni abbiamo?"))
+            call_id = result["human_request"]["call_id"]
+            self.assertEqual(main(["select", "--directory", str(directory), "--option", "EXPRESS",
+                                   "--tool-call-id", call_id]), 0)
             self.assertEqual(main(["inspect", "--directory", str(directory)]), 0)
             with contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(main(["approve", "--directory", str(directory), "--proposal-id", "invented"]), 1)

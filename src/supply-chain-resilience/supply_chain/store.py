@@ -12,7 +12,7 @@ from typing import Iterator
 from uuid import uuid4
 
 from .domain import (
-    OPTIONS, DemoActor, DemoRole, Snapshot, ToolError,
+    OPTIONS, DemoActor, DemoRole, PlanningContext, Snapshot, ToolError,
     assess_transfers, quote_transfer, transfer_violations,
 )
 
@@ -54,7 +54,7 @@ class DemoStore:
                 "CREATE TABLE scenario (id INTEGER PRIMARY KEY CHECK(id = 1), "
                 "version INTEGER NOT NULL, local_stock INTEGER NOT NULL, "
                 "source_stock INTEGER NOT NULL, source_reserved INTEGER NOT NULL, "
-                "cost_cap INTEGER, policy_version TEXT NOT NULL)"
+                "cost_cap INTEGER, policy_version TEXT NOT NULL, context_json TEXT)"
             )
             connection.execute(
                 "CREATE TABLE proposals (proposal_id TEXT PRIMARY KEY, "
@@ -62,7 +62,7 @@ class DemoStore:
                 "option TEXT NOT NULL, quantity INTEGER NOT NULL, cost INTEGER NOT NULL, "
                 "arrival_day INTEGER NOT NULL, completion_day INTEGER NOT NULL, "
                 "source TEXT NOT NULL, destination TEXT NOT NULL, component TEXT NOT NULL, "
-                "approved_by TEXT, approval_digest TEXT)"
+                "approved_by TEXT, approval_digest TEXT, context_json TEXT)"
             )
             connection.execute(
                 "CREATE TABLE requests (request_id TEXT PRIMARY KEY, "
@@ -70,11 +70,22 @@ class DemoStore:
                 "result_json TEXT NOT NULL)"
             )
             connection.execute(
-                "INSERT INTO scenario VALUES (1, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO scenario VALUES (1, ?, ?, ?, ?, ?, ?, ?)",
                 (initial.version, initial.local_stock, initial.source_stock,
-                 initial.source_reserved, initial.cost_cap, initial.policy_version),
+                 initial.source_reserved, initial.cost_cap, initial.policy_version,
+                 json.dumps(asdict(initial.context)) if initial.context is not None else None),
             )
         return {"status": "initialized", "database": str(self.path)}
+
+    @staticmethod
+    def _context(row: sqlite3.Row) -> PlanningContext | None:
+        if "context_json" not in row.keys() or row["context_json"] is None:
+            return None
+        try:
+            value = json.loads(row["context_json"])
+        except json.JSONDecodeError as error:
+            raise ToolError("invalid_database", "The stored planning context is not valid JSON.") from error
+        return PlanningContext.from_data(value)
 
     @staticmethod
     def _snapshot(connection: sqlite3.Connection) -> Snapshot:
@@ -85,6 +96,7 @@ class DemoStore:
             version=row["version"], local_stock=row["local_stock"],
             source_stock=row["source_stock"], source_reserved=row["source_reserved"],
             cost_cap=row["cost_cap"], policy_version=row["policy_version"],
+            context=DemoStore._context(row),
         )
 
     @staticmethod
@@ -98,7 +110,11 @@ class DemoStore:
 
     @staticmethod
     def _decision(row: sqlite3.Row) -> dict[str, object]:
-        return {field: row[field] for field in DECISION_FIELDS}
+        decision = {field: row[field] for field in DECISION_FIELDS}
+        context = DemoStore._context(row)
+        if context is not None:
+            decision.update(context.transfer_data(row["arrival_day"], row["completion_day"]))
+        return decision
 
     @classmethod
     def _digest(cls, row: sqlite3.Row) -> str:
@@ -163,10 +179,11 @@ class DemoStore:
             proposal_id = str(uuid4())
             connection.execute(
                 "INSERT INTO proposals (proposal_id, snapshot_version, snapshot_digest, policy_version, "
-                "option, quantity, cost, arrival_day, completion_day, source, destination, component) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'W-B', 'W-A', 'BOARD-1')",
+                "option, quantity, cost, arrival_day, completion_day, source, destination, component, context_json) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'W-B', 'W-A', 'BOARD-1', ?)",
                 (proposal_id, snapshot.version, _fingerprint(asdict(snapshot)), snapshot.policy_version,
-                 option, quote["quantity"], quote["cost"], quote["arrival_day"], quote["completion_day"]),
+                 option, quote["quantity"], quote["cost"], quote["arrival_day"], quote["completion_day"],
+                 json.dumps(asdict(snapshot.context)) if snapshot.context is not None else None),
             )
             return {"status": "proposed", **self._decision(self._proposal(connection, proposal_id))}
 
@@ -186,6 +203,8 @@ class DemoStore:
         ))
         if actual != expected:
             raise ToolError("invalid_proposal", "The proposal no longer matches the planning facts.")
+        if self._context(row) != snapshot.context:
+            raise ToolError("invalid_proposal", "The proposal context no longer matches the planning facts.")
         if transfer_violations(snapshot, quote):
             raise ToolError("infeasible", "The current stock, timing or cost constraints reject this action.")
         return snapshot

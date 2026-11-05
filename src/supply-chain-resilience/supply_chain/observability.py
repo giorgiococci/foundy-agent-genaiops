@@ -41,6 +41,7 @@ METADATA_ATTRIBUTES = frozenset({
     "gen_ai.response.finish_reasons", "gen_ai.tool.name", "gen_ai.tool.type",
     "gen_ai.tool.call.id", "error.type", "server.address",
     "supply_chain.run.id", "supply_chain.telemetry.mode",
+    "supply_chain.service.conversation.id",
     "gen_ai.usage.input_tokens", "gen_ai.usage.output_tokens",
 })
 _SECRET_KEY = re.compile(r"password|secret|token|credential|authorization|connection.?string|api.?key", re.I)
@@ -140,13 +141,16 @@ class PolicyExporter(SpanExporter):
             if mode not in ("metadata", "content"):
                 continue
             allowed = METADATA_ATTRIBUTES | (PAYLOAD_ATTRIBUTES if mode == "content" else frozenset())
+            selected = {key: value for key, value in attributes.items() if key in allowed}
+            # AG-UI uses its local thread ID for native telemetry; retain the managed service identity.
+            if attributes.get("supply_chain.service.conversation.id"):
+                selected["gen_ai.conversation.id"] = attributes["supply_chain.service.conversation.id"]
             filtered.append(ReadableSpan(
                 name=span.name, context=span.context, parent=span.parent,
                 resource=span.resource, kind=span.kind, start_time=span.start_time,
                 end_time=span.end_time, instrumentation_scope=span.instrumentation_scope,
                 status=Status(span.status.status_code),
-                attributes={key: value for key, value in attributes.items()
-                            if key in allowed},
+                attributes=selected,
             ))
         if not filtered:
             return SpanExportResult.SUCCESS
@@ -243,6 +247,7 @@ def agent_trace(
     }
     if conversation_id:
         attributes["gen_ai.conversation.id"] = conversation_id
+        attributes["supply_chain.service.conversation.id"] = conversation_id
     token = _SCOPE.set(TraceScope(policy, attributes))
     try:
         with trace.get_tracer(__name__).start_as_current_span(

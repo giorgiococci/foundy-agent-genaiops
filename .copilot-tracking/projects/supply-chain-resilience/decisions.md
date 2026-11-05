@@ -1,8 +1,204 @@
 ---
 title: "Decisions for supply-chain-resilience"
 description: "Confirmed business scope and boundaries of the supply-chain demo."
-ms.date: "2026-11-04"
+ms.date: "2026-11-05"
 ---
+
+## D-022 - User-Scoped Knowledge Authorization
+
+* Date: 2026-11-04
+* Status: accepted for SharePoint document location and source ACL setup in
+  Q-049/S-046. Browser-user identity/OBO runtime integration remains proposed.
+  Earlier Q-046 established preferences, not implementation authority.
+* Basis: user revisits S09 and requests consideration of documents/rows
+  visible only to the signed-in user through delegated access.
+* Proposed principle: the model requests a narrow capability; verified
+  identity, service scopes and source authorization determine permitted data
+  before it becomes model context. No prompt/user-supplied identity is trusted.
+* Identity distinction: service/agent authentication to Foundry may coexist
+  with user-delegated data access. OBO is a token/delegation mechanism, not
+  document ACLs, RLS or permission granted by a human business approval.
+* Storage candidate: SharePoint for native document permissions if its
+  same-tenant/license/preview constraints are acceptable. Azure storage plus
+  Search is an alternative requiring explicit permission ingestion/query
+  enforcement; security-string filters are not the same as downstream OBO.
+* Q-046 follow-up: user asks whether database RLS is manageable before
+  falling back to SharePoint. Recommend a small SQL/OBO/RLS design first,
+  but do not infer acceptance of a database, service deployment or code change.
+  Short knowledge records could be stored as rows, clearly distinguished
+  from native Foundry document search.
+* Subsequent direction at 17:41 +01:00: user explicitly requests SharePoint
+  documents/site and two folders with distinct access. SharePoint is now
+  the requested document destination; SQL remains a deferred learning
+  candidate. Exact tenant, reader groups and ACL changes are unresolved
+  in Q-047, and no site provisioning or runtime integration has started.
+* Executed follow-up: Q-049 approves the exact SharePoint site, two empty
+  site-local reader groups, separate folder ACLs and four Word uploads.
+  A-031 verifies this source-side setup. No directory groups or actual
+  reader membership are created; SQL remains deferred.
+* Current limitation: local browser boundary is not per-user Entra login.
+  Foundry calls use server-side Azure CLI credentials and business roles are
+  fixtures. This does not yet demonstrate two browser users' delegated access.
+* Reader follow-up: Q-051/Q-052 approve S-048/A-033 assignment of two manually
+  created synthetic users. UserDemo01 is exclusively in Planning (10) and
+  UserDemo02 exclusively in Procurement (11); source ACLs remain unchanged.
+  Both enabled Member users have no active directory role observed and
+  zero assigned licenses. Interactive access and OBO remain untested.
+* Sources:
+  [LE04-LE07](../../../docs/research/sources.md#le04---delegated-tool-identity-and-obo)
+  and [S09](../../../docs/research/sources.md#s09).
+* Source-side SharePoint storage and ACLs are now selected and configured.
+  This does not approve an app registration, new consent, Foundry retrieval
+  connection or runtime authorization change.
+
+## D-021 - Data-Driven Calendar and Readable Explanations
+
+* Date: 2026-11-04
+* Status: accepted in Q-045 and implemented in S-043/A-029.
+* User requirement (English translation): do not tailor the prompt to the
+  synthetic data, so it remains usable when the data changes. Saved cases
+  may be changed if necessary; avoid needless complexity.
+* Writing principles belong in the prompt; entity names, calendar reference
+  and currency belong in authoritative data/tool output. Do not have the
+  model infer dates from wall-clock today or assume currency.
+* Confirmed fixture convention: day 1 = 2026-11-09, consecutive calendar
+  days, EUR, descriptive labels retaining IDs. This is data, not a prompt
+  instruction or a new general scheduling engine.
+* Display the supplied dates/names/currency in native human cards; use the
+  existing CopilotKit Markdown renderer rather than a new parser/dependency.
+  Explain zero margin as meeting the deadline without buffer.
+* Simplicity: no migration framework or historical utterance rewrites.
+  New chats use the current data and exact advisor v5. Existing versions and
+  cases are retained; changed source/definition cases remain guarded.
+* Activation: one new version on the existing project under Q-045,
+  retrieved and compared exactly. No inference or human decision is included.
+* Evidence: 164 Python tests, 16 frontend tests, three actual offline
+  core/Python SSE integrations and offline browser checks. These prove data
+  and rendering behavior, not live model wording or final UX acceptance.
+
+## D-020 - Agent-Requested Native Human Handoff
+
+* Status: accepted by Q-043 `native_human_tools`.
+* Date: 2026-11-04
+* Basis: S-040/Q-042 source research following the user's rejection of
+  separate Continue and fabricated English user messages.
+* Recommendation: two declaration-only human-request tools,
+  `request_transfer_choice` and `request_transfer_approval`, using the pinned
+  CopilotKit v2 human hook/core continuation. Backend verification and durable
+  native-call-bound receipts remain the only source of human permission.
+* Semantics: the model requests input, never grants itself approval.
+  A human click produces a checked native tool result; it is not a user
+  sentence and needs no extra Continue. Preserve the conversation language.
+* Managed impact: update instructions/schemas in a new version of the same
+  advisor. Per-request React tool declarations cannot extend published v3.
+  No new infrastructure/model/agent or old-session rebinding.
+* Alternative: proper structured application events without model-requested
+  frontend tools. Simpler managed-schema impact, but less native HITL learning.
+  Auto-sending/translating/hiding the old Continue text is rejected.
+* Qualification: native Boolean approval is supported, not ruled out as
+  impossible. One human-tool pattern for both decisions avoids separate
+  preference/approval transports and redundant confirmation in this demo.
+* Evidence and limitations:
+  [S-040 design](research/analysis.md#s-040-conversational-decision-handoff-design)
+  and [CK10-CK13](../../../docs/research/sources.md#conversational-human-handoff-research).
+  Installed-source findings do not establish end-to-end native compatibility.
+* Supersession: would replace D-019's action/Continue handoff, not its real
+  Foundry runtime, backend authority, uncertainty or evidence safeguards.
+  No implementation/publication is approved by this proposal.
+* Consent boundary: acceptance chooses this architecture. S-041 execution,
+  publication targets and live limits still require a separate contract;
+  no operational authority is inferred from the answer.
+* Executed outcome: Q-044 separately authorizes A-028/S-041. Managed v4,
+  actual frontend human tool/result continuation and Italian language
+  preservation are verified through choice and proposal. Approval/execution
+  continuation passes offline native SDK/wire/browser tests, not a new
+  live approval. This does not imply the user's final UX acceptance.
+
+## D-019 - CopilotKit Chat-First Presentation Proposal
+
+User UX correction on 2026-11-04 at 11:58 +01:00 supersedes the endorsement
+of a separately clicked Continue. The real runtime works, but that handoff
+and application-generated English user text are rejected. The replacement
+must preserve backend human verification without exposing redundant
+continuation mechanics or fabricating chat turns. See
+[the source review](research/analysis.md#user-review-of-the-s-039-decision-handoff).
+The exact replacement mechanism remains to be verified in S-040; this
+feedback does not authorize implementation/publication or more live calls.
+
+User correction on 2026-11-04 at 11:26 +01:00: compatibility-only preview
+is not an accepted application delivery. Require one real Foundry chat,
+first-question initialization and removal of the prior UI. Mocks are for
+automated tests only, not the user-facing runtime. The historical S-038
+acceptance below is technical only; revised operational scope is
+[S-039 revision 2](plan/plan.md#s-039-revision-2-real-foundry-chat-as-the-single-interface).
+
+* Status: accepted for S-038 through Q-040 and for complete real
+  default-interface replacement through Q-041/S-039 revision 2.
+  [A-026](implementation/log.md#a-026---s-039-real-foundry-chat-replacement)
+  verifies the real application; final user UX approval is not inferred.
+* History: proposed following S-037; Q-039 selected analysis only.
+  S-038 now verifies local compatibility with stable 1.82.0, not live calls.
+* Date: 2026-11-04
+* Problem: Q-038 rejects the permanent unexplained human-decision sidebar,
+  confusing disabled composer/connection status and bespoke technical layout.
+* Proposal: CopilotKit v2 styled React chat components over a direct local
+  AG-UI agent connection; Python remains the application/runtime authority.
+  Build static assets and serve them from the existing origin.
+* Interaction: contextual evidence-backed comparison/proposal cards in the
+  conversation, trusted backend human actions, explicit separate Continue,
+  concise inline tool activity and optional diagnostics.
+* Runtime boundary: preserve D-018's native streaming, final validation,
+  locks, uncertainty stops, exact proposal checks and telemetry. Use render-
+  only hooks rather than registering browser approval tools.
+* Product boundary: direct dev-only setup is appropriate only for this
+  local lab; Intelligence and production self-managed/runtime choices are
+  not adopted. No third-party model agent, account/key or hosted service.
+* Compatibility: published react-core 1.84.1 and AG-UI JS 1.0.2 are candidates,
+  not a tested lockfile. Existing Python protocol 0.1.22 is retained.
+  Require actual wire tests and zero mount/reload/decision-only inference.
+  Subsequent S-038 resolves the available stable pin to react-core 1.82.0
+  with AG-UI JS 1.0.2, and verifies these local guards. See
+  [A-025](implementation/log.md#a-025---s-038-local-copilotkit-compatibility-slice).
+* UX limitation: the current model output has no typed human-request flag.
+  Initially project contextual actions from validated evidence/state, not
+  prose parsing or a fabricated AG-UI interrupt. A stricter explicit agent
+  request signal requires a separately approved model-contract change.
+* Alternatives not chosen by this proposal: retain bespoke HTML; add a
+  full Copilot Runtime solely for this local screen; use assistant-ui.
+  assistant-ui remains capable, not technically rejected by an executed test.
+* Supersession: S-039 replaces D-018's static presentation after approval and
+  compatibility acceptance. Its underlying safety/runtime decisions and
+  historical evidence remain effective.
+* Evidence: [analysis](research/analysis.md#s-037-copilotkit-integration-analysis),
+  [sources](../../../docs/research/sources.md#copilotkit-complete-integration-analysis)
+  and [proposed S-038](plan/plan.md#s-038-revision-1-local-copilotkit-compatibility-slice).
+
+## D-018 - Local AG-UI Interface with Native Streaming
+
+* Status: accepted through Q-035, Q-036 and explicit Q-037 local approval
+* Date: 2026-11-04
+* Decision: use Microsoft Agent Framework's official AG-UI adapter and
+  encoder with a small same-origin FastAPI/static-browser interface.
+  Native `FoundryAgent` streaming remains the only model/tool runtime.
+* Scope: the complete human-controlled synthetic case, including tool
+  activity, current/historical evidence and separate option, exact-proposal
+  approval/rejection and Continue actions. No extra reasoning workflow.
+* Safety: provisional incremental text is not validated evidence. Terminal
+  usage/status and complete assembled calls are checked before effects;
+  final evidence validation must precede the successful terminal UI event.
+  Client history/state/tools cannot authorize operations.
+* Lifecycle: server-owned native sessions, case locks, durable uncertainty
+  stops, no automatic inference retries and one telemetry lifecycle.
+  Preserve actual managed conversation identity despite AG-UI's local
+  thread-ID telemetry override.
+* Alternative superseded: S-036 revision 1's bespoke non-streaming UI was
+  never approved or implemented; the user explicitly requires AG-UI
+  and real streaming.
+* Exclusions: no new agent publication, production hosting, APIM, second
+  agent, historical-run migration or live Azure validation under Q-037.
+* Evidence: [S-036 revision 2](plan/plan.md#s-036-revision-2-ag-ui-testing-interface-and-native-streaming),
+  [A-023](implementation/log.md#a-023---s-036-ag-ui-and-native-streaming)
+  and [implementation sources](../../../docs/research/sources.md#ag-ui-native-streaming-implementation-follow-up).
 
 ## D-017 - Shared Tracing and Explicit Per-Agent Content
 
